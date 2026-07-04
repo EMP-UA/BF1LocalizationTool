@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BF1LocalizationTool</AssemblyName>
+    <RootNamespace>BF1LocalizationTool.GUI</RootNamespace>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BF1LocalizationTool.Core\BF1LocalizationTool.Core.csproj" />
+  </ItemGroup>
+
+</Project>

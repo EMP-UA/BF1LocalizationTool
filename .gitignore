@@ -1,0 +1,80 @@
+# =============================================================================
+# UA: .gitignore для BF1LocalizationTool (.NET 10 / WPF / Visual Studio)
+# EN: .gitignore for BF1LocalizationTool (.NET 10 / WPF / Visual Studio)
+# =============================================================================
+
+## Build results / Результати збірки
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Rr]elease/
+[Dd]ebug/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio / Rider
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+.idea/
+*.DotSettings.user
+
+## Build artifacts / Артефакти компіляції
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.meta
+*.obj
+*.exp
+*.lib
+*.tlog
+*.tmp
+*.ipch
+
+## NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nuget.props
+*.nuget.targets
+
+## Publish / Дистрибутив
+[Pp]ublish/
+*.publishsettings
+PublishScripts/
+
+## Runtime / робочі файли інструменту
+# UA: Логи SimpleLogger та AutoSaveService — не потрібні в репозиторії
+# EN: SimpleLogger and AutoSaveService logs — not needed in the repository
+*.log
+AutoSave/
+Backups/
+*.diagnostic.txt
+
+## Ігрові файли, які НЕ повинні потрапляти в репо (авторське право)
+## Game files that must NOT be committed (copyrighted content)
+*.lvl
+*.loc
+core_uk.lvl
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Secrets / ключі API (для майбутнього Gemini-інструменту)
+## Secrets / API keys (for the upcoming Gemini tool)
+appsettings.local.json
+*.env
+.env
+secrets.json

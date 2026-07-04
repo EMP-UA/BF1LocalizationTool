@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>BF1Diagnostic</AssemblyName>
+    <RootNamespace>BF1LocalizationTool.Diagnostic</RootNamespace>
+  </PropertyGroup>
+</Project>
