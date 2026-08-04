@@ -3,8 +3,9 @@
 > Інструмент для локалізації Star Wars: Battlefront (Classic 2004) та Battlefront II (2005)
 > Localization editor for Star Wars: Battlefront (Classic 2004) and Battlefront II (2005)
 
+[![Version](https://img.shields.io/badge/Version-1.0.0-8A46C1.svg)](https://github.com/EMP-UA/BF1LocalizationTool/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-8A46C1.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-C989F3.svg)](https://github.com/EMP-UA/BF1LocalizationTool)
+[![Platform: Windows 10 | 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-C989F3.svg)](https://github.com/EMP-UA/BF1LocalizationTool)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-8A46C1.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 *Silence will fall.* ⚡
@@ -348,7 +349,7 @@ BF1LocalizationTool/
 - [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Star Wars: Battlefront (Classic 2004) і/або Battlefront II у Steam
 
-**Зборка з вихідного коду / Build from source:**
+**Збірка з вихідного коду / Build from source:**
 ```bash
 git clone https://github.com/EMP-UA/BF1LocalizationTool
 cd BF1LocalizationTool
