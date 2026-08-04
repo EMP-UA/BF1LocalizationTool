@@ -349,13 +349,6 @@ BF1LocalizationTool/
 - [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Star Wars: Battlefront (Classic 2004) і/або Battlefront II у Steam
 
-**Збірка з вихідного коду / Build from source:**
-```bash
-git clone https://github.com/EMP-UA/BF1LocalizationTool
-cd BF1LocalizationTool
-dotnet build -c Release
-```
-
 **Готовий білд / Prebuilt release:**
 Дивіться [Releases](https://github.com/EMP-UA/BF1LocalizationTool/releases) —
 готовий `.zip` з `BF1LocalizationTool.exe`.
