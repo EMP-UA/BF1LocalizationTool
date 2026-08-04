@@ -77,167 +77,58 @@ from the actual chunk content.
 
 ## ✅ Кирилиця в `.txt`-каналі (BF1) / Cyrillic in the `.txt` channel (BF1)
 
-**UA:** Сам по собі `.txt`-формат (Latin1) не підтримує кирилицю для BF1.
-Підтримка додається окремим кроком, який ін'єктує нові гліфи кирилиці
-напряму в шрифтовий атлас `core.lvl`: `BF1LocalizationTool.Diagnostic`
-вміє це робити (реальні Unicode-коди, без обрізання жодного англійського
-гліфа) — докладно в [`FONT_FORMAT_SPEC.md`](FONT_FORMAT_SPEC.md), розділ
-7. Після ін'єкції гліфів GUI пише український текст як звичайний
-UTF-16LE, і гра відображає його напряму.
+**UA:** Сам по собі `.txt`-формат (Latin1) не підтримує кирилицю для
+BF1. `BF1LocalizationTool.Diagnostic` (розповсюджується лише як
+вихідний код — `dotnet run --project BF1LocalizationTool.Diagnostic`)
+вирішує це, ін'єктуючи нові кириличні гліфи напряму в шрифтовий атлас
+`core.lvl` реальними Unicode-кодами, без обрізання жодного англійського
+гліфа — деталі формату й фінальний вибір шрифтів `FONT_FORMAT_SPEC.md`
+§7. Рендер потребує кількох файлів шрифтів (SIL OFL, Google Fonts, не
+входять у репозиторій) у `Fonts\` — точний перелік §7.6.
 
-**Обов'язковий порядок дій, щоб кирилиця запрацювала:**
-0. Завантажити **5 файлів** шрифтів (SIL OFL, безкоштовно, з Google
-   Fonts — [Sofia Sans](https://fonts.google.com/specimen/Sofia+Sans+Extra+Condensed),
-   [Unbounded](https://fonts.google.com/specimen/Unbounded),
-   [Exo 2](https://fonts.google.com/specimen/Exo+2): кнопка «Download
-   family», потрібні файли лежать у теці `static\` архіву) і покласти
-   їх **напряму** (без підтек) у `BF1LocalizationTool.Diagnostic\Fonts\`,
-   з іменами рівно такими:
-   `SofiaSansExtraCondensed-Bold.ttf`, `Unbounded-Bold.ttf`,
-   `Unbounded-Black.ttf`, `Unbounded-ExtraBold.ttf`, `Exo2-ExtraBold.ttf`.
-   Ці файли **не входять у репозиторій** (публічно доступні на Google
-   Fonts, завантажуються окремо). Шрифт **НЕ** береться із системного
-   реєстру Windows — деталі `FONT_FORMAT_SPEC.md` §7.6.
-1. **Diagnostic tool** → категорія 7 (⚠ ГЕНЕРАЦІЯ) → пункт **2**
-   (★ БЕЗ ДОНОРІВ: згенерувати кириличний core.lvl прямими Unicode-кодами)
-   → вибір гри (BF2 автоматично отримує ще й збільшення шрифту в тому ж
-   кроці — BF2 не підтримує 1080p нативно, BF1 підтримує).
-2. Отриманий `output-nodonor\...\core.lvl` відкрити в GUI як "Оригінал" і
-   "Робочий файл" — попередження про "відсутні кириличні гліфи" в цьому
-   випадку хибне (гліфи вже додані на кроці 1), можна ігнорувати.
-3. Перекладати/імпортувати CSV як зазвичай (розділ "Робочий процес"
-   нижче) — далі усе працює як зі звичайним `core.lvl`.
+Аддон Tat3 (BF1, «Палац Джабби») має власну таблицю тексту (2391
+спільний рядок із базовою грою, 22 унікальні) і не містить власних
+шрифтів — використовує атлас базової гри. Назва карти аддону — єдиний
+рядок BF1 поза `Locl`; інструмент робить її перекладною так само (§8,
+§8.3).
 
-**Аддон Tat3 (BF1, «Палац Джабби») — окремий прохід.** Аддон має ВЛАСНИЙ
-`core.lvl` з власною таблицею тексту: 2391 рядок дублює базову гру і лише
-**22 унікальні** (назви кімнат, точки захоплення, цілі місії). Шрифтів він
-не містить і не повинен — бере атлас базової гри. Порядок:
-1. **Diagnostic** → категорія 7 → пункт **9** («★ АДДОН Tat3: зробити назву
-   карти перекладною») — інакше назва карти в списку лишиться англійською
-   (вона живе в `addme.script`, поза таблицею тексту; деталі —
-   [`FONT_FORMAT_SPEC.md`](FONT_FORMAT_SPEC.md) §8).
-   **Запускати ПІСЛЯ генерації кирилиці (кат. 7 → пункт 2) і ДО перекладу в GUI** —
-   команда спитає шлях до БАЗОВОГО `core.lvl`, бо саме проти базової
-   таблиці шел резолвить назви карт (§8.3). Новий рядок після цього
-   з'явиться в GUI як звичайний неперекладений.
-2. Тека `output-addon\` дзеркалить теку гри
-   (`output-addon\GameData\Data\_LVL_PC\core.lvl` — базовий,
-   `output-addon\GameData\AddOn\Tat3\...\core.lvl` — аддонний;
-   `addme.script` там-таки, копіюється як є). Кожен `core.lvl` окремо
-   відкрити в GUI як **«Оригінал»**, далі **«Новий робочий з оригіналу»**
-   (НЕ «Відкрити робочий»!).
-3. «Імпорт CSV» з перекладу базової гри — підтягне 2391 спільний рядок за
-   хешем; лишиться доперекласти 22 унікальні.
-4. Зберегти. Результат має важити **~1 МБ і не містити шрифтів**; якщо
-   вийшло ~4.9 МБ — узято не той робочий файл (GUI попереджає про це).
+Увесь текст BF1 підтверджено лежить рівно у двох файлах
+(`Data\_LVL_PC\core.lvl`, `AddOn\Tat3\...\core.lvl`), шрифти — лише в
+першому (§8).
 
-**Повна відповідь «де лежить текст»:** увесь текст BF1 — рівно у двох
-файлах (`Data\_LVL_PC\core.lvl` і `AddOn\Tat3\...\core.lvl`), шрифти —
-лише в першому. Перевірено суцільним скануванням усієї інсталяції;
-див. §8.
-
-**Точність гліфів і відомі обмеження (див. `FONT_FORMAT_SPEC.md`
-§7.5, §7.7–§7.8):** метрична модель "ядро+виступ" для малих літер
-(§7.5) і порядок кроків BF2-збільшення (§7.7) верифіковані побайтовим
-сканом ПОВНОГО алфавіту (усі 5 розмірів, обидві гри) — §7.8; рендер
-коректний в обох іграх, без "рамки" навколо великих літер BF1 чи
-"плаваючих" (не на базовій лінії) `і`/`ї`/`й` у BF2. `LvlLocalizationService.SaveAsync`
-завжди бере шрифти з ОРИГІНАЛЬНОГО файлу, а не з робочого
-(`AdoptFontsFrom`) — кількість пересаджених гліфів видно в статус-рядку
-GUI; саме тому кожен робочий процес вимагає окремо відкритий "Оригінал".
-Назва карти аддону Tat3 — єдиний рядок BF1 поза `Locl` (§8) — так само
-перекладна й відображається українською.
-
-Два відкритих обмеження: коефіцієнт збільшення шрифту BF2 (×1,5) підібраний
-емпірично і не є доведено оптимальним; окрема підсистема "BF2 widescreen"
-(коректна ГЕОМЕТРІЯ/верстка меню під 1080p, на відміну від просто розміру
-шрифту) існує в коді, але позначена як експериментальна і не під'єднана до
-основного робочого процесу — за замовчуванням застосовується лише
-збільшення розміру шрифту, без переверстки геометрії меню.
+Метрична модель гліфів верифікована побайтовим сканом повного алфавіту
+обох ігор (§7.5, §7.7–§7.8). Два відкриті обмеження: коефіцієнт
+збільшення шрифту BF2 (×1,5) підібраний емпірично, не доведено
+оптимальний; підсистема "BF2 widescreen" (верстка меню під 1080p)
+існує в коді як експериментальна, не інтегрована в основний робочий
+процес.
 
 **EN:** The `.txt` format (Latin1) does not support Cyrillic for BF1 on
-its own. Support is added by a separate step that injects new Cyrillic
-glyphs directly into the `core.lvl` font atlas:
-`BF1LocalizationTool.Diagnostic` does this (real Unicode code points, no
-existing English glyph is overwritten) — details in
-[`FONT_FORMAT_SPEC.md`](FONT_FORMAT_SPEC.md), section 7. After the
-glyphs are injected, the GUI writes Ukrainian text as ordinary UTF-16LE,
-and the game renders it directly.
+its own. `BF1LocalizationTool.Diagnostic` (distributed as source only —
+`dotnet run --project BF1LocalizationTool.Diagnostic`) solves this by
+injecting new Cyrillic glyphs directly into the `core.lvl` font atlas
+using real Unicode code points, with no existing English glyph
+overwritten — format details and the final font choice are in
+`FONT_FORMAT_SPEC.md` §7. Rendering requires a few font files (SIL OFL,
+Google Fonts, not bundled in this repository) in `Fonts\` — exact list
+in §7.6.
 
-**Required steps for Cyrillic to work:**
-0. Download **5 font files** (SIL OFL, free, from Google Fonts —
-   [Sofia Sans](https://fonts.google.com/specimen/Sofia+Sans+Extra+Condensed),
-   [Unbounded](https://fonts.google.com/specimen/Unbounded),
-   [Exo 2](https://fonts.google.com/specimen/Exo+2): "Download family"
-   button, the needed files are in the archive's `static\` folder) and
-   place them **directly** (no subfolders) in
-   `BF1LocalizationTool.Diagnostic\Fonts\`, named exactly:
-   `SofiaSansExtraCondensed-Bold.ttf`, `Unbounded-Bold.ttf`,
-   `Unbounded-Black.ttf`, `Unbounded-ExtraBold.ttf`, `Exo2-ExtraBold.ttf`.
-   These files are **not included in this repository** (publicly
-   available on Google Fonts, downloaded separately). The font is
-   **NOT** taken from the Windows system registry — details in
-   `FONT_FORMAT_SPEC.md` §7.6.
-1. **Diagnostic tool** → category 7 (⚠ GENERATION) → item **2**
-   (★ NO DONORS: generate a Cyrillic core.lvl with direct Unicode codes)
-   → pick the game (BF2 automatically also gets font enlargement in the
-   same step — BF2 doesn't support 1080p natively, BF1 does).
-2. Open the resulting `output-nodonor\...\core.lvl` in the GUI as
-   "Original" and "Working file" — the "missing Cyrillic glyphs" warning
-   is a false alarm here (glyphs were already added in step 1), safe to
-   ignore.
-3. Translate/import CSV as usual (see "Workflow" below) — everything else
-   works like a normal `core.lvl`.
+The Tat3 add-on (BF1, "Jabba's Palace") has its own text table (2391
+strings shared with the base game, 22 unique) and carries no fonts of
+its own — it uses the base game's atlas. The add-on's map name is
+BF1's only string outside `Locl`; the tool makes it translatable the
+same way (§8, §8.3).
 
-**Tat3 add-on (BF1, "Jabba's Palace") — a separate pass.** The add-on
-ships its OWN `core.lvl` with its own text table: 2391 strings duplicate
-the base game and only **22 are unique** (room names, capture points,
-mission objectives). It carries no fonts and shouldn't — it uses the base
-game's atlas. Order:
-1. **Diagnostic** → category 7 → item **9** ("★ Tat3 ADD-ON: make the map
-   name translatable") — otherwise the map name in the list stays English
-   (it lives in `addme.script`, outside the text table; details —
-   [`FONT_FORMAT_SPEC.md`](FONT_FORMAT_SPEC.md) §8). **Run AFTER Cyrillic
-   generation (category 7 → item 2) and BEFORE translating in the GUI** —
-   the command asks for the BASE `core.lvl` path, since the shell resolves
-   map names against the base table (§8.3). The new string then shows
-   up in the GUI as an ordinary untranslated row.
-2. The `output-addon\` folder mirrors the game folder
-   (`output-addon\GameData\Data\_LVL_PC\core.lvl` — base,
-   `output-addon\GameData\AddOn\Tat3\...\core.lvl` — add-on;
-   `addme.script` sits alongside, copy it as-is). Open each `core.lvl`
-   separately in the GUI as **"Original"**, then **"New working from
-   original"** (NOT "Open working file"!).
-3. "Import CSV" from the base game's translation — pulls in the 2391
-   shared strings by hash; only the 22 unique ones remain to translate.
-4. Save. The result should weigh **~1 MB and carry no fonts**; if it came
-   out ~4.9 MB, the wrong working file was picked (the GUI warns about
-   this).
+All of BF1's text is confirmed to live in exactly two files
+(`Data\_LVL_PC\core.lvl`, `AddOn\Tat3\...\core.lvl`), fonts only in the
+first (§8).
 
-**The full answer to "where does the text live":** all of BF1's text sits
-in exactly two files (`Data\_LVL_PC\core.lvl` and
-`AddOn\Tat3\...\core.lvl`), fonts only in the first. Verified by scanning
-the entire installation; see §8.
-
-**Glyph accuracy and known limitations (see `FONT_FORMAT_SPEC.md`
-§7.5, §7.7–§7.8):** the lowercase "core+extension" metric model (§7.5)
-and the BF2 enlargement step order (§7.7) are verified via a byte-level
-scan of the FULL alphabet (all 5 sizes, both games) — §7.8; rendering is
-correct in both games, with no "frame" around BF1 capitals and no BF2
-і/ї/й floating off the shared baseline.
-`LvlLocalizationService.SaveAsync` always adopts fonts from the ORIGINAL
-file, not the working file (`AdoptFontsFrom`) — the count of adopted
-glyphs is surfaced in the GUI status bar, which is why every workflow
-requires a separately opened "Original". The Tat3 add-on's map name —
-BF1's only string outside `Locl` (§8) — is likewise translatable and
-renders in Ukrainian.
-
-Two open limitations remain: the BF2 font enlargement factor (×1.5) was
-chosen empirically and isn't proven optimal; a separate "BF2 widescreen"
-subsystem (correct menu LAYOUT/geometry for 1080p, distinct from just
-font size) exists in the code but is marked experimental and isn't wired
-into the main workflow — only font size scaling is applied by default,
-without adjusting menu geometry.
+The glyph metric model is verified via a byte-level scan of the full
+alphabet in both games (§7.5, §7.7–§7.8). Two open limitations remain:
+the BF2 font enlargement factor (×1.5) was chosen empirically and isn't
+proven optimal; a "BF2 widescreen" subsystem (1080p menu layout) exists
+in the code as experimental and isn't integrated into the main
+workflow.
 
 ---
 
@@ -300,45 +191,41 @@ BF1LocalizationTool/
 │                                            # donor + no-donor pipelines)
 │
 ├── BF1LocalizationTool.Diagnostic/         # Консольний інструмент: реверс-
-                                             # інжиніринг формату + PRODUCTION
-                                             # генерація кириличного core.lvl
-                                             # (категорія меню 7) — див.
+                                             # інжиніринг формату + генерація
+                                             # кириличного core.lvl (лише
+                                             # з коду, не входить у реліз) —
                                              # FONT_FORMAT_SPEC.md
                                              # Console tool: format reverse-
-                                             # engineering + PRODUCTION Cyrillic
-                                             # core.lvl generation (menu
-                                             # category 7) — see
-                                             # FONT_FORMAT_SPEC.md
+                                             # engineering + Cyrillic
+                                             # core.lvl generation (source
+                                             # only, not part of the release)
+                                             # — see FONT_FORMAT_SPEC.md
 ```
 
 ---
 
 ## Робочий процес / Workflow
 
-### Ручний переклад / Manual translation
-1. Відкрити `GameData/Data/_LVL_PC/core.lvl` (BF1 або BF2) — **для
-   кирилиці спершу згенерувати шрифт через Diagnostic tool**, див. розділ
-   "Кирилиця в `.txt`-каналі" вище, і відкрити ЗГЕНЕРОВАНИЙ файл, не
-   сирий файл гри
-2. Оригінал і мова перекладу — обидві `english` (гра ніколи не мала
-   українського слоту; переклад пишеться поверх English, мови за
-   замовчуванням на ліцензійній копії — так само, як у SteamWorld та
-   Empire at War)
-3. Редагувати рядки в колонці «Переклад» прямо в таблиці
-4. Скористатись фільтрами і валідатором маркерів для перевірки
-5. Зберегти модифікований `core.lvl`
+**UA:** Оригінал і мова перекладу — обидві `english` (гра ніколи не мала
+українського слоту; переклад пишеться поверх English, мови за
+замовчуванням на ліцензійній копії — так само, як у SteamWorld та
+Empire at War). Для кирилиці GUI відкриває файл, уже згенерований
+`BF1LocalizationTool.Diagnostic` (розділ вище), а не сирий файл гри.
+Переклад редагується прямо в таблиці, з фільтрами й валідатором
+маркерів; для batch-перекладу через зовнішній сервіс — експорт/імпорт
+CSV (`Hash,Ordinal,Original,Translation`), сумісний з будь-яким
+зовнішнім інструментом, що читає й пише ці чотири колонки.
 
-### Batch-переклад через зовнішній сервіс / Batch translation via external service
-1. Відкрити `core.lvl`
-2. Експортувати CSV (`⬆ Експорт CSV`, формат `Hash,Ordinal,Original,Translation`)
-3. Перекласти CSV будь-яким зовнішнім засобом. Один із варіантів —
-   окремий локальний консольний інструмент (Gemini Batch API, з
-   глосарієм і валідацією технічних маркерів), що **не входить у цей
-   репозиторій** і не є частиною публічної збірки; CSV-формат
-   експорту/імпорту сумісний з будь-яким інструментом, що читає й пише
-   ці чотири колонки
-4. Імпортувати CSV з перекладами (`⬇ Імпорт CSV`)
-5. Перевірити валідатором і зберегти
+**EN:** Both the original and translation language are `english` (the
+game never had a Ukrainian slot; the translation is written over
+English, the default language on a licensed copy — same as in
+SteamWorld and Empire at War). For Cyrillic, the GUI opens the file
+already generated by `BF1LocalizationTool.Diagnostic` (section above),
+not the game's raw file. Translation is edited directly in the table,
+with filters and marker validation; for batch translation via an
+external service — CSV export/import (`Hash,Ordinal,Original,Translation`),
+compatible with any external tool that reads and writes those four
+columns.
 
 ---
 
@@ -346,14 +233,23 @@ BF1LocalizationTool/
 
 **Вимоги / Requirements:**
 - Windows 10/11
-- [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Star Wars: Battlefront (Classic 2004) і/або Battlefront II у Steam
+- [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+  — лише для варіанту `generic` (`win-x64`/`win-x86` самодостатні, .NET
+  встановлювати не треба)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) — лише
+  якщо потрібна генерація кириличного `core.lvl`
+  (`BF1LocalizationTool.Diagnostic` розповсюджується лише як вихідний
+  код, готового `.exe` для нього нема)
 
 **Готовий білд / Prebuilt release:**
 Дивіться [Releases](https://github.com/EMP-UA/BF1LocalizationTool/releases) —
-готовий `.zip` з `BF1LocalizationTool.exe`.
+готовий `.zip` з GUI-редактором (`win-x64`/`win-x86`/`generic`). Реліз
+містить лише GUI; `BF1LocalizationTool.Diagnostic` — окремо, з коду.
 See [Releases](https://github.com/EMP-UA/BF1LocalizationTool/releases) for a
-ready-to-run `.zip` with `BF1LocalizationTool.exe`.
+ready-to-run `.zip` with the GUI editor (`win-x64`/`win-x86`/`generic`).
+The release contains the GUI only; `BF1LocalizationTool.Diagnostic` is
+built from source separately.
 
 ---
 
@@ -371,17 +267,16 @@ ready-to-run `.zip` with `BF1LocalizationTool.exe`.
 
   UA: усі три — **SIL Open Font License**, вільно доступні на Google
   Fonts. **Цей репозиторій НЕ містить `.ttf`-файлів** (вони публічні,
-  і посилання вище ведуть напряму до джерела) — конкретний перелік
-  потрібних файлів і куди їх покласти див. у розділі «Кирилиця в
-  `.txt`-каналі» нижче та `FONT_FORMAT_SPEC.md` §7.6. Обрані навмисно
-  замість системного `Bahnschrift` (заборона розповсюдження).
+  і посилання вище ведуть напряму до джерела) — точний перелік
+  потрібних файлів і куди їх класти: `FONT_FORMAT_SPEC.md` §7.6.
+  Обрані навмисно замість системного `Bahnschrift` (заборона
+  розповсюдження).
   EN: all three are **SIL Open Font License**, freely available on
   Google Fonts. **This repository does NOT bundle `.ttf` files** (they
-  are public, and the links above go straight to the source) — see the
-  "Cyrillic in the `.txt` channel" section below and
-  `FONT_FORMAT_SPEC.md` §7.6 for the exact list of files and where to
-  put them. Chosen deliberately instead of the system `Bahnschrift`
-  font (redistribution forbidden).
+  are public, and the links above go straight to the source) — the
+  exact list of files and where to put them is in
+  `FONT_FORMAT_SPEC.md` §7.6. Chosen deliberately instead of the
+  system `Bahnschrift` font (redistribution forbidden).
 
 ---
 

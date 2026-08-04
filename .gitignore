@@ -494,6 +494,12 @@ core_uk.lvl
 **/review/
 **/reference-files/
 
+## UA: Локальна тека для збірки релізних .zip перед завантаженням на
+##     GitHub Releases (dotnet publish output) — не є вихідним кодом.
+## EN: Local staging folder for building release .zip files before
+##     uploading to GitHub Releases (dotnet publish output) — not source.
+/release/
+
 ## UA: Робочі/кеш-файли ШІ-перекладача (BF1LocalizationTool.Translator) —
 ##     містять РЕАЛЬНИЙ текст перекладу, а не лише налаштування.
 ## EN: AI-translator working/cache files (BF1LocalizationTool.Translator) —
