@@ -12,6 +12,30 @@
         <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#E8E0F0"/>
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="#9080A8"/>
 
+        <!-- UA: Заливка ЦІЛОГО РЯДКА таблиці перекладу за статусом — щоб
+             непере-кладені/проблемні/дубльовані-з-розбіжним-перекладом/
+             незбережені рядки "кидались в око" одразу, а не лише через
+             маленький кружечок у першій колонці (за зразком SWH.LocEditor,
+             MainWindow.xaml, стиль "RowStyle"). Так само як пензлі вище —
+             замінюються ЦІЛКОМ у коді через ApplyTheme, бо потребують
+             різних відтінків на темному й світлому фоні. Використовується
+             в MainWindow.xaml (Window.Resources, x:Key="RowStyle").
+             EN: Fills the WHOLE ROW of the translation grid by status — so
+             untranslated/problem/inconsistent-duplicate/unsaved rows
+             immediately catch the eye instead of relying only on the small
+             dot in the first column (modeled after SWH.LocEditor,
+             MainWindow.xaml, the "RowStyle" style). Same as the brushes
+             above — replaced ENTIRELY in code via ApplyTheme, since they
+             need different shades on dark vs light backgrounds. Used in
+             MainWindow.xaml (Window.Resources, x:Key="RowStyle"). -->
+        <SolidColorBrush x:Key="RowUntranslatedBg" Color="#3A1620"/>
+        <SolidColorBrush x:Key="RowTranslatedBg"   Color="#123A22"/>
+        <SolidColorBrush x:Key="RowIssueBg"        Color="#4A3410"/>
+        <SolidColorBrush x:Key="RowDupWarnBg"      Color="#2E1A3E"/>
+        <SolidColorBrush x:Key="RowTechnicalBg"    Color="#0F2A30"/>
+        <SolidColorBrush x:Key="RowModifiedBg"     Color="#3A2E0C"/>
+        <SolidColorBrush x:Key="RowHoverBg"        Color="#241A30"/>
+
         <!-- ═══ НЕЗМІННІ АКЦЕНТНІ КОЛЬОРИ ═══════════════════════════════════════ -->
         <SolidColorBrush x:Key="AccentPurpleBrush" Color="#8A46C1"/>
         <SolidColorBrush x:Key="AccentLightBrush"  Color="#C989F3"/>
@@ -134,10 +158,20 @@
             <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
             <Setter Property="HorizontalGridLinesBrush"
                     Value="{DynamicResource BgWindowBrush}"/>
-            <Setter Property="RowBackground"
-                    Value="{DynamicResource BgPanelBrush}"/>
-            <Setter Property="AlternatingRowBackground"
-                    Value="{DynamicResource BgRowAltBrush}"/>
+            <!-- UA: НЕМАЄ RowBackground/AlternatingRowBackground тут — вони
+                 КОНКУРУЮТЬ із будь-яким власним DataGrid.RowStyle
+                 (MainWindow.xaml, x:Key="RowStyle"): фактично видимою
+                 лишається лише рамка рядка, а заливка за статусом ховається.
+                 Ті DataGrid, яким власний RowStyle не потрібен
+                 (CompareWindow), задають ці два пензлі ЛОКАЛЬНО на своєму
+                 елементі — див. CompareWindow.xaml.
+                 EN: NO RowBackground/AlternatingRowBackground here — they
+                 COMPETE with any DataGrid.RowStyle of its own
+                 (MainWindow.xaml, x:Key="RowStyle"): in practice only the
+                 row's border stays visible, and the per-status fill gets
+                 hidden. DataGrids that don't need their own RowStyle
+                 (CompareWindow) set these two brushes LOCALLY on their own
+                 element instead — see CompareWindow.xaml. -->
             <Setter Property="FontSize"        Value="13"/>
             <Setter Property="SelectionMode"   Value="Single"/>
             <Setter Property="HeadersVisibility" Value="Column"/>

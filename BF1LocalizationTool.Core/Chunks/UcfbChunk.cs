@@ -74,6 +74,27 @@ public class UcfbChunk
         return System.Text.Encoding.ASCII.GetString(bytes);
     }
 
+    // UA: Зворотне до IdToFourCC — кодує 4-символьний FourCC-рядок назад
+    //     у числовий Id (мала розрядність першою, дзеркало IdToFourCC).
+    //     Потрібне для ПОБУДОВИ нових чанків (напр. widescreen-фікс
+    //     BF2 — Core/Bf2Widescreen), а не лише читання наявних.
+    // EN: The reverse of IdToFourCC — encodes a 4-character FourCC string
+    //     back into a numeric Id (little-endian first, mirrors
+    //     IdToFourCC). Needed for BUILDING new chunks (e.g. the BF2
+    //     widescreen fix — Core/Bf2Widescreen), not just reading existing
+    //     ones.
+    public static uint FourCcToId(string fourCc)
+    {
+        if (fourCc.Length != 4)
+            throw new ArgumentException(
+                $"UA: FourCC має бути рівно 4 символи, отримано '{fourCc}' ({fourCc.Length}) / " +
+                $"EN: FourCC must be exactly 4 characters, got '{fourCc}' ({fourCc.Length})",
+                nameof(fourCc));
+
+        var bytes = System.Text.Encoding.ASCII.GetBytes(fourCc);
+        return (uint)bytes[0] | ((uint)bytes[1] << 8) | ((uint)bytes[2] << 16) | ((uint)bytes[3] << 24);
+    }
+
     public override string ToString() =>
         IsFourCC
             ? $"[{FourCC}] size={DataSize}"

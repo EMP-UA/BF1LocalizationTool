@@ -1,0 +1,159 @@
+<Window x:Class="BF1LocalizationTool.GUI.CompareWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UA: Порівняння файлів — оригінал ↔ змінений / EN: File Comparison — original ↔ modified"
+        Height="700" Width="1150" MinHeight="420" MinWidth="760"
+        Background="{DynamicResource BgWindowBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ══ ФАЙЛИ A / B ══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="{DynamicResource BgPanelBrush}" Padding="8,6">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <Button x:Name="BtnOpenA" Style="{StaticResource EmpButton}"
+                            Content="📂 UA: Файл A (оригінал) / EN: File A (original)"
+                            Click="BtnOpenA_Click" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="TxtPathA" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"
+                               Text="UA: не вибрано / EN: not selected" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="BtnOpenB" Style="{StaticResource EmpButton}"
+                            Content="📂 UA: Файл B (змінений) / EN: File B (modified)"
+                            Click="BtnOpenB_Click" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="TxtPathB" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"
+                               Text="UA: не вибрано / EN: not selected" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ══ МОВА ═════════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="1" Background="{DynamicResource BgWindowBrush}" Padding="8,5">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="UA: Мова / EN: Language:"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox x:Name="CmbLang" Width="160" Height="28"
+                          SelectionChanged="CmbLang_SelectionChanged" IsEnabled="False"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ══ ФІЛЬТРИ + ПОШУК ══════════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="{DynamicResource BgPanelBrush}" Padding="8,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Grid.Column="1" x:Name="TxtSearch" Height="26" TextChanged="TxtSearch_TextChanged"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center" Margin="12,0,0,0">
+                    <RadioButton x:Name="RbAll" IsChecked="True"
+                                 Content="UA: Усі / EN: All" Checked="FilterChanged"/>
+                    <RadioButton x:Name="RbDiffOnly"
+                                 Content="≠ UA: Лише відмінності / EN: Differences only"
+                                 Foreground="{StaticResource UntranslatedBrush}"
+                                 Checked="FilterChanged"/>
+                    <RadioButton x:Name="RbMissingOnly"
+                                 Content="⚠ UA: Лише відсутні / EN: Missing only"
+                                 Foreground="{StaticResource WarningBrush}"
+                                 Checked="FilterChanged"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ══ ТАБЛИЦЯ ══════════════════════════════════════════════════════════════ -->
+        <!-- UA: RowBackground/AlternatingRowBackground задано ЛОКАЛЬНО тут
+             (а не в глобальному стилі DataGrid у App.xaml), бо це вікно НЕ
+             має власного RowStyle і покладається саме на них для
+             "зебри" — на відміну від MainWindow.GridEntries, де ці два
+             пензлі прибрані з глобального стилю, щоб не конкурувати з
+             RowStyle (див. коментар в App.xaml над стилем DataGrid).
+             EN: RowBackground/AlternatingRowBackground are set LOCALLY here
+             (not in the global DataGrid style in App.xaml), because this
+             window has NO RowStyle of its own and relies on them for
+             zebra-striping — unlike MainWindow.GridEntries, where these two
+             brushes were removed from the global style so they don't
+             compete with RowStyle (see the comment in App.xaml above the
+             DataGrid style). -->
+        <DataGrid Grid.Row="3" x:Name="GridCompare"
+                  AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False"
+                  RowHeaderWidth="0"
+                  RowBackground="{DynamicResource BgPanelBrush}"
+                  AlternatingRowBackground="{DynamicResource BgRowAltBrush}">
+            <DataGrid.Columns>
+
+                <DataGridTemplateColumn Header="●" Width="24" CanUserSort="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="8" Height="8" Margin="4,0"
+                                     Fill="{Binding StatusColor}"
+                                     VerticalAlignment="Center"
+                                     ToolTip="{Binding StatusLabel}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Hash" Binding="{Binding HashDisplay}" Width="110">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontSize"   Value="12"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Padding"    Value="4,2"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="UA: Файл A / EN: File A" Binding="{Binding TextA}" Width="2*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="Wrap"/>
+                            <Setter Property="Padding"      Value="4,2"/>
+                            <Setter Property="Foreground"   Value="{DynamicResource TextPrimaryBrush}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="UA: Файл B / EN: File B" Binding="{Binding TextB}" Width="2*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="Wrap"/>
+                            <Setter Property="Padding"      Value="4,2"/>
+                            <Setter Property="Foreground"   Value="{DynamicResource TextPrimaryBrush}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridCheckBoxColumn Header="⚙" Binding="{Binding IsTechnical}" Width="32"/>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ══ STATUS BAR ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="4" Background="{DynamicResource BgPanelBrush}" Padding="8,4">
+            <TextBlock x:Name="TxtSummary"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="12" TextWrapping="Wrap"
+                       Text="UA: Виберіть файли A і B / EN: Choose files A and B"/>
+        </Border>
+
+    </Grid>
+</Window>

@@ -1,0 +1,29 @@
+﻿<!-- BF1LocalizationTool.FontGenerator.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- UA: Windows-only через System.Drawing.Common — узгоджено,
+         так само як у SteamWorld Heist проєкті.
+         EN: Windows-only due to System.Drawing.Common — consistent
+         with the SteamWorld Heist project. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>false</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BF1LocalizationTool.FontGenerator</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BF1LocalizationTool.Core\BF1LocalizationTool.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Matching\" />
+  </ItemGroup>
+
+</Project>

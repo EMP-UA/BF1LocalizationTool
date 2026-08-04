@@ -53,23 +53,21 @@ public static class LoclChunkParser
 
     // -------------------------------------------------------------------------
     // UA: Парсить мовний файл напряму з вже розпарсеного "Locl" чанку.
-    //     Повертає файл локалізації та посилання на BODY-чанк (для запису назад).
-    //     fallbackLanguage використовується якщо NAME-чанк відсутній або порожній.
-    // EN: Parses a language file directly from an already-parsed "Locl" chunk.
-    //     Returns the localization file and a reference to the BODY chunk
-    //     (for write-back). fallbackLanguage is used if NAME chunk is missing/empty.
-    // -------------------------------------------------------------------------
-    // -------------------------------------------------------------------------
-    // UA: Парсить мовний файл напряму з вже розпарсеного "Locl" чанку.
-    //     Повертає null якщо чанк не має BODY — це означає що FourCC "Locl"
-    //     випадково збігся з якимось іншим бінарним чанком (хибне спрацювання
-    //     детекції FourCC, яка лише перевіряє друковані ASCII-байти).
-    //     Такі чанки безпечно пропускаються, не зупиняючи завантаження файлу.
-    // EN: Parses a language file directly from an already-parsed "Locl" chunk.
-    //     Returns null if the chunk has no BODY — meaning the FourCC "Locl"
-    //     coincidentally matched some other binary chunk (false positive of
-    //     FourCC detection, which only checks for printable ASCII bytes).
-    //     Such chunks are safely skipped without stopping the file load.
+    //     Повертає файл локалізації та посилання на BODY-чанк (для запису
+    //     назад). fallbackLanguage використовується якщо NAME-чанк відсутній
+    //     або порожній. Повертає null якщо чанк не має BODY — це означає, що
+    //     FourCC "Locl" випадково збігся з якимось іншим бінарним чанком
+    //     (хибне спрацювання детекції FourCC, яка лише перевіряє друковані
+    //     ASCII-байти). Такі чанки безпечно пропускаються, не зупиняючи
+    //     завантаження файлу.
+    // EN: Parses a language file directly from an already-parsed "Locl"
+    //     chunk. Returns the localization file and a reference to the BODY
+    //     chunk (for write-back). fallbackLanguage is used if the NAME chunk
+    //     is missing or empty. Returns null if the chunk has no BODY —
+    //     meaning the FourCC "Locl" coincidentally matched some other binary
+    //     chunk (a false positive of FourCC detection, which only checks for
+    //     printable ASCII bytes). Such chunks are safely skipped without
+    //     stopping the file load.
     // -------------------------------------------------------------------------
     public static (LocalizationFile File, UcfbChunk BodyChunk)? ParseFromUcfbChunk(
         UcfbChunk loclChunk, string fallbackLanguage)

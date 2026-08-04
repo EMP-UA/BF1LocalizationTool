@@ -1,13 +1,14 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.11925.187 insiders
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BF1LocalizationTool.Core", "BF1LocalizationTool.Core\BF1LocalizationTool.Core.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BF1LocalizationTool.GUI", "BF1LocalizationTool.GUI\BF1LocalizationTool.GUI.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BF1LocalizationTool.Diagnostic", "BF1LocalizationTool.Diagnostic\BF1LocalizationTool.Diagnostic.csproj", "{CD35EA54-1549-4993-BEDC-01708DBE1D63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BF1LocalizationTool.FontGenerator", "BF1LocalizationTool.FontGenerator\BF1LocalizationTool.FontGenerator.csproj", "{311969B7-D5CB-4348-A9AA-5A415531B4A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,5 +28,15 @@ Global
 		{CD35EA54-1549-4993-BEDC-01708DBE1D63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD35EA54-1549-4993-BEDC-01708DBE1D63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD35EA54-1549-4993-BEDC-01708DBE1D63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{311969B7-D5CB-4348-A9AA-5A415531B4A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{311969B7-D5CB-4348-A9AA-5A415531B4A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{311969B7-D5CB-4348-A9AA-5A415531B4A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{311969B7-D5CB-4348-A9AA-5A415531B4A7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {98221240-8391-4014-9EAE-CD7039D28AFF}
 	EndGlobalSection
 EndGlobal

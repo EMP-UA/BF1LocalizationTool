@@ -1,10 +1,40 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>BF1Diagnostic</AssemblyName>
-    <RootNamespace>BF1LocalizationTool.Diagnostic</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>BF1Diagnostic</AssemblyName>
+		<RootNamespace>BF1LocalizationTool.Diagnostic</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BF1LocalizationTool.Core\BF1LocalizationTool.Core.csproj" />
+		<ProjectReference Include="..\BF1LocalizationTool.FontGenerator\BF1LocalizationTool.FontGenerator.csproj" />
+	</ItemGroup>
+
+	<!--
+	UA: PrivateFontRegistry читає шрифти з AppContext.BaseDirectory\Fonts\ —
+	    це тека РЕЗУЛЬТАТУ збірки (bin\Debug\net10.0-windows\Fonts\), а НЕ
+	    тека проєкту (BF1LocalizationTool.Diagnostic\Fonts\), де фізично
+	    лежать .ttf. Fonts\ навмисно лежить біля .csproj (у git, разом з
+	    кодом), а не "біля .exe" напряму — "біля .exe" це bin\, він у
+	    .gitignore і перестворюється щоразу при збірці. CopyToOutputDirectory
+	    — стандартний MSBuild-міст між ними: копіює .ttf у bin\ ПІСЛЯ
+	    кожної збірки, автоматично, рекурсивно (підтеки на кшталт
+	    Fira_Sans\ дозволені — PrivateFontRegistry сканує рекурсивно).
+	EN: PrivateFontRegistry reads fonts from AppContext.BaseDirectory\Fonts\
+	    — the BUILD OUTPUT folder (bin\Debug\net10.0-windows\Fonts\), NOT
+	    the project folder (BF1LocalizationTool.Diagnostic\Fonts\) where the
+	    .ttf files physically live. Fonts\ deliberately lives next to the
+	    .csproj (in git, with the code), not "next to the .exe" directly —
+	    "next to the .exe" is bin\, which is gitignored and rebuilt from
+	    scratch every build. CopyToOutputDirectory is the standard MSBuild
+	    bridge between the two: copies the .ttf files into bin\ AFTER every
+	    build, automatically, recursively (subfolders like Fira_Sans\ are
+	    fine — PrivateFontRegistry scans recursively).
+	-->
+	<ItemGroup>
+		<None Include="Fonts\**\*.ttf" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 </Project>

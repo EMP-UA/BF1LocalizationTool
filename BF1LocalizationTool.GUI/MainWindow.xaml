@@ -1,12 +1,99 @@
 <Window x:Class="BF1LocalizationTool.GUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="BF1 Localization Tool — EMP_UA"
         Height="720" Width="1200" MinHeight="520" MinWidth="860"
         Background="{DynamicResource BgWindowBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing">
+
+    <Window.Resources>
+        <!-- UA: Готові позначки для колонки "Вичитка" — той самий підхід, що
+             й у SWH.LocEditor (MainWindow.xaml, ReviewPresets): випадають у
+             списку, але поле РЕДАГОВАНЕ (ComboBox IsEditable), тож замість
+             готової позначки можна вписати довільний коментар до рядка.
+             EN: Ready-made markers for the "Review" column — same approach
+             as SWH.LocEditor (MainWindow.xaml, ReviewPresets): offered in a
+             dropdown, but the field is EDITABLE (ComboBox IsEditable), so a
+             free-form per-row comment can be typed instead of a marker. -->
+        <x:Array x:Key="ReviewPresets" Type="{x:Type sys:String}">
+            <sys:String>+</sys:String>
+            <sys:String>-</sys:String>
+            <sys:String>+/-</sys:String>
+        </x:Array>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             UA: Кольорове кодування РЯДКА ЦІЛКОМ (той самий підхід, що й у
+             SWH.LocEditor, MainWindow.xaml, стиль "RowStyle") — заливка
+             рядка ЦІЛКОМ + тонка рамка в тон, а не лише маленький кружечок
+             у першій колонці ("●") плюс колір тексту перекладу, щоб рядки,
+             що потребують уваги, одразу кидались в око. Порядок тригерів =
+             ПРІОРИТЕТ (пізніший тригер ПЕРЕМАГАЄ, якщо кілька умов
+             збігаються одночасно):
+               Без перекладу (база) < Перекладено < Дублі з розбіжним
+               перекладом < Проблема (задовгий/недійсний) < Технічний (не
+               потребує перекладу взагалі) < Змінено й не збережено
+               (найвищий пріоритет — саме такі рядки треба зберегти
+               НАЙПЕРШИМИ).
+             EN: Color-codes the WHOLE ROW (same approach as SWH.LocEditor,
+             MainWindow.xaml, the "RowStyle" style) — a full row fill plus a
+             thin matching border, rather than just the small dot in the
+             first column ("●") plus the translation text color, so rows
+             needing attention immediately catch the eye. Trigger order =
+             PRIORITY (a later trigger WINS if multiple conditions match at
+             once):
+               Untranslated (base) < Translated < Duplicates with
+               inconsistent translation < Issue (too long/invalid) <
+               Technical (doesn't need translation at all) <
+               Modified-and-unsaved (highest priority — these are exactly
+               the rows that need to be saved FIRST).
+             ══════════════════════════════════════════════════════════════ -->
+        <Style x:Key="RowStyle" TargetType="DataGridRow">
+            <Setter Property="Background"      Value="{DynamicResource RowUntranslatedBg}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource UntranslatedBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTranslated}" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource RowTranslatedBg}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource TranslatedBrush}"/>
+                </DataTrigger>
+                <!-- UA: Дублі з розбіжним перекладом — попередження нижчого
+                     пріоритету за "Проблему" (задовгий/недійсний), яка
+                     МАЄ перемагати, якщо застосовна одночасно.
+                     EN: Duplicates with inconsistent translation — a
+                     lower-priority warning than "Issue" (too long/
+                     invalid), which MUST win if both apply at once. -->
+                <DataTrigger Binding="{Binding HasInconsistentDuplicateTranslation}" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource RowDupWarnBg}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentPurpleBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasValidationError}" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource RowIssueBg}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}"/>
+                </DataTrigger>
+                <!-- UA: Технічний рядок — заливка БЕЗ рамки (BorderThickness=0
+                     явно прибирає базову рамку), щоб не виглядало як
+                     попередження — це нейтральна інформація, не проблема.
+                     EN: Technical row — fill WITHOUT a border
+                     (BorderThickness=0 explicitly removes the base border),
+                     so it doesn't look like a warning — it's neutral
+                     information, not a problem. -->
+                <DataTrigger Binding="{Binding IsTechnical}" Value="True">
+                    <Setter Property="Background"      Value="{DynamicResource RowTechnicalBg}"/>
+                    <Setter Property="BorderThickness"  Value="0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsModified}" Value="True">
+                    <Setter Property="Background"  Value="{DynamicResource RowModifiedBg}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentLightBrush}"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource RowHoverBg}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -44,9 +131,18 @@
 
                 <!-- UA: Дії / EN: Actions -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="BtnOpen" Style="{StaticResource EmpButton}"
-                            Content="📂 UA: Відкрити / EN: Open"
-                            Click="BtnOpen_Click" Margin="0,0,6,0"/>
+                    <Button x:Name="BtnOpenOriginal" Style="{StaticResource EmpButton}"
+                            Content="📂 UA: Оригінал / EN: Original"
+                            ToolTip="UA: Файл-оригінал — READ-ONLY, ніколи не перезаписується, дає колонку 'Оригінал' / EN: Original file — READ-ONLY, never overwritten, provides the 'Original' column"
+                            Click="BtnOpenOriginal_Click" Margin="0,0,6,0"/>
+                    <Button x:Name="BtnNewWorking" Style="{StaticResource EmpButton}"
+                            Content="✨ UA: Новий робочий / EN: New working"
+                            ToolTip="UA: Клонувати оригінал у пам'яті як робочий файл — переклад 'з нуля' / EN: Clone the original in memory as the working file — translate 'from scratch'"
+                            Click="BtnNewWorking_Click" Margin="0,0,6,0" IsEnabled="False"/>
+                    <Button x:Name="BtnOpenWorking" Style="{StaticResource EmpButton}"
+                            Content="📂 UA: Робочий файл / EN: Working file"
+                            ToolTip="UA: Відкрити ІСНУЮЧИЙ робочий файл (напр. згенерований core.lvl з output-теки) — саме сюди пишеться переклад / EN: Open an EXISTING working file (e.g. the generated core.lvl from the output folder) — this is what the translation is written into"
+                            Click="BtnOpenWorking_Click" Margin="0,0,6,0" IsEnabled="False"/>
                     <Button x:Name="BtnSave" Style="{StaticResource EmpButton}"
                             Content="💾 UA: Зберегти / EN: Save"
                             Click="BtnSave_Click" Margin="0,0,6,0" IsEnabled="False"/>
@@ -59,6 +155,11 @@
                             Content="⬇ CSV"
                             ToolTip="UA: Імпорт CSV / EN: Import CSV"
                             Click="BtnImportCsv_Click" IsEnabled="False"/>
+                    <Separator Width="1" Background="{StaticResource AccentPurpleBrush}" Margin="4,0"/>
+                    <Button x:Name="BtnCompare" Style="{StaticResource EmpButton}"
+                            Content="🔍 UA: Порівняти / EN: Compare"
+                            ToolTip="UA: Порівняти два core.lvl за текстом (оригінал ↔ змінений) / EN: Compare two core.lvl files by text (original ↔ modified)"
+                            Click="BtnCompare_Click" Margin="6,0,0,0"/>
                 </StackPanel>
 
                 <!-- UA: Права панель — тема, шрифт / EN: Right panel — theme, font -->
@@ -156,6 +257,7 @@
                   CanUserAddRows="False" CanUserDeleteRows="False"
                   RowHeaderWidth="0"
                   IsReadOnly="False"
+                  RowStyle="{StaticResource RowStyle}"
                   CellEditEnding="GridEntries_CellEditEnding"
                   SelectionChanged="GridEntries_SelectionChanged"
                   PreviewMouseRightButtonDown="GridEntries_PreviewMouseRightButtonDown">
@@ -169,6 +271,9 @@
                               Click="CtxPasteAsTranslation_Click"/>
                     <MenuItem Header="UA: Очистити переклад / EN: Clear translation"
                               Click="CtxClearTranslation_Click"/>
+                    <MenuItem Header="⧉ UA: Застосувати переклад до всіх дублів / EN: Apply translation to all duplicates"
+                              ToolTip="UA: Копіює переклад цього рядка в усі рядки з ІДЕНТИЧНИМ оригіналом / EN: Copies this row's translation into every row with an IDENTICAL original"
+                              Click="CtxApplyToDuplicates_Click"/>
                     <Separator/>
                     <MenuItem Header="UA: Копіювати хеш / EN: Copy hash"
                               Click="CtxCopyHash_Click"/>
@@ -216,8 +321,45 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <!-- Переклад — DataGridTemplateColumn для відображення технічних рядків -->
-                <DataGridTemplateColumn Header="UA: Переклад / EN: Translation" Width="2*">
+                <!-- Дублі — за зразком SWH.LocEditor ("⧉ Дублі/Dup." колонка):
+                     показує розмір групи ЛИШЕ для рядків, у яких оригінал
+                     збігається з іншим (мінімум) одним рядком. Технічні —
+                     виключено (див. MainWindow.RecomputeDuplicates). Колір
+                     тексту синхронізовано з кольором рамки "розбіжного
+                     дубля" в RowStyle (AccentPurpleBrush), щоб бейдж і
+                     попередження рядка виглядали як одна система. -->
+                <!-- Duplicates — modeled after SWH.LocEditor (the
+                     "⧉ Дублі/Dup." column): shows the group size ONLY for
+                     rows whose original matches at least one other row.
+                     Technical rows excluded (see
+                     MainWindow.RecomputeDuplicates). Text color matches the
+                     "inconsistent duplicate" border color in RowStyle
+                     (AccentPurpleBrush), so the badge and the row warning
+                     read as one system. -->
+                <DataGridTemplateColumn Header="⧉" Width="28" IsReadOnly="True" CanUserSort="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DuplicateGroupSize}"
+                                       FontWeight="Bold" FontSize="11"
+                                       Foreground="{StaticResource AccentPurpleBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding IsDuplicateOriginal, Converter={StaticResource BoolToVisibility}}"
+                                       ToolTip="UA: Стільки рядків мають ІДЕНТИЧНИЙ оригінал (технічні не рахуються). Фіолетовий фон рядка = серед них є розбіжний переклад — ПКМ → 'Застосувати переклад до всіх дублів' / EN: This many rows share an IDENTICAL original (technical rows not counted). A purple row background = one of them has a different translation — right-click → 'Apply translation to all duplicates'"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Переклад — DataGridTemplateColumn для відображення технічних рядків.
+                     SortMemberPath ОБОВ'ЯЗКОВИЙ: TemplateColumn без нього не сортується
+                     кліком по заголовку (на відміну від TextColumn, де сортування "з коробки").
+                     UA: Колір тексту за статусом (перекладено/не перекладено) визначає
+                     заливка ЦІЛОГО РЯДКА (RowStyle вище); ця колонка лишає лише
+                     нейтральний TextPrimaryBrush + виділення технічних рядків курсивом/жирним.
+                     EN: Per-status text coloring (translated/untranslated) is handled by
+                     the WHOLE-ROW fill (RowStyle above); this column keeps only a neutral
+                     TextPrimaryBrush plus italic/bold for technical rows. -->
+                <DataGridTemplateColumn x:Name="ColTranslation" Header="UA: Переклад / EN: Translation" Width="2*"
+                                         SortMemberPath="Translation">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding TranslationDisplay}"
@@ -225,17 +367,8 @@
                                        VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource TranslatedBrush}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                                         <Style.Triggers>
-                                            <!-- UA: "Не перекладено" — лише якщо НЕ технічний -->
-                                            <!-- EN: "Untranslated" — only if NOT technical -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsTranslated}" Value="False"/>
-                                                    <Condition Binding="{Binding IsTechnical}"  Value="False"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="{StaticResource UntranslatedBrush}"/>
-                                            </MultiDataTrigger>
                                             <!-- UA: Технічний — найвищий пріоритет, йде останнім щоб перебити все -->
                                             <!-- EN: Technical — highest priority, placed last to override everything -->
                                             <DataTrigger Binding="{Binding IsTechnical}" Value="True">
@@ -260,6 +393,38 @@
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- Статус вичитки — той самий підхід, що й у SWH.LocEditor
+                     (MainWindow.xaml, ReviewPresets/колонка "Вичитка"):
+                     подвійний клік відкриває РЕДАГОВАНИЙ ComboBox із трьома
+                     готовими позначками (+, -, +/-), але можна й вписати
+                     власний коментар до конкретного рядка. ЛИШЕ GUI-
+                     метадані: НІКОЛИ не пишеться в core.lvl, лише в парний
+                     робочий CSV поруч зі збереженням (див.
+                     MainWindow.EntryRow.ReviewStatus / BtnSave_Click).
+                     SortMemberPath ОБОВ'ЯЗКОВИЙ — той самий принцип, що й
+                     для колонки "Переклад" вище (TemplateColumn без нього
+                     не сортується кліком по заголовку). -->
+                <DataGridTemplateColumn Header="UA: Вичитка / EN: Review" Width="90"
+                                         SortMemberPath="ReviewStatus">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ReviewStatus}" TextWrapping="Wrap"
+                                       Padding="4,2" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       ToolTip="UA: Подвійний клік — обрати позначку (+, -, +/-) або вписати власний коментар до рядка / EN: Double-click — pick a marker (+, -, +/-) or type your own per-row comment"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox IsEditable="True"
+                                      ItemsSource="{StaticResource ReviewPresets}"
+                                      Text="{Binding ReviewStatus, UpdateSourceTrigger=PropertyChanged}"
+                                      Background="{DynamicResource BgRowAltBrush}"
+                                      Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
                 <!-- Попередження -->
                 <DataGridTemplateColumn Header="⚠" Width="24" IsReadOnly="True" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
@@ -276,11 +441,14 @@
 
             </DataGrid.Columns>
 
-            <!-- UA: Технічні рядки виділяються лише текстом (колір/курсив/жирний) —
-                 без додаткового фону рядка, щоб уникнути хардкоджених кольорів
-                 що ламають тему -->
-            <!-- EN: Technical rows are highlighted via text only (color/italic/bold) —
-                 no extra row background, to avoid hardcoded colors that break theming -->
+            <!-- UA: Технічні рядки мають фон рядка (RowTechnicalBg, див.
+                 RowStyle вище) плюс текст курсивом/жирним у колонці
+                 перекладу; фон іде через DynamicResource і міняється
+                 разом з темою (ApplyTheme). -->
+            <!-- EN: Technical rows get a row background (RowTechnicalBg,
+                 see RowStyle above) plus italic/bold text in the
+                 translation column; the background goes through
+                 DynamicResource and changes with the theme (ApplyTheme). -->
         </DataGrid>
 
         <!-- ══ STATUS BAR ════════════════════════════════════════════════════════════ -->
@@ -288,6 +456,7 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -298,13 +467,64 @@
                            Text="UA: Відкрийте core.lvl для початку / EN: Open core.lvl to start"
                            TextTrimming="CharacterEllipsis"/>
 
-                <TextBlock x:Name="TxtAutoSaveStatus" Grid.Column="1"
+                <!-- UA: Налаштування порогу "задовгого" перекладу (падає в Проблемні) —
+                     розміщено поруч зі статусом автозбереження в статус-барі. -->
+                <!-- EN: "Too long translation" threshold settings (flags into Issues) —
+                     placed next to the autosave status in the status bar. -->
+                <Button x:Name="BtnLengthSettings" Grid.Column="1"
+                        Content="⚙" Width="22" Height="22" Margin="8,0,0,0"
+                        Padding="0" FontSize="12"
+                        ToolTip="UA: Поріг довжини перекладу / EN: Translation length threshold"
+                        Click="BtnLengthSettings_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="3"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <Popup x:Name="PopupLengthSettings" PlacementTarget="{Binding ElementName=BtnLengthSettings}"
+                       Placement="Top" StaysOpen="False" AllowsTransparency="True">
+                    <Border Background="{DynamicResource BgPanelBrush}"
+                            BorderBrush="{DynamicResource TechnicalBrush}" BorderThickness="1"
+                            Padding="10" CornerRadius="4">
+                        <StackPanel Width="280">
+                            <TextBlock Text="UA: Поріг довжини перекладу — переклад &gt; оригінал×коеф.+запас падає в «Проблемні» / EN: Translation length threshold — translation &gt; original×ratio+margin flags into «Issues»"
+                                       TextWrapping="Wrap" FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11"
+                                           Text="UA: Коефіцієнт (×оригінал) / EN: Ratio (×original)"/>
+                                <TextBox x:Name="TxtLengthRatio" Grid.Column="1" Text="1.3"
+                                         TextChanged="LengthThreshold_Changed"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11"
+                                           Text="UA: Запас (символів) / EN: Margin (chars)"/>
+                                <TextBox x:Name="TxtLengthMargin" Grid.Column="1" Text="4"
+                                         TextChanged="LengthThreshold_Changed"/>
+                            </Grid>
+                            <TextBlock x:Name="TxtLengthPreview" FontSize="10" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TechnicalBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+                <TextBlock x:Name="TxtAutoSaveStatus" Grid.Column="2"
                            Foreground="{DynamicResource TechnicalBrush}"
                            FontSize="11" VerticalAlignment="Center" Margin="12,0"/>
 
                 <!-- UA: Лічильник: перекладено/всього (%) · правок · техн. · проблем -->
                 <!-- EN: Counter: translated/total (%) · edits · tech. · issues -->
-                <TextBlock x:Name="TxtProgress" Grid.Column="2"
+                <TextBlock x:Name="TxtProgress" Grid.Column="3"
                            Foreground="{StaticResource AccentLightBrush}"
                            FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
             </Grid>
