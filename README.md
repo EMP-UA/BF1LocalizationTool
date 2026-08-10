@@ -191,15 +191,24 @@ BF1LocalizationTool/
 │                                            # donor + no-donor pipelines)
 │
 ├── BF1LocalizationTool.Diagnostic/         # Консольний інструмент: реверс-
-                                             # інжиніринг формату + генерація
-                                             # кириличного core.lvl (лише
-                                             # з коду, не входить у реліз) —
-                                             # FONT_FORMAT_SPEC.md
-                                             # Console tool: format reverse-
-                                             # engineering + Cyrillic
-                                             # core.lvl generation (source
-                                             # only, not part of the release)
-                                             # — see FONT_FORMAT_SPEC.md
+│                                            # інжиніринг формату + генерація
+│                                            # кириличного core.lvl (лише
+│                                            # з коду, не входить у реліз) —
+│                                            # FONT_FORMAT_SPEC.md
+│                                            # Console tool: format reverse-
+│                                            # engineering + Cyrillic
+│                                            # core.lvl generation (source
+│                                            # only, not part of the release)
+│                                            # — see FONT_FORMAT_SPEC.md
+│
+└── installer/                              # Inno Setup: встановлювач готового
+                                             # перекладу (GameData\ + Readme.txt)
+                                             # для кінцевого користувача гри,
+                                             # поза .NET-рішенням інструменту
+                                             # Inno Setup: end-user installer
+                                             # for the finished translation
+                                             # (GameData\ + Readme.txt),
+                                             # outside the tool's .NET solution
 ```
 
 ---
