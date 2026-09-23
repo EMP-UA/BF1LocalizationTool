@@ -1279,6 +1279,159 @@ public partial class MainWindow : Window
     }
 
     // =========================================================================
+    // UA: ПЕРЕНЕСЕННЯ ПЕРЕКЛАДУ З ІНШОЇ ГРИ / EN: CROSS-GAME TRANSLATION TRANSFER
+    //     Зіставлення — за текстом англійського оригіналу (не за Hash, який у
+    //     BF1 і BF2 належить різним просторам ключів — див. заголовок
+    //     CrossGameTranslationTransfer.cs). Донор — файл ІНШОЇ (або тієї ж)
+    //     гри, обраний у діалозі; ЦІЛЬ — уже відкритий у сесії _serviceTarget
+    //     (кнопка активна лише коли він є).
+    //
+    //     ЗАХИСТ — ЗА ВИЧИТКОЮ, НЕ ЗА НАЯВНІСТЮ ПЕРЕКЛАДУ: після пакетного
+    //     перекладу через Gemini Translation має практично кожен рядок, тож
+    //     критерій "не чіпати вже перекладене" не переносив би нічого.
+    //     Натомість не перезаписуються лише ВИЧИТАНІ записи (непорожній
+    //     ReviewStatus у _reviewStatuses) — решта, включно з сирим
+    //     Gemini-перекладом, вважається кандидатом на заміну збігом з
+    //     донора.
+    // EN: Matching is done on the English original TEXT (not Hash, which
+    //     belongs to different key namespaces in BF1 vs BF2 — see the header
+    //     of CrossGameTranslationTransfer.cs). The donor is a file from
+    //     ANOTHER (or the same) game, picked in a dialog; the TARGET is the
+    //     already-open _serviceTarget (the button is only enabled when it
+    //     exists).
+    //
+    //     PROTECTION IS BY REVIEW STATUS, NOT BY PRESENCE OF A TRANSLATION:
+    //     after a batch translation pass through Gemini, practically every
+    //     row already has a Translation, so a "don't touch already
+    //     translated" rule would transfer nothing. Instead, only REVIEWED
+    //     entries (a non-empty ReviewStatus in _reviewStatuses) are left
+    //     alone — everything else, including raw Gemini output, is a
+    //     candidate for replacement by a donor match.
+    // =========================================================================
+    private async void BtnTransferFromOtherGame_Click(object sender, RoutedEventArgs e)
+    {
+        if (_serviceTarget is null)
+        {
+            System.Windows.MessageBox.Show(
+                "UA: Спочатку відкрийте робочий файл / EN: Open the working file first",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var dlg = new OpenFileDialog
+        {
+            Title            = "UA: Обрати файл-донор перекладу (інша гра — напр. BF1 для BF2) / " +
+                                "EN: Choose the donor translation file (another game — e.g. BF1 for BF2)",
+            Filter           = "LVL/CSV files (*.lvl;*.csv)|*.lvl;*.csv|LVL files (*.lvl)|*.lvl|CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            InitialDirectory = GetOutputRootPath()
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        SetBusy(true, "UA: Аналіз донора... / EN: Analyzing donor...");
+        SimpleLogger.Info($"Cross-game transfer: donor = {dlg.FileName}");
+
+        try
+        {
+            IReadOnlyDictionary<string, IReadOnlyList<string>> donorIndex;
+
+            if (dlg.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                var rows = await LocalizationCsvIo.ReadAsync(dlg.FileName);
+                donorIndex = CrossGameTranslationTransfer.BuildIndex(rows);
+            }
+            else
+            {
+                var donor = new LvlLocalizationService();
+                await donor.LoadAsync(dlg.FileName);
+
+                var donorSourceFile     = donor.GetLanguageFile(_sourceLang);
+                var donorTranslatedFile = donor.GetLanguageFile(_targetLang);
+                if (donorSourceFile is null || donorTranslatedFile is null)
+                {
+                    System.Windows.MessageBox.Show(
+                        $"UA: У донорі немає мов «{_sourceLang}»/«{_targetLang}» / " +
+                        $"EN: The donor has no «{_sourceLang}»/«{_targetLang}» languages",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                donorIndex = CrossGameTranslationTransfer.BuildIndex(donorSourceFile, donorTranslatedFile);
+            }
+
+            var plan = CrossGameTranslationTransfer.BuildPlan(donorIndex);
+
+            IReadOnlyDictionary<string, string> conflictResolutions = new Dictionary<string, string>();
+            if (plan.Conflicts.Count > 0)
+            {
+                var conflictWindow = new TranslationConflictWindow(plan.Conflicts) { Owner = this };
+                var confirmed = conflictWindow.ShowDialog();
+                if (confirmed != true)
+                {
+                    SetStatus("UA: Перенесення скасовано / EN: Transfer cancelled");
+                    return;
+                }
+                conflictResolutions = conflictWindow.Resolutions;
+            }
+
+            var targetSourceFile     = _serviceTarget.GetLanguageFile(_sourceLang);
+            var targetTranslatedFile = _serviceTarget.GetLanguageFile(_targetLang);
+            if (targetSourceFile is null || targetTranslatedFile is null)
+            {
+                System.Windows.MessageBox.Show(
+                    $"UA: У поточному файлі немає мов «{_sourceLang}»/«{_targetLang}» / " +
+                    $"EN: The current file has no «{_sourceLang}»/«{_targetLang}» languages",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // UA: Захист від перезапису — за ПОЗНАЧКОЮ ВИЧИТКИ (ReviewStatus), а
+            //     не за фактом наявності перекладу: після пакетного перекладу
+            //     через Gemini Translation має практично кожен рядок, тож
+            //     критерій "не чіпати перекладене" не переносив би нічого.
+            //     Вичитаним вважається запис із непорожнім ReviewStatus у
+            //     _reviewStatuses (той самий словник, що керує колонкою
+            //     "Вичитка" в гріді) — Core про ReviewStatus нічого не знає
+            //     (це GUI/CSV-метадані), тому критерій передається сюди як
+            //     делегат.
+            // EN: Overwrite protection is based on the REVIEW MARK
+            //     (ReviewStatus), not on whether a translation is present:
+            //     after a batch translation pass through Gemini, practically
+            //     every row already has a Translation, so a "don't touch
+            //     translated rows" rule would transfer nothing. An entry
+            //     counts as reviewed when it has a non-empty ReviewStatus in
+            //     _reviewStatuses (the same dictionary that drives the
+            //     "Review" column in the grid) — Core knows nothing about
+            //     ReviewStatus (GUI/CSV metadata only), so the criterion is
+            //     passed in here as a delegate.
+            var result = CrossGameTranslationTransfer.Apply(
+                targetSourceFile, targetTranslatedFile, plan.AutoFill, conflictResolutions,
+                isProtected: (hash, ordinal) =>
+                    _reviewStatuses.TryGetValue((hash, ordinal), out var rs) && !string.IsNullOrWhiteSpace(rs));
+
+            SnapshotReviewStatuses();
+            RefreshGrid();
+
+            SetStatus(
+                $"UA: Перенесено {result.AutoFilled} однозначних + {result.ConflictResolved} вирішених конфліктів " +
+                $"(пропущено {result.ProtectedSkipped} уже вичитаних) / " +
+                $"EN: Transferred {result.AutoFilled} unambiguous + {result.ConflictResolved} resolved conflicts " +
+                $"(skipped {result.ProtectedSkipped} already reviewed)");
+            SimpleLogger.Info(
+                $"Cross-game transfer done: autoFilled={result.AutoFilled}, conflictResolved={result.ConflictResolved}, " +
+                $"protectedSkipped={result.ProtectedSkipped}");
+        }
+        catch (Exception ex)
+        {
+            SimpleLogger.Error("Cross-game transfer failed", ex);
+            System.Windows.MessageBox.Show(
+                $"UA: Помилка перенесення перекладу:\n{ex.Message}\n\nEN: Translation transfer error:\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            SetStatus("UA: Помилка перенесення перекладу / EN: Translation transfer error");
+        }
+        finally { SetBusy(false); }
+    }
+
+    // =========================================================================
     // UA: МОВНІ СЕЛЕКТОРИ / EN: LANGUAGE SELECTORS
     // =========================================================================
 
@@ -2043,17 +2196,19 @@ public partial class MainWindow : Window
 
     // UA: BtnExportCsv НЕ тут — він залежить лише від оригіналу (наявності
     //     рядків у _allRows), вмикається окремо в BtnOpenOriginal_Click.
-    //     Save/Import залежать від РОБОЧОГО файлу — саме їх торкається
-    //     цей метод (викликається після створення/відкриття _serviceTarget).
+    //     Save/Import/Перенесення з іншої гри залежать від РОБОЧОГО файлу —
+    //     саме їх торкається цей метод (викликається після
+    //     створення/відкриття _serviceTarget).
     // EN: BtnExportCsv is NOT here — it only depends on the original
     //     (having rows in _allRows), enabled separately in
-    //     BtnOpenOriginal_Click. Save/Import depend on the WORKING file —
-    //     that's what this method touches (called after creating/opening
-    //     _serviceTarget).
+    //     BtnOpenOriginal_Click. Save/Import/Transfer from another game
+    //     depend on the WORKING file — that's what this method touches
+    //     (called after creating/opening _serviceTarget).
     private void SetButtonsEnabled(bool enabled)
     {
-        BtnSave.IsEnabled      = enabled;
-        BtnImportCsv.IsEnabled = enabled;
+        BtnSave.IsEnabled                  = enabled;
+        BtnImportCsv.IsEnabled             = enabled;
+        BtnTransferFromOtherGame.IsEnabled = enabled;
     }
 }
 

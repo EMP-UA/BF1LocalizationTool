@@ -3,6 +3,30 @@
 Формат базується на [Keep a Changelog](https://keepachangelog.com/uk/1.1.0/).
 Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### UA: Додано
+- Перенесення перекладу між іграми (BF1 ↔ BF2) за збігом англійського
+  оригіналу — кнопка «⇄ BF1↔BF2» у GUI
+- Захист від перезапису — лише за позначкою вичитки (ReviewStatus), не за
+  фактом наявності перекладу: рядки без цієї позначки (включно з уже
+  перекладеними Gemini) можуть бути перезаписані донором
+- Вікно вирішення конфліктів (`TranslationConflictWindow`) для рядків, де
+  донор має кілька різних перекладів одного англійського оригіналу
+
+---
+
+### EN: Added
+- Cross-game translation transfer (BF1 ↔ BF2) matching by English
+  original — the "⇄ BF1↔BF2" GUI button
+- Overwrite protection based solely on the review mark (ReviewStatus),
+  not on whether a translation is present: rows without that mark
+  (including ones already translated by Gemini) may be overwritten by
+  the donor
+- Conflict-resolution window (`TranslationConflictWindow`) for strings
+  where the donor has several different translations of the same
+  English original
+
 ## [1.0.0] — 2026-08-04
 
 ### UA: Додано

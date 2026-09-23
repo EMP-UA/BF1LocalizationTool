@@ -158,7 +158,12 @@
                     <Button x:Name="BtnCompare" Style="{StaticResource EmpButton}"
                             Content="🔍 UA: Порівняти / EN: Compare"
                             ToolTip="UA: Порівняти два core.lvl за текстом (оригінал ↔ змінений) / EN: Compare two core.lvl files by text (original ↔ modified)"
-                            Click="BtnCompare_Click" Margin="6,0,0,0"/>
+                            Click="BtnCompare_Click" Margin="6,0,6,0"/>
+                    <Separator Width="1" Background="{StaticResource AccentPurpleBrush}" Margin="4,0"/>
+                    <Button x:Name="BtnTransferFromOtherGame" Style="{StaticResource EmpButton}"
+                            Content="⇄ UA: BF1↔BF2 / EN: BF1↔BF2"
+                            ToolTip="UA: Перенести переклад з іншої гри (напр. BF1 → BF2) за англійським оригіналом — не чіпає ВИЧИТАНІ (ReviewStatus) рядки, решту (в т.ч. вже перекладені Gemini) може перезаписати. Структура й шрифти завжди з поточного файлу / EN: Transfer translation from another game (e.g. BF1 → BF2) by matching English original — leaves REVIEWED (ReviewStatus) rows untouched, may overwrite the rest (including rows already translated by Gemini). Structure and fonts always stay from the current file"
+                            Click="BtnTransferFromOtherGame_Click" Margin="6,0,0,0" IsEnabled="False"/>
                 </StackPanel>
 
                 <!-- UA: Права панель — тема, шрифт / EN: Right panel — theme, font -->
