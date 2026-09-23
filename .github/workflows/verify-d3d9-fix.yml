@@ -91,22 +91,22 @@ jobs:
           tar -xf zig.tar.xz -C zig-toolchain --strip-components=1
           echo "$(pwd)/zig-toolchain" >> "$GITHUB_PATH"
 
-      - name: Rebuild d3d9.dll from tools/bf2_d3d9_widescreen_fix/ (exact documented Zig recipe)
+      - name: Rebuild zig_d3d9.dll from tools/bf2_d3d9_widescreen_fix/ (exact documented Zig recipe)
         working-directory: tools/bf2_d3d9_widescreen_fix
         # UA: Точно MovieSubtitleD3D9FixZigBuilder.BuildCommand.
         # EN: Exactly MovieSubtitleD3D9FixZigBuilder.BuildCommand.
         run: >
           zig c++ -target x86-windows-gnu -shared -O2 -s
-          d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll
+          d3d9_proxy.cpp d3d9_proxy.def -o zig_d3d9.dll
 
       - name: Compare rebuilt DLL against the one committed to the repo (byte-for-byte)
         run: |
           COMMITTED="BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
-          REBUILT="tools/bf2_d3d9_widescreen_fix/d3d9.dll"
+          REBUILT="tools/bf2_d3d9_widescreen_fix/zig_d3d9.dll"
 
           echo "UA: SHA-256 вбудованого в репозиторій файла / EN: SHA-256 of the file committed to the repo:"
           sha256sum "$COMMITTED"
-          echo "UA: SHA-256 щойно пересібраного файла / EN: SHA-256 of the just-rebuilt file:"
+          echo "UA: SHA-256 щойно перезібраного файла / EN: SHA-256 of the just-rebuilt file:"
           sha256sum "$REBUILT"
 
           if cmp -s "$COMMITTED" "$REBUILT"; then
@@ -125,11 +125,11 @@ jobs:
         # EN: The plain system objdump (binutils, already on ubuntu-latest)
         #     reads PE/COFF just fine — no separate target-specific objdump
         #     is needed.
-        run: objdump -p tools/bf2_d3d9_widescreen_fix/d3d9.dll
+        run: objdump -p tools/bf2_d3d9_widescreen_fix/zig_d3d9.dll
 
       - name: Upload rebuilt DLL as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: d3d9-rebuilt-from-source
-          path: tools/bf2_d3d9_widescreen_fix/d3d9.dll
+          path: tools/bf2_d3d9_widescreen_fix/zig_d3d9.dll
           retention-days: 90

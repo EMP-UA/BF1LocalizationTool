@@ -28,14 +28,19 @@
 //     підмінити код так, щоб перезбірка з нього все одно давала той самий
 //     бінарник, неможливо.
 //
+//     ВИХІДНА НАЗВА ФАЙЛА. Рецепт компілює саме в `zig_d3d9.dll`, а НЕ
+//     в `d3d9.dll` — щоб під час діагностики файл не плутався зі
+//     справжньою системною d3d9.dll поруч. У теку гри як GameData\d3d9.dll
+//     його кладе .iss-інсталятор — перейменування відбувається там, не тут.
+//
 //     ПОСТАЧАННЯ. Завантажується `zig-x86_64-windows-0.16.0.zip`
 //     (~93 МБ) — офіційний реліз, адреса й SHA-256 взяті з
 //     https://ziglang.org/download/index.json (машинозчитуваний реєстр
 //     релізів, який публікує сам проєкт Zig, а не сторонній дзеркальний
 //     сайт). Перевірено емпірично в пісочниці розробки: `zig c++ -target
 //     x86-windows-gnu -shared -O2 -s d3d9_proxy.cpp d3d9_proxy.def -o
-//     d3d9.dll` успішно компілює цей реальний файл у коректний PE32 DLL
-//     з експортом рівно "Direct3DCreate9" (перевірено через objdump).
+//     zig_d3d9.dll` успішно компілює цей реальний файл у коректний PE32
+//     DLL з експортом рівно "Direct3DCreate9" (перевірено через objdump).
 // EN: Native compilation of d3d9.dll BY THIS PROGRAM ITSELF, with no
 //     external tooling — no MSYS2, no Visual Studio C++
 //     workload, no application the user would have to install by hand.
@@ -61,14 +66,20 @@
 //     provenance proof itself: tampering with the code so a rebuild from
 //     it still produces the same binary is not possible.
 //
+//     OUTPUT FILE NAME. The recipe compiles to `zig_d3d9.dll`, NOT
+//     `d3d9.dll` — so the file isn't confused with the real system
+//     d3d9.dll sitting right next to it during diagnostics. The .iss
+//     installer is what places it into the game folder as
+//     GameData\d3d9.dll — the rename happens there, not here.
+//
 //     DISTRIBUTION. Downloads `zig-x86_64-windows-0.16.0.zip` (~93 MB) —
 //     the official release, with its URL and SHA-256 taken from
 //     https://ziglang.org/download/index.json (the machine-readable
 //     release registry the Zig project itself publishes, not a
 //     third-party mirror). Verified empirically in the development
 //     sandbox: `zig c++ -target x86-windows-gnu -shared -O2 -s
-//     d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll` successfully compiles the
-//     actual file into a correct PE32 DLL exporting exactly
+//     d3d9_proxy.cpp d3d9_proxy.def -o zig_d3d9.dll` successfully compiles
+//     the actual file into a correct PE32 DLL exporting exactly
 //     "Direct3DCreate9" (verified via objdump).
 // =============================================================================
 
@@ -116,11 +127,14 @@ public static class MovieSubtitleD3D9FixZigBuilder
         "68659eb5f1e4eb1437a722f1dd889c5a322c9954607f5edcf337bc3684a75a7e";
 
     // UA: Точний рецепт компіляції ЦИМ шляхом — перевірено емпірично (див.
-    //     коментар вище класу).
+    //     коментар вище класу). Вихідний файл навмисно зветься
+    //     zig_d3d9.dll, не d3d9.dll (див. "ВИХІДНА НАЗВА ФАЙЛА" вище).
     // EN: The exact compilation recipe for THIS path — verified
-    //     empirically (see the class comment above).
+    //     empirically (see the class comment above). The output file is
+    //     deliberately named zig_d3d9.dll, not d3d9.dll (see "OUTPUT FILE
+    //     NAME" above).
     public const string BuildCommand =
-        "zig c++ -target x86-windows-gnu -shared -O2 -s d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll";
+        "zig c++ -target x86-windows-gnu -shared -O2 -s d3d9_proxy.cpp d3d9_proxy.def -o zig_d3d9.dll";
 
     public sealed record EnsureResult(string ZigExePath, bool WasDownloadedThisRun);
 

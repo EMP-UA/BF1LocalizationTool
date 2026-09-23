@@ -77,11 +77,13 @@ step in the application's own code. Manual rebuilding is only needed if
 
 ```bash
 zig c++ -target x86-windows-gnu -shared -O2 -s \
-  d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll
+  d3d9_proxy.cpp d3d9_proxy.def -o zig_d3d9.dll
 ```
 
-Zig-версія `0.16.0`, офіційний архів `zig-x86_64-windows-0.16.0.zip` з
-`ziglang.org`.
+Вихідний файл навмисно зветься `zig_d3d9.dll`, не `d3d9.dll` — щоб під час
+діагностики не плутався зі справжньою системною `d3d9.dll` поруч; у GameData
+його кладе під іменем `d3d9.dll` вже `.iss`-інсталятор. Zig-версія `0.16.0`,
+офіційний архів `zig-x86_64-windows-0.16.0.zip` з `ziglang.org`.
 
 **EN:** The file bundled into BF1LocalizationTool (`Data/MovieSubtitleD3D9Fix.dll`)
 is built with the portable Zig compiler, which is self-contained (no
@@ -90,11 +92,14 @@ separate install — it self-downloads with a SHA-256 check, see
 
 ```bash
 zig c++ -target x86-windows-gnu -shared -O2 -s \
-  d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll
+  d3d9_proxy.cpp d3d9_proxy.def -o zig_d3d9.dll
 ```
 
-Zig version `0.16.0`, official `zig-x86_64-windows-0.16.0.zip` archive
-from `ziglang.org`.
+The output file is deliberately named `zig_d3d9.dll`, not `d3d9.dll` — so it
+isn't confused with the real system `d3d9.dll` sitting next to it during
+diagnostics; the `.iss` installer is what places it into GameData as
+`d3d9.dll`. Zig version `0.16.0`, official `zig-x86_64-windows-0.16.0.zip`
+archive from `ziglang.org`.
 
 ### 4.2. Visual Studio (альтернатива) / Visual Studio (alternative)
 
