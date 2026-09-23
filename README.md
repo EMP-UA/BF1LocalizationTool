@@ -248,9 +248,9 @@ BF1LocalizationTool/
 │                                            # — see FONT_FORMAT_SPEC.md
 │
 └── installer/                              # Inno Setup: встановлювачі готового перекладу
-                                             # (GameData\ + Readme.txt), поза .NET-рішенням
-                                             # Inno Setup: end-user installers for the
-                                             # finished translation, outside the .NET solution
+    │                                        # (GameData\ + Readme.txt), поза .NET-рішенням
+    │                                        # Inno Setup: end-user installers for the
+    │                                        # finished translation, outside the .NET solution
     ├── bf1_installer.iss                   # Battlefront (2004) / Star Wars: Battlefront
     └── bf2_installer.iss                   # Battlefront II (2005) / Star Wars: Battlefront II
 ```
@@ -267,7 +267,7 @@ BF1LocalizationTool/
   меню під ширші роздільності: прив'язки елементів, обрізаний фон,
   вкладки, спливне вікно довідки, бойовий HUD.
 - [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)
-  — окремо екран вибору місії (`ifs_missionselect` /
+  — окремо екран «Миттєвий бій» (`ifs_missionselect` /
   `ifs_missionselect_pcMulti`): найскладніший екран меню, для якого
   загальне правило з `BF2_UI_LAYOUT_FIX.md` не сходиться до нуля
   дефектів, тому значення виміряні й задокументовані окремо.
@@ -294,7 +294,7 @@ document, each covers its own separate part):
   layout for wider resolutions: element anchors, the clipped
   background, tabs, the help popup, the combat HUD.
 - [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)
-  — the mission-select screen on its own (`ifs_missionselect` /
+  — the Instant Action screen on its own (`ifs_missionselect` /
   `ifs_missionselect_pcMulti`): the most complex menu screen, where the
   general rule from `BF2_UI_LAYOUT_FIX.md` doesn't converge to zero
   defects, so its values are measured and documented separately.
@@ -456,7 +456,9 @@ self-contained `.exe`.
   [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
   Перед перезаписом чужого файла з такою назвою робиться резервна копія
   (`d3d9.dll.bf1backup`); під час роботи пише лог
-  `bf2_widescreen_fix.log` у тій самій теці.
+  `bf2_widescreen_fix.log` у тій самій теці — без жодних мережевих
+  з'єднань; про вміст і призначення логу —
+  [`tools/bf2_d3d9_widescreen_fix/README.md`](tools/bf2_d3d9_widescreen_fix/README.md).
 
 **EN:**
 
@@ -504,7 +506,9 @@ self-contained `.exe`.
   [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
   Before overwriting an existing file of the same name, a backup is made
   (`d3d9.dll.bf1backup`); at runtime it writes a `bf2_widescreen_fix.log`
-  log file in the same folder.
+  log file in the same folder — with no network connections of any
+  kind; for the log's contents and purpose, see
+  [`tools/bf2_d3d9_widescreen_fix/README.md`](tools/bf2_d3d9_widescreen_fix/README.md).
 
 ---
 

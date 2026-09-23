@@ -250,3 +250,54 @@ the moderator or the user.
 `BattlefrontII.exe` (the same folder as the executable itself — NOT a
 separate `GameData` subfolder, but right beside the `.exe`). Deleting the
 file fully removes the fix.
+
+## 8. Прозорість: лог / Transparency: log file
+
+**UA:** DLL завжди (без «тихого» варіанта збирання) пише лог
+`bf2_widescreen_fix.log` у тій самій теці, де лежить сама DLL (поряд із
+`BattlefrontII.exe`), у режимі додавання (append) — дані попередніх
+запусків не стираються. Це єдиний спосіб діагностувати поведінку на
+нестандартному апаратному забезпеченні користувача, тому вимкнути запис
+не можна.
+
+Розмір обмежено 25 МБ (`LOG_SIZE_LIMIT_BYTES`): по досягненні межі
+записується один підсумковий рядок, і подальший запис у цьому сеансі
+призупиняється. Обґрунтування межі: формат логування зі стисненням за
+сигнатурою пише по рядку на кожну зміну елемента HUD; кілька хвилин
+реального запуску дали 5,5 МБ, а найбільший зафіксований запуск усієї
+кампанії — 5,49 МБ, тож 25 МБ лишає запас приблизно в 4,5 рази.
+
+Вміст логу: рядки статусу ініціалізації (успіх/невдача завантаження
+справжньої системної `d3d9.dll`, включно з повним шляхом до неї),
+підтвердження прив'язки до пристрою рендеру, роздільність робочого
+столу (один раз за сеанс) і діагностичні рядки корекції масштабу для
+кожного елемента HUD.
+
+DLL не встановлює жодних мережевих з'єднань — вихідний код підключає
+лише `<windows.h>`, без жодного мережевого API (перевірено читанням
+`d3d9_proxy.cpp`). Файл логу можна видалити в будь-який момент — на
+роботу самого фіксу це не впливає.
+
+**EN:** The DLL always writes a `bf2_widescreen_fix.log` log (there is
+no "quiet" build variant) in the same folder as the DLL itself (next to
+`BattlefrontII.exe`), in append mode — earlier runs' data is not
+erased. This is the only way to diagnose behaviour on a user's
+non-standard hardware, so logging cannot be turned off.
+
+Size is capped at 25 MB (`LOG_SIZE_LIMIT_BYTES`): once the cap is
+reached, one final summary line is written and further logging is
+suppressed for that session. Rationale for the cap: the
+signature-compressed log format writes one line per HUD-element
+change; a few minutes of a real run produced 5.5 MB, and the largest
+recorded full-campaign run was 5.49 MB, so 25 MB leaves roughly a
+4.5x margin.
+
+Log contents: initialization status lines (success/failure of loading
+the real system `d3d9.dll`, including its full path), render-device
+hook confirmation, desktop resolution (logged once per session), and
+per-HUD-element scale-correction diagnostic lines.
+
+The DLL makes no network connections of any kind — the source only
+includes `<windows.h>`, with no networking API whatsoever (verified by
+reading `d3d9_proxy.cpp`). The log file can be deleted at any time
+without affecting the fix itself.

@@ -1,9 +1,10 @@
-# BF2: розкладка екрана вибору місії / BF2: mission-select screen layout
+# BF2: розкладка екрана «Миттєвий бій» / BF2: Instant Action screen layout
 
 ## 1. Чому це окремий файл / Why this is a separate file
 
 **UA:** `ifs_missionselect` (одиночна гра) і `ifs_missionselect_pcMulti`
-(мультиплеер / «Миттєвий бій») — найскладніший екран меню: чотири списки
+(мультиплеер) — в грі обидва варіанти підписані «Миттєвий бій», а не
+«місія»: чотири списки
 (карта, режим, епоха, тип гри), набір чекбоксів, кнопки керування
 списком, нижня інформаційна панель. Загальне правило успадкування
 прив'язки (`BF2_UI_LAYOUT_FIX.md`) на ньому не сходиться до нуля дефектів
@@ -16,7 +17,8 @@
 нижче).
 
 **EN:** `ifs_missionselect` (single-player) and `ifs_missionselect_pcMulti`
-(multiplayer / "Instant Action") are the most complex menu screen: four
+(multiplayer) — in-game both variants are labeled "Instant Action", not
+"mission": the most complex menu screen: four
 lists (map, mode, era, game type), a set of checkboxes, list-control
 buttons, a bottom info panel. The general anchor-inheritance rule
 (`BF2_UI_LAYOUT_FIX.md`) doesn't converge to zero defects here — too many

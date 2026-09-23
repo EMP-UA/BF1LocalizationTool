@@ -9,7 +9,7 @@
 власної панелі, а фонове зображення виявляється обрізаним. Нижче — усі
 класи цього дефекту, кожен зі своєю точною формулою чи набором виміряних
 значень. Бойовий HUD (`ingame.lvl`) — окремий розділ наприкінці файлу;
-розкладка екрана вибору місії (`ifs_missionselect` /
+розкладка екрана «Миттєвий бій» (`ifs_missionselect` /
 `ifs_missionselect_pcMulti`) — окремий файл, `BF2_MISSIONSELECT_LAYOUT.md`
 (це найбільший за обсягом окремий екран, з власними механізмами).
 
@@ -20,7 +20,7 @@ each other, drift apart, or run outside their own panel, and the
 background image ends up clipped. Below are all classes of this defect,
 each with its own exact formula or measured value set. The combat HUD
 (`ingame.lvl`) is a separate section at the end of this file; the layout
-of the mission-select screen (`ifs_missionselect` /
+of the Instant Action screen (`ifs_missionselect` /
 `ifs_missionselect_pcMulti`) is a separate file,
 `BF2_MISSIONSELECT_LAYOUT.md` (by far the largest single screen, with its
 own mechanisms).
