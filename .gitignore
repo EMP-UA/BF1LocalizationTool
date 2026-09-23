@@ -467,6 +467,14 @@ FodyWeavers.xsd
 *.lib
 *.ipch
 
+## UA: ВИНЯТОК із *.dll вище — це не build-артефакт, а вбудований ресурс
+##     (EmbeddedResource у BF1LocalizationTool.Core.csproj), звірений
+##     через SHA-256 у CI (.github/workflows/verify-d3d9-fix.yml).
+## EN: EXCEPTION to *.dll above — not a build artifact, but an embedded
+##     resource (EmbeddedResource in BF1LocalizationTool.Core.csproj),
+##     SHA-256-verified in CI (.github/workflows/verify-d3d9-fix.yml).
+!BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll
+
 ## Runtime / робочі файли інструменту
 ## Runtime / tool working files
 AutoSave/
