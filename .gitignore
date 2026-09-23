@@ -481,6 +481,14 @@ AutoSave/
 Backups/
 *.diagnostic.txt
 
+## UA: Текстові звіти діагностичної команди "★★ ПОХОДЖЕННЯ d3d9.dll"
+##     (GenerateD3D9FixProvenanceReportCommand) — локальний вивід одного
+##     запуску, не джерело й не документація.
+## EN: Text reports from the "★★ PROVENANCE of d3d9.dll" diagnostic command
+##     (GenerateD3D9FixProvenanceReportCommand) — local output of a single
+##     run, not source and not documentation.
+GenerateD3D9FixProvenanceReport_*.txt
+
 ## Ігрові файли, які НЕ повинні потрапляти в репо (авторське право)
 ## Game files that must NOT be committed (copyrighted content)
 *.lvl

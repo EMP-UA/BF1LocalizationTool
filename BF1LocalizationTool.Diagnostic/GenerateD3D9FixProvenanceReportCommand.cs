@@ -60,8 +60,8 @@ public static class GenerateD3D9FixProvenanceReportCommand
 {
     public static async Task RunAsync(DiagnosticReport report, string outputDir)
     {
-        report.Log("UA: === Походження d3d9.dll: видобування, хеші, дві незалежні перезбірки ===");
-        report.Log("EN: === Provenance of d3d9.dll: extraction, hashes, two independent rebuilds ===");
+        report.Log("UA: === Походження d3d9.dll: видобування, хеші, перезбірка Zig-ом ===");
+        report.Log("EN: === Provenance of d3d9.dll: extraction, hashes, Zig rebuild ===");
         report.Log();
 
         Directory.CreateDirectory(outputDir);
