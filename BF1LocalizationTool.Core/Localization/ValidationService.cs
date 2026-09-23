@@ -89,8 +89,14 @@ public static class ValidationService
     // EN: Patterns of technical markers that must be preserved in translation
     // UA: %s %d — змінні формату; {btn...} — кнопкові маркери (.loc); [X] (X) — клавіші
     // EN: %s %d — format vars; {btn...} — button markers (.loc); [X] (X) — keys
+    // UA: Шаблон спільний із TranslationCaseAdapter (маркери, чий регістр
+    //     не змінюється при узгодженні регістру перекладу).
+    // EN: The pattern is shared with TranslationCaseAdapter (markers whose
+    //     case is never changed when aligning a translation's case).
+    internal const string MarkerPattern = @"%[sdifcux%]|\{[^}]+\}|\[[^\]]+\]|\(.\)|\\\w";
+
     private static readonly Regex MarkerRegex = new(
-        @"%[sdifcux%]|\{[^}]+\}|\[[^\]]+\]|\(.\)|\\\w",
+        MarkerPattern,
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static ValidationResult Validate(string original, string? translation)

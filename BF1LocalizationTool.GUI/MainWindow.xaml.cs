@@ -1282,9 +1282,24 @@ public partial class MainWindow : Window
     // UA: ПЕРЕНЕСЕННЯ ПЕРЕКЛАДУ З ІНШОЇ ГРИ / EN: CROSS-GAME TRANSLATION TRANSFER
     //     Зіставлення — за текстом англійського оригіналу (не за Hash, який у
     //     BF1 і BF2 належить різним просторам ключів — див. заголовок
-    //     CrossGameTranslationTransfer.cs). Донор — файл ІНШОЇ (або тієї ж)
-    //     гри, обраний у діалозі; ЦІЛЬ — уже відкритий у сесії _serviceTarget
+    //     CrossGameTranslationTransfer.cs). Донор — файли ІНШОЇ (або тієї ж)
+    //     гри, обрані в діалозі; ЦІЛЬ — уже відкритий у сесії _serviceTarget
     //     (кнопка активна лише коли він є).
+    //
+    //     ДОНОР — ЗАВЖДИ ДВА ФАЙЛИ: ванільний (без перекладу) і перекладений
+    //     (раніше збережений вихідний файл тієї ж гри-донора). Причина: для
+    //     BF2 переклад фізично лежить в ОКРЕМІЙ мовній секції, але для BF1
+    //     переклад пишеться НАПРЯМУ в секцію "english" (той самий простір,
+    //     що й оригінал) — тож з ОДНОГО завантаженого файлу "оригінал" і
+    //     "переклад" виявляються буквально тим самим текстом, і різницю
+    //     виявити неможливо. Тому донор завжди береться з ДВОХ окремих
+    //     завантажень LvlLocalizationService — так само, як це вже робить
+    //     MergeTranslationsFromDonor у межах однієї гри.
+    //
+    //     ЗБІГ — БЕЗ УРАХУВАННЯ РЕГІСТРУ Й ПРОБІЛІВ: англійський текст BF1
+    //     зберігається ВЕЛИКИМИ, BF2 — звичайним регістром; регістр самого
+    //     перекладу узгоджується з рядком BF2 (CrossGameTranslationTransfer.
+    //     NormalizeKey, TranslationCaseAdapter).
     //
     //     ЗАХИСТ — ЗА ВИЧИТКОЮ, НЕ ЗА НАЯВНІСТЮ ПЕРЕКЛАДУ: після пакетного
     //     перекладу через Gemini Translation має практично кожен рядок, тож
@@ -1295,10 +1310,27 @@ public partial class MainWindow : Window
     //     донора.
     // EN: Matching is done on the English original TEXT (not Hash, which
     //     belongs to different key namespaces in BF1 vs BF2 — see the header
-    //     of CrossGameTranslationTransfer.cs). The donor is a file from
+    //     of CrossGameTranslationTransfer.cs). The donor is files from
     //     ANOTHER (or the same) game, picked in a dialog; the TARGET is the
     //     already-open _serviceTarget (the button is only enabled when it
     //     exists).
+    //
+    //     THE DONOR IS ALWAYS TWO FILES: a vanilla (untranslated) original
+    //     and a translated (previously saved) output of the SAME donor
+    //     game. Reason: for BF2 the translation physically lives in a
+    //     SEPARATE language section, but for BF1 the translation is
+    //     written DIRECTLY into the "english" section (the same slot as
+    //     the original) — so from a SINGLE loaded file "original" and
+    //     "translation" turn out to be literally the same text, and no
+    //     difference can be detected. The donor is therefore always loaded
+    //     as TWO separate LvlLocalizationService instances — the same
+    //     pattern already used by MergeTranslationsFromDonor within one
+    //     game.
+    //
+    //     MATCHING IGNORES CASE AND WHITESPACE: BF1's English text is
+    //     stored in UPPER CASE, BF2's in normal case; the translation's own
+    //     case is aligned with the BF2 row (CrossGameTranslationTransfer.
+    //     NormalizeKey, TranslationCaseAdapter).
     //
     //     PROTECTION IS BY REVIEW STATUS, NOT BY PRESENCE OF A TRANSLATION:
     //     after a batch translation pass through Gemini, practically every
@@ -1318,34 +1350,52 @@ public partial class MainWindow : Window
             return;
         }
 
-        var dlg = new OpenFileDialog
+        var originalDlg = new OpenFileDialog
         {
-            Title            = "UA: Обрати файл-донор перекладу (інша гра — напр. BF1 для BF2) / " +
-                                "EN: Choose the donor translation file (another game — e.g. BF1 for BF2)",
+            Title            = "UA: Крок 1/2 — оберіть ВАНІЛЬНИЙ (без перекладу) файл гри-донора / " +
+                                "EN: Step 1/2 — choose the VANILLA (untranslated) donor-game file",
+            Filter           = "LVL files (*.lvl)|*.lvl|All files (*.*)|*.*",
+            InitialDirectory = GetOutputRootPath()
+        };
+        if (originalDlg.ShowDialog() != true) return;
+
+        var translatedDlg = new OpenFileDialog
+        {
+            Title            = "UA: Крок 2/2 — оберіть ПЕРЕКЛАДЕНИЙ файл донора (той самий вміст із вписаним перекладом) / " +
+                                "EN: Step 2/2 — choose the TRANSLATED donor file (same content with the translation filled in)",
             Filter           = "LVL/CSV files (*.lvl;*.csv)|*.lvl;*.csv|LVL files (*.lvl)|*.lvl|CSV files (*.csv)|*.csv|All files (*.*)|*.*",
             InitialDirectory = GetOutputRootPath()
         };
-        if (dlg.ShowDialog() != true) return;
+        if (translatedDlg.ShowDialog() != true) return;
 
         SetBusy(true, "UA: Аналіз донора... / EN: Analyzing donor...");
-        SimpleLogger.Info($"Cross-game transfer: donor = {dlg.FileName}");
+        SimpleLogger.Info($"Cross-game transfer: donor original = {originalDlg.FileName}, translated = {translatedDlg.FileName}");
 
         try
         {
             IReadOnlyDictionary<string, IReadOnlyList<string>> donorIndex;
 
-            if (dlg.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            if (translatedDlg.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
-                var rows = await LocalizationCsvIo.ReadAsync(dlg.FileName);
+                // UA: CSV-рядки вже містять пару Original/Translation в одному
+                //     рядку — ванільний файл, обраний на кроці 1, тут не
+                //     потрібен (свідомо лишається невикористаним).
+                // EN: CSV rows already carry the Original/Translation pair in
+                //     one row — the vanilla file picked at step 1 isn't needed
+                //     here (deliberately left unused).
+                var rows = await LocalizationCsvIo.ReadAsync(translatedDlg.FileName);
                 donorIndex = CrossGameTranslationTransfer.BuildIndex(rows);
             }
             else
             {
-                var donor = new LvlLocalizationService();
-                await donor.LoadAsync(dlg.FileName);
+                var donorOriginal = new LvlLocalizationService();
+                await donorOriginal.LoadAsync(originalDlg.FileName);
 
-                var donorSourceFile     = donor.GetLanguageFile(_sourceLang);
-                var donorTranslatedFile = donor.GetLanguageFile(_targetLang);
+                var donorTranslated = new LvlLocalizationService();
+                await donorTranslated.LoadAsync(translatedDlg.FileName);
+
+                var donorSourceFile     = donorOriginal.GetLanguageFile(_sourceLang);
+                var donorTranslatedFile = donorTranslated.GetLanguageFile(_targetLang);
                 if (donorSourceFile is null || donorTranslatedFile is null)
                 {
                     System.Windows.MessageBox.Show(
@@ -1384,6 +1434,16 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // UA: Незбережені правки гріда цієї сесії живуть лише в рядках
+            //     (EntryRow) до збереження, а RefreshGrid нижче перебудовує
+            //     рядки із сервісу — тому спершу правки переносяться в
+            //     сервіс, інакше вони зникли б.
+            // EN: This session's unsaved grid edits live only in the rows
+            //     (EntryRow) until saving, and RefreshGrid below rebuilds the
+            //     rows from the service — so the edits are pushed into the
+            //     service first, otherwise they would be lost.
+            ApplyRowEditsToService();
+
             // UA: Захист від перезапису — за ПОЗНАЧКОЮ ВИЧИТКИ (ReviewStatus), а
             //     не за фактом наявності перекладу: після пакетного перекладу
             //     через Gemini Translation має практично кожен рядок, тож
@@ -1411,14 +1471,34 @@ public partial class MainWindow : Window
             SnapshotReviewStatuses();
             RefreshGrid();
 
+            var changed = result.AutoFilled + result.ConflictResolved;
             SetStatus(
-                $"UA: Перенесено {result.AutoFilled} однозначних + {result.ConflictResolved} вирішених конфліктів " +
-                $"(пропущено {result.ProtectedSkipped} уже вичитаних) / " +
-                $"EN: Transferred {result.AutoFilled} unambiguous + {result.ConflictResolved} resolved conflicts " +
-                $"(skipped {result.ProtectedSkipped} already reviewed)");
+                $"UA: Перенесено {changed} (однозначних {result.AutoFilled}, з конфліктів {result.ConflictResolved}), " +
+                $"без змін {result.AlreadyEqual}, пропущено вичитаних {result.ProtectedSkipped} / " +
+                $"EN: Transferred {changed} (unambiguous {result.AutoFilled}, from conflicts {result.ConflictResolved}), " +
+                $"unchanged {result.AlreadyEqual}, reviewed skipped {result.ProtectedSkipped}");
             SimpleLogger.Info(
                 $"Cross-game transfer done: autoFilled={result.AutoFilled}, conflictResolved={result.ConflictResolved}, " +
-                $"protectedSkipped={result.ProtectedSkipped}");
+                $"alreadyEqual={result.AlreadyEqual}, protectedSkipped={result.ProtectedSkipped}, unmatched={result.Unmatched}");
+
+            // UA: Підсумок ще й окремим вікном — рядок статусу легко не помітити.
+            // EN: The summary also goes into a dialog — the status line is easy to miss.
+            SetBusy(false);
+            System.Windows.MessageBox.Show(
+                "UA: Перенесення перекладу завершено.\n" +
+                $"   Змінено (однозначний збіг): {result.AutoFilled}\n" +
+                $"   Змінено (вирішені конфлікти): {result.ConflictResolved}\n" +
+                $"   Уже збігалися, без змін: {result.AlreadyEqual}\n" +
+                $"   Пропущено вичитаних (ReviewStatus): {result.ProtectedSkipped}\n" +
+                $"   Без відповідника (немає в донорі або конфлікт пропущено): {result.Unmatched}\n\n" +
+                "EN: Translation transfer finished.\n" +
+                $"   Changed (unambiguous match): {result.AutoFilled}\n" +
+                $"   Changed (resolved conflicts): {result.ConflictResolved}\n" +
+                $"   Already equal, unchanged: {result.AlreadyEqual}\n" +
+                $"   Reviewed rows skipped (ReviewStatus): {result.ProtectedSkipped}\n" +
+                $"   No match (absent from the donor or conflict skipped): {result.Unmatched}",
+                "UA: Перенесення перекладу / EN: Translation transfer",
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {

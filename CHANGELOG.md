@@ -7,7 +7,16 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### UA: Додано
 - Перенесення перекладу між іграми (BF1 ↔ BF2) за збігом англійського
-  оригіналу — кнопка «⇄ BF1↔BF2» у GUI
+  оригіналу — кнопка «⇄ BF1↔BF2» у GUI; донор задається двома файлами
+  (спершу ванільний, потім перекладений), щоб коректно розпізнавати
+  переклад і тоді, коли гра-донор пише його в ту саму мовну секцію,
+  що й оригінал (BF1)
+- Збіг оригіналів — без урахування регістру й пробілів (англійський
+  текст BF1 зберігається ВЕЛИКИМИ, BF2 — звичайним регістром); регістр
+  перенесеного перекладу узгоджується з рядком цільової гри
+  (`TranslationCaseAdapter`)
+- Вікно з підсумком перенесення (змінено / без змін / пропущено
+  вичитаних / без відповідника)
 - Захист від перезапису — лише за позначкою вичитки (ReviewStatus), не за
   фактом наявності перекладу: рядки без цієї позначки (включно з уже
   перекладеними Gemini) можуть бути перезаписані донором
@@ -18,7 +27,16 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### EN: Added
 - Cross-game translation transfer (BF1 ↔ BF2) matching by English
-  original — the "⇄ BF1↔BF2" GUI button
+  original — the "⇄ BF1↔BF2" GUI button; the donor is given as two
+  files (vanilla first, then translated), so the translation is
+  correctly recognized even when the donor game writes it into the
+  same language section as the original (BF1)
+- Original matching ignores case and whitespace (BF1's English text is
+  stored in UPPER CASE, BF2's in normal case); the transferred
+  translation's case is aligned with the target game's row
+  (`TranslationCaseAdapter`)
+- Transfer summary dialog (changed / unchanged / reviewed skipped / no
+  match)
 - Overwrite protection based solely on the review mark (ReviewStatus),
   not on whether a translation is present: rows without that mark
   (including ones already translated by Gemini) may be overwritten by
