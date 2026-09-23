@@ -96,68 +96,25 @@ zig c++ -target x86-windows-gnu -shared -O2 -s \
 Zig version `0.16.0`, official `zig-x86_64-windows-0.16.0.zip` archive
 from `ziglang.org`.
 
-### 4.2. MinGW-w64 (альтернатива) / MinGW-w64 (alternative)
-
-**UA:** Крос-компілятор MinGW-w64 (32-біт, гра сама 32-бітна — перевірено
-через PE-заголовок `BattlefrontII.exe`); MinGW потребує окремого
-встановлення (MSYS2 або winlibs.com), тому Core-код і
-`GenerateD3D9FixProvenanceReportCommand` використовують його лише як
-ДРУГУ, необов'язкову перевірку, а не canonical джерело:
-
-```bash
-sudo apt-get install -y g++-mingw-w64-i686
-i686-w64-mingw32-g++ -shared -O2 -s -static -static-libgcc -static-libstdc++ \
-  d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll -Wl,--enable-stdcall-fixup \
-  -Wl,--no-insert-timestamp
-```
-
-`--no-insert-timestamp` — НЕ косметика: без нього лінкер пише в
-PE-заголовок поточну мітку часу, тож дві незалежні MinGW-збірки з
-ІДЕНТИЧНОГО коду дають РІЗНІ файли (різний SHA-256). Байт-у-байт збіг
-MinGW-збірки із вбудованим (Zig-) файлом НЕ очікується — різні
-компілятори й різні рантайми (UCRT у Zig-збірці, `msvcrt.dll` у
-MinGW-збірці) дають різні байти з ідентичного джерела за визначенням.
-
-**EN:** The MinGW-w64 cross-compiler (32-bit, the game itself is 32-bit —
-verified against `BattlefrontII.exe`'s PE header); MinGW needs a separate
-install (MSYS2 or winlibs.com), so the Core code and
-`GenerateD3D9FixProvenanceReportCommand` use it only as a SECOND, optional
-check, not as the canonical source:
-
-```bash
-sudo apt-get install -y g++-mingw-w64-i686
-i686-w64-mingw32-g++ -shared -O2 -s -static -static-libgcc -static-libstdc++ \
-  d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll -Wl,--enable-stdcall-fixup \
-  -Wl,--no-insert-timestamp
-```
-
-`--no-insert-timestamp` is NOT cosmetic: without it the linker writes the
-current time into the PE header, so two independent MinGW builds of
-IDENTICAL source produce DIFFERENT files (different SHA-256). A
-byte-for-byte match between the MinGW build and the bundled (Zig) file is
-NOT expected — different compilers and different runtimes (UCRT in the
-Zig build, `msvcrt.dll` in the MinGW build) produce different bytes from
-identical source by definition.
-
-### 4.3. Visual Studio (альтернатива) / Visual Studio (alternative)
+### 4.2. Visual Studio (альтернатива) / Visual Studio (alternative)
 
 **UA:** Новий проєкт "Dynamic-Link Library (DLL)", платформа
 **Win32 (x86)**, додати `d3d9_proxy.cpp` і вказати `d3d9_proxy.def` як
 Module Definition File (Linker → Input → Module Definition File). Лінкувати
 з `d3d9.lib` НЕ ТРЕБА — реальна `d3d9.dll` завантажується динамічно
 (`LoadLibraryA`/`GetProcAddress`), щоб уникнути конфлікту символів.
-Байт-у-байт збіг з Zig- чи MinGW-збіркою в цьому разі не очікується, лише
-функціональна еквівалентність.
+Байт-у-байт збіг зі збіркою Zig у цьому разі не очікується (інший
+компілятор), лише функціональна еквівалентність.
 
 **EN:** Create a new "Dynamic-Link Library (DLL)" project, platform
 **Win32 (x86)**, add `d3d9_proxy.cpp`, and set `d3d9_proxy.def` as the
 Module Definition File (Linker → Input → Module Definition File). Do NOT
 link against `d3d9.lib` — the real `d3d9.dll` is loaded dynamically
 (`LoadLibraryA`/`GetProcAddress`) to avoid a symbol conflict. A
-byte-for-byte match with the Zig or MinGW build isn't expected here
-either, only functional equivalence.
+byte-for-byte match with the Zig build isn't expected here either
+(a different compiler), only functional equivalence.
 
-### 4.4. Після перезбірки / After rebuilding
+### 4.3. Після перезбірки / After rebuilding
 
 **UA:** Скопіювати новий `d3d9.dll` у
 `BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll` і
@@ -219,11 +176,11 @@ completed — the fix is confirmed working in-game (details in
 
 **UA:** Для модерації (наприклад, NexusMods) або будь-кого, хто хоче
 перевірити, звідки взявся вбудований `d3d9.dll`, НЕ потрібно вірити на
-слово — є три незалежні способи перевірки.
+слово — є два незалежні способи перевірки.
 
 **EN:** For moderation (e.g. NexusMods) or anyone who wants to check where
 the bundled `d3d9.dll` came from, no one has to take it on faith — there
-are three independent ways to verify it.
+are two independent ways to verify it.
 
 ### 6.1. Крок 1: Zig (вбудований інструмент) / Step 1: Zig (built-in tool)
 
@@ -252,54 +209,30 @@ compares the result byte-for-byte against what's bundled. Implementation:
 `MovieSubtitleD3D9FixProvenance.cs` and `MovieSubtitleD3D9FixZigBuilder.cs`
 (Core).
 
-### 6.2. Крок 2: MinGW (якщо встановлено) / Step 2: MinGW (if installed)
+### 6.2. Крок 2: GitHub Actions (незалежно від локальної машини) / Step 2: GitHub Actions (independent of the local machine)
 
-**UA:** Той самий пункт меню робить і ДРУГИЙ крок — MinGW: якщо на машині
-вже встановлений компілятор (`i686-w64-mingw32-g++`, або голий `g++` з
-правильною ціллю — розпізнаються обидва), він теж перезбирає той самий код
-і звіряє результат байт-у-байт із вбудованим файлом. Оскільки вбудований
-файл зараз зібраний Zig-ом, цей крок звітує про розбіжність хешів —
-очікуваний факт (інший компілятор і інший рантайм — `msvcrt.dll` замість
-UCRT — дають інші байти з ідентичного джерела за визначенням), а не ознака
-проблеми з фіксом; цей крок лишається корисним як доказ, що ДРУГИЙ,
-повністю незалежний компілятор так само успішно будує той самий відкритий
-код у коректний, правильно-експортований D3D9-проксі. Реалізація: та сама
-`GenerateD3D9FixProvenanceReportCommand.cs`.
-
-**EN:** The same menu item also runs a SECOND step — MinGW: if a compiler
-is already installed on the machine (`i686-w64-mingw32-g++`, or a plain
-`g++` with the right target — both are recognized), it also rebuilds the
-same code and compares the result byte-for-byte against the bundled file.
-Since the bundled file is currently Zig-built, this step reports a hash
-mismatch — an expected fact (a different compiler and a different
-runtime — `msvcrt.dll` instead of UCRT — produce different bytes from
-identical source by definition), not a sign of a problem with the fix;
-this step remains useful as proof that a SECOND, fully independent
-compiler also successfully builds the same open source into a correct,
-properly-exporting D3D9 proxy. Implementation: the same
-`GenerateD3D9FixProvenanceReportCommand.cs`.
-
-### 6.3. Крок 3: GitHub Actions (незалежно від локальної машини) / Step 3: GitHub Actions (independent of the local machine)
-
-**UA:** Є й ТРЕТІЙ, повністю незалежний від локальної машини спосіб:
+**UA:** Є й ДРУГИЙ, повністю незалежний від локальної машини спосіб:
 GitHub Actions workflow `.github/workflows/verify-d3d9-fix.yml` — на
-чистому `ubuntu-latest`-раннері GitHub САМ встановлює
-`g++-mingw-w64-i686`, перезбирає `d3d9.dll` з коду репозиторію й звіряє
-байт-у-байт із закомміченим бінарником при КОЖНОМУ push/PR, що чіпає цей
-код. Це публічний, незалежний від автора результат (зелена галочка/бейдж
-на GitHub) — сильніший доказ для модерації, ніж локальний прогін на
-машині автора, і не вимагає нічого встановлювати ні від модератора, ні
-від користувача.
+чистому `ubuntu-latest`-раннері GitHub САМ завантажує й перевіряє SHA-256
+офіційного архіву Zig (той самий довірчий механізм, що й
+`MovieSubtitleD3D9FixZigBuilder.cs`), перезбирає `d3d9.dll` з коду
+репозиторію й звіряє байт-у-байт із закомміченим бінарником при КОЖНОМУ
+push/PR, що чіпає цей код. Це публічний, незалежний від автора результат
+(зелена галочка/бейдж на GitHub) — сильніший доказ для модерації, ніж
+локальний прогін на машині автора, і не вимагає нічого встановлювати ні
+від модератора, ні від користувача.
 
-**EN:** There is also a THIRD, fully machine-independent way: the GitHub
+**EN:** There is also a SECOND, fully machine-independent way: the GitHub
 Actions workflow `.github/workflows/verify-d3d9-fix.yml` — on a clean
-`ubuntu-latest` runner, GitHub itself installs `g++-mingw-w64-i686`,
-rebuilds `d3d9.dll` from the repository's own source, and compares it
-byte-for-byte against the committed binary on EVERY push/PR that touches
-this code. That is a public result independent of the repo's own author
-(a green check/badge on GitHub) — stronger evidence for moderation than a
-local run on the author's own machine, and it requires nothing to be
-installed by either the moderator or the user.
+`ubuntu-latest` runner, GitHub itself downloads and SHA-256-verifies the
+official Zig archive (the same trust mechanism as
+`MovieSubtitleD3D9FixZigBuilder.cs`), rebuilds `d3d9.dll` from the
+repository's own source, and compares it byte-for-byte against the
+committed binary on EVERY push/PR that touches this code. That is a
+public result independent of the repo's own author (a green check/badge
+on GitHub) — stronger evidence for moderation than a local run on the
+author's own machine, and it requires nothing to be installed by either
+the moderator or the user.
 
 ## 7. Встановлення вручну (без BF1LocalizationTool) / Manual install (without BF1LocalizationTool)
 

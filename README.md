@@ -134,6 +134,7 @@ workflow.
 
 ## Можливості GUI / GUI features
 
+**UA:**
 - 🎨 Темна/світла тема (dark/light theme)
 - 🔍 Фільтри рядків за мовою, статусом перекладу, технічністю — три статуси
   (Технічний / Перекладено / Без перекладу) взаємовиключні
@@ -153,6 +154,27 @@ workflow.
   окремі локальні інструменти (напр. Gemini-based пайплайн з глосарієм і
   валідацією маркерів — не входить у цей репозиторій, див. розділ
   "Робочий процес" нижче)
+
+**EN:**
+- 🎨 Dark/light theme
+- 🔍 Row filters by language, translation status, technical-ness — three
+  mutually exclusive statuses (Technical / Translated / Untranslated)
+- ✅ **ValidationService** — checks that technical markers are preserved
+  (`%s %d %i %f %c %u`, `{btn...}`, `[X]`, `\n \t`) in the translation, and
+  strictly rejects Russian letters (`ыэёъ`) that end up in a translation
+- ⚠️ **"Too long" translation threshold** (⚙ in the status bar) —
+  configurable `original×coefficient+margin` (default 1.3×+4), flags
+  translations at risk of not fitting the UI in the "Issues" filter —
+  calibrated against real in-game text-truncation cases
+- 🤖 **TechnicalStringService** — auto-detects strings that don't need
+  translation (URLs, numbers, `WORD_WORD`/`word_word` identifiers, key
+  names, cheat codes, vehicle/unit designations, copyright text, etc.)
+- 💾 **AutoSaveService** — autosaves translation progress
+- 📝 **SimpleLogger** — logs actions for diagnostics
+- 📤 CSV export/import for batch translation via external services or
+  separate local tools (e.g. a Gemini-based pipeline with a glossary and
+  marker validation — not part of this repository, see the "Workflow"
+  section below)
 
 ---
 
@@ -225,14 +247,10 @@ BF1LocalizationTool/
 │                                            # only, not part of the release)
 │                                            # — see FONT_FORMAT_SPEC.md
 │
-└── installer/                              # Inno Setup: встановлювачі готового
-                                             # перекладу (GameData\ + Readme.txt)
-                                             # для кінцевого користувача гри,
-                                             # поза .NET-рішенням інструменту
-                                             # Inno Setup: end-user installers
-                                             # for the finished translation
-                                             # (GameData\ + Readme.txt),
-                                             # outside the tool's .NET solution
+└── installer/                              # Inno Setup: встановлювачі готового перекладу
+                                             # (GameData\ + Readme.txt), поза .NET-рішенням
+                                             # Inno Setup: end-user installers for the
+                                             # finished translation, outside the .NET solution
     ├── bf1_installer.iss                   # Battlefront (2004) / Star Wars: Battlefront
     └── bf2_installer.iss                   # Battlefront II (2005) / Star Wars: Battlefront II
 ```
@@ -502,34 +520,24 @@ self-contained `.exe`.
   Jean-Baptiste Morizot, Fátima Lazaro, Florian Runge) і **[Exo 2](https://fonts.google.com/specimen/Exo+2)**
   (Natanael Gama) — шрифти для рендеру кириличних гліфів BF2.
 
-  UA: усі три — **SIL Open Font License**, вільно доступні на Google
+  **UA:** усі три — **SIL Open Font License**, вільно доступні на Google
   Fonts. **Цей репозиторій НЕ містить `.ttf`-файлів** (вони публічні,
   і посилання вище ведуть напряму до джерела) — точний перелік
   потрібних файлів і куди їх класти: `FONT_FORMAT_SPEC.md` §7.6.
   Обрані навмисно замість системного `Bahnschrift` (заборона
   розповсюдження).
-
-  Який файл рендерить який ігровий шрифт:
-
-  | Гра | Розмір | Файл |
-  |---|---|---|
-  | BF1 | усі 5 розмірів | `SofiaSansExtraCondensed-Bold.ttf` |
-  | BF2 | `gamefont_large` | `Unbounded-Bold.ttf` |
-  | BF2 | `gamefont_medium` | `Unbounded-Black.ttf` |
-  | BF2 | `gamefont_small` | `Unbounded-ExtraBold.ttf` |
-  | BF2 | `gamefont_tiny` / `gamefont_super_tiny` | `Exo2-ExtraBold.ttf` |
-  EN: all three are **SIL Open Font License**, freely available on
+  **EN:** all three are **SIL Open Font License**, freely available on
   Google Fonts. **This repository does NOT bundle `.ttf` files** (they
   are public, and the links above go straight to the source) — the
   exact list of files and where to put them is in
   `FONT_FORMAT_SPEC.md` §7.6. Chosen deliberately instead of the
   system `Bahnschrift` font (redistribution forbidden).
 
-  Which file renders which in-game font:
+  Який файл рендерить який ігровий шрифт / Which file renders which in-game font:
 
-  | Game | Size | File |
+  | Гра / Game | Розмір / Size | Файл / File |
   |---|---|---|
-  | BF1 | all 5 sizes | `SofiaSansExtraCondensed-Bold.ttf` |
+  | BF1 | усі 5 розмірів / all 5 sizes | `SofiaSansExtraCondensed-Bold.ttf` |
   | BF2 | `gamefont_large` | `Unbounded-Bold.ttf` |
   | BF2 | `gamefont_medium` | `Unbounded-Black.ttf` |
   | BF2 | `gamefont_small` | `Unbounded-ExtraBold.ttf` |

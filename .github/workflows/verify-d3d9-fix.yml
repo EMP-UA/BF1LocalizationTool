@@ -1,31 +1,31 @@
 # =============================================================================
 # UA: НЕЗАЛЕЖНА, ПУБЛІЧНА перевірка походження d3d9.dll — доказ для модерації
-#     (NexusMods тощо), що НЕ залежить від того, чи є mingw-w64 на машині
-#     користувача/модератора (локальний аналог — пункт меню "★★ ПОХОДЖЕННЯ
-#     d3d9.dll" у BF1LocalizationTool.Diagnostic, GenerateD3D9FixProvenance
-#     ReportCommand.cs). Тут те саме робить GitHub, а не машина автора:
-#     на чистому ubuntu-раннері встановлюється i686-w64-mingw32-g++, з
-#     ТОГО САМОГО вихідного коду репозиторію (tools/bf2_d3d9_widescreen_fix/)
-#     ЗБИРАЄТЬСЯ d3d9.dll ТОЧНО тим самим задокументованим рецептом, і
-#     результат звіряється БАЙТ-У-БАЙТ із бінарником, що лежить у
-#     репозиторії (BF1LocalizationTool.Core/Bf2Widescreen/Data/
+#     (NexusMods тощо), що НЕ залежить від машини користувача/модератора.
+#     На чистому ubuntu-раннері встановлюється офіційний, портативний
+#     компілятор Zig (той самий, що BF1LocalizationTool.Diagnostic
+#     довантажує сам собі — MovieSubtitleD3D9FixZigBuilder.cs,
+#     GenerateD3D9FixProvenanceReportCommand.cs), з ТОГО САМОГО вихідного
+#     коду репозиторію (tools/bf2_d3d9_widescreen_fix/) ЗБИРАЄТЬСЯ d3d9.dll
+#     ТОЧНО тим самим задокументованим рецептом (MovieSubtitleD3D9FixZigBuilder.
+#     BuildCommand), і результат звіряється БАЙТ-У-БАЙТ із бінарником, що
+#     лежить у репозиторії (BF1LocalizationTool.Core/Bf2Widescreen/Data/
 #     MovieSubtitleD3D9Fix.dll). Якщо хтось підмінить вбудований бінарник
 #     на щось, чого немає у відкритому джерелі поруч, — цей workflow
 #     впаде червоним, публічно і незалежно від автора репозиторію.
 # EN: An INDEPENDENT, PUBLIC check of d3d9.dll's provenance — evidence for
-#     moderation (NexusMods etc) that does NOT depend on whether the user's
-#     or a moderator's own machine has mingw-w64 (the local analogue is the
-#     "★★ PROVENANCE of d3d9.dll" menu item in BF1LocalizationTool.
-#     Diagnostic, GenerateD3D9FixProvenanceReportCommand.cs). Here GitHub
-#     itself does the same check, not the author's machine: on a clean
-#     ubuntu runner, i686-w64-mingw32-g++ is installed, d3d9.dll is built
-#     from THIS repository's own source (tools/bf2_d3d9_widescreen_fix/)
-#     with the EXACT same documented recipe, and the result is compared
-#     BYTE-FOR-BYTE against the binary committed to the repository
-#     (BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll).
-#     If anyone ever swaps the bundled binary for something not matching
-#     the open source next to it, this workflow fails red, publicly, and
-#     independently of the repo's own author.
+#     moderation (NexusMods etc) that does NOT depend on the user's or a
+#     moderator's own machine. On a clean ubuntu runner, the official,
+#     portable Zig compiler is installed (the same one BF1LocalizationTool.
+#     Diagnostic downloads for itself — MovieSubtitleD3D9FixZigBuilder.cs,
+#     GenerateD3D9FixProvenanceReportCommand.cs), d3d9.dll is built from
+#     THIS repository's own source (tools/bf2_d3d9_widescreen_fix/) with the
+#     EXACT same documented recipe (MovieSubtitleD3D9FixZigBuilder.
+#     BuildCommand), and the result is compared BYTE-FOR-BYTE against the
+#     binary committed to the repository (BF1LocalizationTool.Core/
+#     Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll). If anyone ever swaps the
+#     bundled binary for something not matching the open source next to it,
+#     this workflow fails red, publicly, and independently of the repo's
+#     own author.
 # =============================================================================
 name: Verify d3d9 fix reproducibility
 
@@ -36,36 +36,68 @@ on:
       - "tools/bf2_d3d9_widescreen_fix/**"
       - "BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
       - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixProvenance.cs"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixZigBuilder.cs"
       - ".github/workflows/verify-d3d9-fix.yml"
   pull_request:
     paths:
       - "tools/bf2_d3d9_widescreen_fix/**"
       - "BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
       - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixProvenance.cs"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixZigBuilder.cs"
   workflow_dispatch: {}
 
 jobs:
   verify:
     # UA: Ubuntu, НЕ Windows — саме тут (і саме так) верифіковано рецепт
-    #     збірки: g++-mingw-w64-i686 з apt, той самий, яким збирався
-    #     бінарник, що лежить у репозиторії.
+    #     збірки: офіційний портативний Zig, той самий, яким збирався
+    #     бінарник, що лежить у репозиторії (як і в самій програмі —
+    #     MovieSubtitleD3D9FixZigBuilder.cs — Zig однаково детерміновано
+    #     кросс-компілює під x86-windows-gnu незалежно від хост-ОС).
     # EN: Ubuntu, NOT Windows — this is exactly where (and how) the build
-    #     recipe was verified: g++-mingw-w64-i686 from apt, the same
-    #     toolchain the binary committed to this repository was built with.
+    #     recipe was verified: the official portable Zig compiler, the same
+    #     toolchain the binary committed to this repository was built with
+    #     (same as inside the program itself — MovieSubtitleD3D9FixZigBuilder.cs
+    #     — Zig cross-compiles to x86-windows-gnu deterministically
+    #     regardless of the host OS).
     runs-on: ubuntu-latest
+    env:
+      # UA: Має збігатися з MovieSubtitleD3D9FixZigBuilder.ZigVersion.
+      # EN: Must match MovieSubtitleD3D9FixZigBuilder.ZigVersion.
+      ZIG_VERSION: "0.16.0"
     steps:
       - name: Checkout / Клонування
         uses: actions/checkout@v4
 
-      - name: Install i686-w64-mingw32-g++ (apt)
-        run: sudo apt-get update && sudo apt-get install -y g++-mingw-w64-i686
+      - name: Download & verify official Zig (same trust model as MovieSubtitleD3D9FixZigBuilder.cs)
+        run: |
+          set -euo pipefail
+          # UA: Адреса й SHA-256 беруться живцем з офіційного, машинозчитуваного
+          #     реєстру релізів https://ziglang.org/download/index.json (не
+          #     зашиті наперед у workflow) — той самий принцип довіри, що й у
+          #     MovieSubtitleD3D9FixZigBuilder.EnsureZigAvailableAsync.
+          # EN: The URL and SHA-256 are read live from the official,
+          #     machine-readable release registry https://ziglang.org/download/
+          #     index.json (not pinned ahead of time in the workflow) — the
+          #     same trust model as MovieSubtitleD3D9FixZigBuilder.
+          #     EnsureZigAvailableAsync.
+          INDEX=$(curl -fsSL https://ziglang.org/download/index.json)
+          URL=$(echo "$INDEX" | jq -r --arg v "$ZIG_VERSION" '.[$v]["x86_64-linux"].tarball')
+          SHA=$(echo "$INDEX" | jq -r --arg v "$ZIG_VERSION" '.[$v]["x86_64-linux"].shasum')
+          echo "UA: Офіційна адреса Zig $ZIG_VERSION (linux-x86_64): $URL"
+          echo "EN: Official Zig $ZIG_VERSION (linux-x86_64) URL: $URL"
+          curl -fsSL "$URL" -o zig.tar.xz
+          echo "$SHA  zig.tar.xz" | sha256sum -c -
+          mkdir -p zig-toolchain
+          tar -xf zig.tar.xz -C zig-toolchain --strip-components=1
+          echo "$(pwd)/zig-toolchain" >> "$GITHUB_PATH"
 
-      - name: Rebuild d3d9.dll from tools/bf2_d3d9_widescreen_fix/ (exact documented recipe)
+      - name: Rebuild d3d9.dll from tools/bf2_d3d9_widescreen_fix/ (exact documented Zig recipe)
         working-directory: tools/bf2_d3d9_widescreen_fix
+        # UA: Точно MovieSubtitleD3D9FixZigBuilder.BuildCommand.
+        # EN: Exactly MovieSubtitleD3D9FixZigBuilder.BuildCommand.
         run: >
-          i686-w64-mingw32-g++ -shared -O2 -s -static -static-libgcc -static-libstdc++
+          zig c++ -target x86-windows-gnu -shared -O2 -s
           d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll
-          -Wl,--enable-stdcall-fixup -Wl,--no-insert-timestamp
 
       - name: Compare rebuilt DLL against the one committed to the repo (byte-for-byte)
         run: |
@@ -88,10 +120,10 @@ jobs:
 
       - name: Sanity-check exports/imports/format (objdump)
         # UA: Звичайний системний objdump (binutils, він уже є на ubuntu-latest)
-        #     читає PE/COFF так само добре — окремий mingw-специфічний
-        #     objdump не потрібен.
+        #     читає PE/COFF так само добре — окремий цільовий objdump не
+        #     потрібен.
         # EN: The plain system objdump (binutils, already on ubuntu-latest)
-        #     reads PE/COFF just fine — no separate mingw-specific objdump
+        #     reads PE/COFF just fine — no separate target-specific objdump
         #     is needed.
         run: objdump -p tools/bf2_d3d9_widescreen_fix/d3d9.dll
 

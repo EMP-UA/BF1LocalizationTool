@@ -15,18 +15,18 @@
 //     і використовує для компіляції ТОГО САМОГО d3d9_proxy.cpp/.def, що
 //     вже вбудований у програму (MovieSubtitleD3D9FixProvenance.cs).
 //
-//     ЧОМУ ЦЕ ДРУГИЙ, А НЕ ЗАМІННИЙ шлях відносно MinGW:
-//     Zig використовує ІНШИЙ, LLVM-based компілятор і ІНШУ модель
-//     рантайму (Windows 10/11 UCRT — `api-ms-win-crt-*.dll`, вбудований
-//     компонент ОС із 2015 року, а не `msvcrt.dll`, який тягне GCC/MinGW).
-//     Тому результат НІКОЛИ не буде байт-у-байт ідентичним MinGW-білду —
-//     це чесно й очікувано, не помилка. Натомість це дає СИЛЬНІШИЙ за
-//     інших параметром доказ: ДВА ПОВНІСТЮ НЕЗАЛЕЖНІ компілятори (GCC і
-//     LLVM/Zig), скомпільовані з ОДНОГО Й ТОГО Ж відкритого коду, обидва
-//     видають коректний, правильно-експортований D3D9-проксі. Підмінити
-//     код так, щоб ОБИДВА незалежні тулчейни це "не помітили", а
-//     результат обох залишався функціонально тим самим — набагато
-//     складніше, ніж підмінити один бінарник.
+//     ЧОМУ ЦЕ КАНОНІЧНИЙ ШЛЯХ: саме цей механізм (запущений із Visual
+//     Studio, без стороннього, окремо встановлюваного тулчейна) і зібрав
+//     той бінарник, що реально протестований у грі, — тому вбудований у
+//     програму Data/MovieSubtitleD3D9Fix.dll зібраний саме Zig-ом
+//     (перевірено через objdump: внутрішня PE-назва модуля —
+//     "zig_d3d9.dll"). Компілятор LLVM-based, а рантайм — Windows 10/11
+//     UCRT (`api-ms-win-crt-*.dll`, вбудований компонент ОС із 2015 року),
+//     тож жодного стороннього рантайму встановлювати не треба. Незалежна
+//     перезбірка з того самого відкритого .cpp/.def на іншій машині (або
+//     в CI) і звірка SHA-256 із RecordedDllSha256 — і є доказ походження:
+//     підмінити код так, щоб перезбірка з нього все одно давала той самий
+//     бінарник, неможливо.
 //
 //     ПОСТАЧАННЯ. Завантажується `zig-x86_64-windows-0.16.0.zip`
 //     (~93 МБ) — офіційний реліз, адреса й SHA-256 взяті з
@@ -48,18 +48,18 @@
 //     SAME d3d9_proxy.cpp/.def already bundled in the program
 //     (MovieSubtitleD3D9FixProvenance.cs).
 //
-//     WHY THIS IS A SECOND path, not a REPLACEMENT for MinGW:
-//     Zig uses a DIFFERENT, LLVM-based compiler and a
-//     DIFFERENT runtime model (Windows 10/11 UCRT — `api-ms-win-crt-*.dll`,
-//     a built-in OS component since 2015, rather than the `msvcrt.dll`
-//     that GCC/MinGW pulls in). So the result will NEVER be byte-for-byte
-//     identical to the MinGW build — that is honest and expected, not a
-//     bug. What it gives instead is a STRONGER kind of evidence along a
-//     different axis: TWO FULLY INDEPENDENT compilers (GCC and LLVM/Zig),
-//     built from the SAME open source, both produce a correct, properly-
-//     exporting D3D9 proxy. Tampering with the code so that BOTH
-//     independent toolchains "fail to notice" while both results stay
-//     functionally the same is far harder than tampering with one binary.
+//     WHY THIS IS THE CANONICAL path: this very mechanism (run from
+//     Visual Studio, with no separately installed third-party toolchain)
+//     is what actually produced the binary tested in the game — which is
+//     why the bundled Data/MovieSubtitleD3D9Fix.dll is built with Zig
+//     (verified via objdump: its internal PE module name is
+//     "zig_d3d9.dll"). The compiler is LLVM-based and the runtime is the
+//     Windows 10/11 UCRT (`api-ms-win-crt-*.dll`, a built-in OS component
+//     since 2015), so no separate runtime needs installing either. An
+//     independent rebuild from the same open .cpp/.def on another machine
+//     (or in CI), checked by SHA-256 against RecordedDllSha256, is the
+//     provenance proof itself: tampering with the code so a rebuild from
+//     it still produces the same binary is not possible.
 //
 //     DISTRIBUTION. Downloads `zig-x86_64-windows-0.16.0.zip` (~93 MB) —
 //     the official release, with its URL and SHA-256 taken from
@@ -83,11 +83,14 @@ namespace BF1LocalizationTool.Core.Bf2Widescreen;
 /// UA: Завантажує (з перевіркою SHA-256), кешує й запускає портативний
 ///     Zig-компілятор — самодостатній, без сторонніх встановлюваних
 ///     застосунків спосіб зібрати d3d9_proxy.cpp/.def прямо з програми.
-///     Другий, незалежний від MinGW шлях перевірки.
+///     Канонічний шлях і збірки, і перевірки походження — саме ним
+///     зібрано вбудований у програму d3d9.dll.
 /// EN: Downloads (with SHA-256 verification), caches, and runs the
 ///     portable Zig compiler — a self-contained way, with no separately
 ///     installed application, to build d3d9_proxy.cpp/.def right from the
-///     program. A second, MinGW-independent verification path.
+///     program. The canonical path for both building it and verifying its
+///     provenance — this is what produced the d3d9.dll bundled in the
+///     program.
 /// </summary>
 public static class MovieSubtitleD3D9FixZigBuilder
 {

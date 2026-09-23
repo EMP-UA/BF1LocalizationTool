@@ -91,31 +91,6 @@ public static class MovieSubtitleD3D9FixProvenance
     private const string DefSourceResourceName = "BF1LocalizationTool.Core.Bf2Widescreen.Data.Source.d3d9_proxy.def";
 
     /// <summary>
-    /// UA: Рецепт МінGW-перезбірки, яку GenerateD3D9FixProvenanceReportCommand
-    ///     запускає як другу, незалежну перезбірку (окрім Zig — див.
-    ///     MovieSubtitleD3D9FixZigBuilder.BuildCommand). Вбудований файл
-    ///     (Data/MovieSubtitleD3D9Fix.dll) зараз зібраний Zig-ом, не цим
-    ///     рецептом, тож MinGW-перезбірка за цим рецептом дає ІНШИЙ хеш, ніж
-    ///     RecordedDllSha256, — це очікуваний факт (різні компілятори дають
-    ///     різні байти з ідентичного .cpp/.def), а не ознака проблеми.
-    ///     Прапорець "--no-insert-timestamp" прибирає єдине недетерміноване
-    ///     поле PE-заголовка MinGW-збірки (мітку часу лінкера).
-    /// EN: The MinGW rebuild recipe that GenerateD3D9FixProvenanceReportCommand
-    ///     runs as a second, independent rebuild (besides Zig — see
-    ///     MovieSubtitleD3D9FixZigBuilder.BuildCommand). The bundled file
-    ///     (Data/MovieSubtitleD3D9Fix.dll) is currently built with Zig, not
-    ///     this recipe, so a MinGW rebuild using this recipe yields a
-    ///     DIFFERENT hash than RecordedDllSha256 — an expected fact
-    ///     (different compilers produce different bytes from identical
-    ///     .cpp/.def), not a sign of a problem. The "--no-insert-timestamp"
-    ///     flag removes the one non-deterministic field of the MinGW build's
-    ///     PE header (the linker timestamp).
-    /// </summary>
-    public const string BuildCommand =
-        "i686-w64-mingw32-g++ -shared -O2 -s -static -static-libgcc -static-libstdc++ " +
-        "d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll -Wl,--enable-stdcall-fixup -Wl,--no-insert-timestamp";
-
-    /// <summary>
     /// UA: SHA-256 бінарника, що ЗАРАЗ вбудований у цю збірку
     ///     BF1LocalizationTool — зібраний тулчейном Zig (рецепт у
     ///     MovieSubtitleD3D9FixZigBuilder.BuildCommand), підтверджений
@@ -129,10 +104,9 @@ public static class MovieSubtitleD3D9FixProvenance
     ///     in MovieSubtitleD3D9FixZigBuilder.BuildCommand), confirmed by two
     ///     independent Zig rebuilds of identical .cpp/.def on the user's
     ///     real machine and a live in-game test. Update this value only
-    ///     when you
-    ///     deliberately change d3d9_proxy.cpp/.def and rebuild — otherwise
-    ///     GenerateD3D9FixProvenanceReportCommand will correctly report a
-    ///     mismatch.
+    ///     when you deliberately change d3d9_proxy.cpp/.def and rebuild —
+    ///     otherwise GenerateD3D9FixProvenanceReportCommand will correctly
+    ///     report a mismatch.
     /// </summary>
     public const string RecordedDllSha256 = "d94edea6662a11219c7aa12ead532e762bf51927a5adb4e2af1ef4d7af938cf8";
 

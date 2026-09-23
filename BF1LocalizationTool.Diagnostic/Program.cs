@@ -471,8 +471,8 @@ List<MenuCategory> BuildCategories() =>
                 "★★ ALPHA SOURCE (BattlefrontII.exe read-only): narrow down functions that write to the movie/subtitle node's +0x2C..0x2F AND reference ws/W/H",
                 RunAnalyzeMovieSubtitleAlphaSource),
             new MenuItem(
-                "★★ ПОХОДЖЕННЯ d3d9.dll: розпакувати вбудоване джерело, порівняти SHA-256, і перезібрати наживо двома незалежними компіляторами (MinGW, якщо є на машині; Zig — самодостатньо, довантажується сам)",
-                "★★ PROVENANCE of d3d9.dll: extract the bundled source, compare SHA-256, and rebuild it live with two independent compilers (MinGW, if present on the machine; Zig — self-contained, fetches itself)",
+                "★★ ПОХОДЖЕННЯ d3d9.dll: розпакувати вбудоване джерело, порівняти SHA-256, і перезібрати наживо тулчейном Zig (самодостатньо, довантажується сам)",
+                "★★ PROVENANCE of d3d9.dll: extract the bundled source, compare SHA-256, and rebuild it live with the Zig toolchain (self-contained, fetches itself)",
                 RunGenerateD3D9FixProvenanceReport),
         ]),
 
