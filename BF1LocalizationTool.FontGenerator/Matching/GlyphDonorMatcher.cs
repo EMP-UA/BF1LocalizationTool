@@ -4,11 +4,11 @@
 // Ліцензія / License: MIT
 // =============================================================================
 // UA: Донорські слоти ЖОРСТКО ФІКСОВАНІ за розміром (стратегія
-//     "перезаписати існуючий слот", FONT_FORMAT_SPEC.md розділ 5: рухати/
-//     змінювати розмір сусідніх гліфів в атласі не розглядається). Тому
-//     кінцевий рендер ЗАВЖДИ буде масштабований точно під
-//     CanvasWidth×CanvasHeight донора — питання лише в тому, НАСКІЛЬКИ
-//     сильним буде це масштабування.
+//     "перезаписати існуючий слот", FONT_FORMAT_SPEC.md розділ 5:
+//     рухати/змінювати розмір сусідніх гліфів в атласі не
+//     розглядається). Тому кінцевий рендер ЗАВЖДИ буде масштабований
+//     точно під CanvasWidth×CanvasHeight донора — питання лише в тому,
+//     НАСКІЛЬКИ сильним буде це масштабування.
 //
 //     Замість силуваного вписування/обрізання (обрізання гірше за
 //     масштабування — ламає форму штриха, а не просто трохи стискає) —
@@ -16,17 +16,18 @@
 //     природно близькою пропорцією ширина/висота, щоб масштабування було
 //     мінімальним.
 //
-//     Підбір враховує ДВА критерії одночасно, а не лише пропорцію:
-//     оскільки FilterOutTooSmall пропускає донорів від 50% до 100%+
-//     висоти великої літери, серед "безпечних" донорів висота лишається
-//     дуже різною, а GlyphBoxFitRenderer розтягує кожну літеру рівно під
-//     розмір ЇЇ ВЛАСНОГО донора без жодного узгодження з сусідніми
-//     літерами — тому підбір ЛИШЕ за пропорцією міг би дати літері
-//     донора на 55% висоти, а сусідній літері — донора на 95% висоти, і
-//     на екрані вони виглядали б як дрібна і велика, навіть маючи
-//     майже ідеальну пропорцію кожна.
-//
-//     Критерії:
+//     Підбір враховує ДВА критерії одночасно, бо самої лише пропорції
+//     (W/H) недостатньо: FilterOutTooSmall пропускає донорів від 50% до
+//     100%+ висоти великої літери, тобто серед "безпечних" донорів
+//     висота лишається дуже різною, а GlyphBoxFitRenderer розтягує кожну
+//     літеру рівно під розмір ЇЇ ВЛАСНОГО донора без жодного узгодження
+//     з сусідніми літерами — тому літера, що отримала донора на 55%
+//     висоти, і сусідня літера, що отримала донора на 95% висоти, на
+//     екрані виглядають як дрібна і велика, навіть якщо обидві мають
+//     майже ідеальну пропорцію (підтверджено скріншотами з реальної
+//     гри — BF1/BF2 головне меню, літери "стрибають": і/н/д тощо різного
+//     розміру в тому самому слові, деякі помітно менші за сусідні
+//     англійські літери поруч):
 //       1. Пропорція (log-шкала).
 //       2. Відносна висота — InkHeight літери (з CyrillicGlyphShapeProbe,
 //          порівнянний між усіма літерами ЦЬОГО алфавіту, бо всі
@@ -35,14 +36,16 @@
 //          усіх ВЕЛИКИХ цілей), звірена з висотою донора як часткою від
 //          referenceCapHeight (медіана висот РЕАЛЬНИХ A-Z цього шрифту —
 //          той самий еталон, що й у FilterOutTooSmall).
-//     Вага 1.0 для обох доданків — обидва в порівнянному діапазоні (0-1).
+//     Вага 1.0 для обох доданків — обидва в порівнянному діапазоні
+//     (0-1), рівна вага як обґрунтована стартова точка; потребує
+//     візуальної перевірки в грі після перегенерації, за потреби
+//     скоригувати.
 //
-//     Порядок призначення — "від НАЙЕКСТРЕМАЛЬНІШИХ цілей" (найбільше
-//     відхилення від "квадратної, повної висоти" форми), а не за
-//     зростанням пропорції — щоб літерам, яким найважче знайти
-//     відповідного донора, першими діставався найкращий вибір із ще
-//     повного пулу, а не рештки після того, як усі "звичайні" літери
-//     вже розібрали найкращих кандидатів.
+//     Призначення обробляє спершу НАЙЕКСТРЕМАЛЬНІШІ цілі (найбільше
+//     відхилення від "квадратної, повної висоти" форми) — так літерам,
+//     яким найважче знайти відповідного донора, першими дістається
+//     найкращий вибір із ще повного пулу, а не рештки після того, як усі
+//     "звичайні" літери вже розібрали найкращих кандидатів.
 // EN: Donor slots are RIGIDLY FIXED in size (the "overwrite existing
 //     slot" strategy, FONT_FORMAT_SPEC.md section 5: moving/resizing
 //     neighboring atlas glyphs is out of scope). So the final render
@@ -56,17 +59,18 @@
 //     to a donor with a naturally close width/height ratio, so scaling
 //     stays minimal.
 //
-//     Matching factors in TWO criteria at once, not just ratio: since
-//     FilterOutTooSmall lets through donors anywhere from 50% to 100%+ of
-//     the capital letter's height, height varies wildly even among "safe"
-//     donors, and GlyphBoxFitRenderer stretches each letter to exactly
-//     fill ITS OWN donor's size with no coordination with neighboring
-//     letters — so matching by ratio ALONE could give one letter a
-//     55%-height donor and its neighbor a 95%-height donor, rendering as
-//     small and large on screen even though both have a near-perfect
-//     ratio match.
-//
-//     Criteria:
+//     Matching factors in TWO criteria at once, because ratio (W/H)
+//     alone is not enough: FilterOutTooSmall lets through donors
+//     anywhere from 50% to 100%+ of the capital letter's height, so even
+//     among "safe" donors, height varies wildly, and GlyphBoxFitRenderer
+//     stretches each letter to exactly fill ITS OWN donor's size with no
+//     coordination with neighboring letters — so a letter that got a
+//     55%-height donor and a neighbor that got a 95%-height donor render
+//     as small and large on screen, even if both have a near-perfect
+//     ratio match (confirmed via real in-game screenshots — BF1/BF2 main
+//     menu, "jumping" letters: і/н/д etc. at inconsistent sizes within
+//     the same word, some noticeably smaller than neighboring English
+//     letters):
 //       1. Ratio (log scale).
 //       2. Relative height — the letter's InkHeight (from
 //          CyrillicGlyphShapeProbe, comparable across all letters of
@@ -76,13 +80,15 @@
 //          against the donor's height as a fraction of referenceCapHeight
 //          (median height of REAL A-Z glyphs in this font — the same
 //          reference FilterOutTooSmall already uses).
-//     Weight 1.0 for both terms — both are in a comparable range (0-1).
+//     Weight 1.0 for both terms — both are in a comparable range (0-1),
+//     equal weighting as a reasoned starting point; needs visual
+//     confirmation in-game after regeneration, adjust if needed.
 //
-//     Assignment order is "most extreme targets first" (largest deviation
-//     from a "square, full-height" shape), not ascending ratio — so
-//     letters that are hardest to match get first pick from the
-//     still-full donor pool, instead of leftovers after all "ordinary"
-//     letters already took the best candidates.
+//     Assignment processes "most extreme
+//     targets first" (largest deviation from a "square, full-height"
+//     shape) — so letters that are hardest to match get first pick from
+//     the still-full donor pool, instead of leftovers after all
+//     "ordinary" letters already took the best candidates.
 // =============================================================================
 
 namespace BF1LocalizationTool.FontGenerator.Matching;

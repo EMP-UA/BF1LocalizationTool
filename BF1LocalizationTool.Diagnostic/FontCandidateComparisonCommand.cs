@@ -2,10 +2,12 @@
 // BF1LocalizationTool.Diagnostic — FontCandidateComparisonCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: ПОСТІЙНИЙ, повторно-запускний інструмент — заміняє одноразовий
-//     зовнішній аналіз реальними даними прямо в тулчейні, для повної
-//     достовірності звірки того, що в грі, з тим, що додається.
+//     зовнішній аналіз реальними даними прямо в тулчейні: звіряє
+//     кандидатів шрифтів проти реальних байтів гри для повної
+//     достовірності того, що в грі, і того, що додається.
 //
 //     Читає РЕАЛЬНІ метрики ВАНІЛЬНОГО (ще без кирилиці) шрифту гри —
 //     ті самі байти FBOD/HEAD, що й GenerateNoDonorCyrillicCoreCommand
@@ -27,25 +29,27 @@
 //     (кандидат природно ширший за шрифт гри). >1.0 = РОЗТЯГУВАТИ
 //     (кандидат природно вужчий).
 //
-//     ВАЖЛИВО: показник спотворення — це САМЕ aspectRatio (відношення
-//     widthScale до heightScale), а НЕ widthScale сам по собі. widthScale
-//     — це переведення одиниць (пікселі гри ÷ пікселі пробного растру
-//     ProbeFontSizePx=300), у ньому взагалі немає висоти, тож він НЕ
-//     МОЖЕ показувати спотворення: шрифти з різною висотою капітелі
-//     (напр. BF1 CapHeightGame=22px і BF2 CapHeightGame=11px) можуть
-//     дати ОДНАКОВИЙ widthScale для того самого кандидата, попри
-//     протилежні реальні пропорції (BF1 ≈0.50 — дуже вузький; BF2
-//     ≈1.00 — майже квадратний). Сортування за близькістю widthScale до
-//     1.0 системно обирало б найвужчий шрифт (Extra Condensed Thin) для
-//     обох ігор незалежно від їхньої реальної пропорції. widthScale сам
-//     по собі лишається правильним у ПРОДАКШН-генерації
-//     (GlyphMetricModel.ComputeLetterMetric), де він і має бути
-//     переведенням одиниць — коректним показником спотворення саме тут,
-//     у діагностиці, є лише відношення aspectRatio.
+//     ⚠️ widthScale САМ ПО СОБІ НЕ Є показником спотворення — це лише
+//     ПЕРЕВЕДЕННЯ ОДИНИЦЬ (пікселі гри ÷ пікселі пробного растру
+//     ProbeFontSizePx=300), у ньому взагалі немає висоти. Доказ: BF1
+//     gamefont_large (CapHeightGame=22px) і BF2 gamefont_large
+//     (CapHeightGame=11px) дають ОДНАКОВИЙ widthScale 0.105 для того
+//     самого кандидата — висота вдвічі різна, показник не зрушив.
+//     Сортування за близькістю widthScale до 1.0 обрало б просто
+//     НАЙВУЖЧИЙ шрифт (Extra Condensed Thin) для ОБОХ ігор, хоча
+//     реальні пропорції капітелей у них протилежні (BF1 ≈0.50 — дуже
+//     вузький; BF2 ≈1.00 — майже квадратний) — саме тому показником
+//     спотворення є aspectRatio, а не widthScale. Сам widthScale у
+//     ПРОДАКШН-генерації (GlyphMetricModel.ComputeLetterMetric)
+//     лишається правильним — там він і має бути переведенням одиниць.
+// ---
+//     Менше довіри "на око" — більше довіри реальному числу з реальних
+//     байтів. Але й саме "реальне число" треба перевіряти на
+//     осмисленість, а не лише на походження.
 // EN: A PERMANENT, re-runnable tool — replaces a one-off external
-//     analysis with real data directly in the toolchain, for full
-//     reliability when comparing what's in the game against what's
-//     being added.
+//     analysis with real data directly in the toolchain: it checks font
+//     candidates against real game bytes for full reliability of what's
+//     in the game versus what gets added.
 //
 //     Reads REAL metrics of the VANILLA (still Cyrillic-free) game font —
 //     the SAME FBOD/HEAD bytes GenerateNoDonorCyrillicCoreCommand uses
@@ -68,20 +72,24 @@
 //     naturally wider than the game font). >1.0 = STRETCHED (candidate
 //     is naturally narrower).
 //
-//     IMPORTANT: the distortion metric is aspectRatio (the ratio of
-//     widthScale to heightScale), NOT widthScale alone. widthScale is a
-//     unit conversion (game pixels ÷ probe-raster pixels,
-//     ProbeFontSizePx=300); it contains no height at all, so it CANNOT
-//     express distortion: fonts with different cap heights (e.g. BF1
-//     CapHeightGame=22px and BF2 CapHeightGame=11px) can produce the
-//     SAME widthScale for the same candidate despite opposite real
-//     proportions (BF1 ≈0.50 — very narrow; BF2 ≈1.00 — nearly square).
-//     Sorting by closeness of widthScale to 1.0 would systematically
-//     pick the narrowest font (Extra Condensed Thin) for both games
-//     regardless of their real proportion. widthScale itself stays
-//     correct in PRODUCTION generation (GlyphMetricModel.ComputeLetterMetric),
-//     where it is meant to be a unit conversion — aspectRatio is the
-//     only valid distortion metric here, in diagnostics.
+//     ⚠️ widthScale ALONE is NOT a distortion metric — it is only a
+//     UNIT CONVERSION (game pixels ÷ probe-raster pixels,
+//     ProbeFontSizePx=300), and it contains no height at all. Proof: BF1
+//     gamefont_large (CapHeightGame=22px) and BF2 gamefont_large
+//     (CapHeightGame=11px) produce the SAME widthScale 0.105 for the
+//     same candidate — the height differs 2×, the number doesn't move.
+//     Sorting by closeness of widthScale to 1.0 would simply pick the
+//     NARROWEST font (Extra Condensed Thin) for BOTH games, even though
+//     their real capital proportions are opposite (BF1 ≈0.50 — very
+//     narrow; BF2 ≈1.00 — nearly square) — which is exactly why
+//     aspectRatio, not widthScale, is the distortion metric. widthScale
+//     itself stays correct in PRODUCTION generation
+//     (GlyphMetricModel.ComputeLetterMetric) — a unit conversion is
+//     exactly what belongs there.
+// ---
+//     Less trust in "looks about right" — more trust in a real number
+//     from real bytes. But the "real number" itself must also be
+//     checked for meaning, not just for provenance.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Fonts;
@@ -96,11 +104,11 @@ public static class FontCandidateComparisonCommand
     private static readonly string[] TargetFontBaseNames =
         ["gamefont_large", "gamefont_medium", "gamefont_small", "gamefont_tiny", "gamefont_super_tiny"];
 
-    // UA: ДРУГИЙ, НЕЗАЛЕЖНИЙ показник: ЩІЛЬНІСТЬ ШТРИХА
-    //     (насиченість/weight). ПРИЧИНА: сам aspect (пропорція)
+    // UA: ДРУГИЙ, НЕЗАЛЕЖНИЙ показник: ЩІЛЬНІСТЬ
+    //     ШТРИХА (насиченість/weight). ПРИЧИНА: сам aspect (пропорція)
     //     принципово не може відповісти на питання насиченості, і
-    //     покладатись на око тут суперечить правилу "оригінал — наш
-    //     вказівник". Але насиченість ТЕЖ вимірна з реальних даних:
+    //     покладатись на око тут суперечить правилу "оригінал —
+    //     орієнтир". Але насиченість ТЕЖ вимірна з реальних даних:
     //     беремо РЕАЛЬНІ пікселі атласу ванільного шрифту (ті самі
     //     байти, що малює гра), рахуємо СЕРЕДНЮ альфу в межах
     //     UV-прямокутника кожної англійської капітелі A-Z і беремо
@@ -121,10 +129,10 @@ public static class FontCandidateComparisonCommand
     //     буде дещо ВИЩОЮ за виміряну тут. Показник лишається придатним
     //     для ПОРІВНЯННЯ кандидатів між собою (усі в однакових умовах),
     //     але не є точним прогнозом фінального результату.
-    // EN: A SECOND, INDEPENDENT metric: STROKE DENSITY (weight). REASON:
-    //     aspect (proportion) fundamentally
+    // EN: A SECOND, INDEPENDENT metric: STROKE
+    //     DENSITY (weight). REASON: aspect (proportion) fundamentally
     //     cannot answer the weight question, and falling back on
-    //     eyeballing contradicts the "the original is our guide" rule.
+    //     eyeballing contradicts the "the original is the guide" rule.
     //     But weight is ALSO measurable from real data: take the REAL
     //     atlas pixels of the vanilla font (the same bytes the game
     //     draws), compute the MEAN alpha within each English capital
@@ -253,42 +261,45 @@ public static class FontCandidateComparisonCommand
         try
         {
             PrivateFontRegistry.EnsureLoaded();
-            // UA: Кандидати ідентифікуються ВІДНОСНИМ ШЛЯХОМ файлу
-            //     (LoadedPaths), а не назвою родини — назви родин можуть
-            //     бути обрізаними/неоднозначними (напр. "...Extra"
-            //     збігається і з ExtraBold, і з ExtraLight —
-            //     FONT_FORMAT_SPEC.md розділ 11.13), тоді як файловий шлях
-            //     ("FiraSansExtraCondensed-ExtraBold.ttf") завжди
-            //     однозначний.
-            // EN: Candidates are identified by file RELATIVE PATH
-            //     (LoadedPaths), not family name — family names can be
-            //     truncated/ambiguous (e.g. "...Extra" collides with both
-            //     ExtraBold and ExtraLight — FONT_FORMAT_SPEC.md section
-            //     11.13), whereas the file path
-            //     ("FiraSansExtraCondensed-ExtraBold.ttf") is always
-            //     unambiguous.
-            // UA: Курсивні (Italic) файли виключаються з кандидатів.
-            //     Причина: курсив нахиляє контур, тому його bounding-box
-            //     ширший за той самий гліф у прямому накресленні — це
-            //     підвищує "природний" InkWidth і штучно наближає aspect
-            //     до цілі, не роблячи курсив насправді придатним для
-            //     заміни ПРЯМИХ англійських капітелей у грі (вимірювальний
-            //     артефакт, а не коректний збіг). У грі кирилиця має бути
-            //     прямою (як оригінал — п.1 стандартних правил), тож
-            //     курсив як кандидат на продакшн-шрифт не розглядається
-            //     взагалі — виключається ще на етапі списку кандидатів, а
-            //     не покладається на сортування/вердикт.
-            // EN: Italic files are excluded from candidates. Reason:
-            //     slanting the outline widens its bounding box relative to
-            //     the same glyph upright, which inflates "natural"
-            //     InkWidth and artificially pulls aspect toward the
-            //     target without making italic actually suitable for
-            //     replacing UPRIGHT English capitals in-game (a
-            //     measurement artifact, not a genuine match). In-game
-            //     Cyrillic must be upright (matching the original — rule
-            //     1), so italic is never a valid production candidate —
-            //     excluded at the candidate-list stage rather than relying
-            //     on sorting/verdict to catch it.
+            // UA: Кандидати — ВІДНОСНІ ШЛЯХИ файлів
+            //     (LoadedPaths), не назви родин (LoadedFamilyNames,
+            //     видалено з PrivateFontRegistry). Прямий наслідок: у звіті
+            //     тепер видно РЕАЛЬНІ імена файлів
+            //     ("FiraSansExtraCondensed-ExtraBold.ttf"), а не обрізані/
+            //     неоднозначні family-назви ("...Extra", яка збігалась і з
+            //     ExtraLight — FONT_FORMAT_SPEC.md розділ 11.13).
+            // EN: Candidates are file RELATIVE
+            //     PATHS (LoadedPaths), not family names (LoadedFamilyNames,
+            //     removed from PrivateFontRegistry). Direct consequence:
+            //     the report now shows REAL file names
+            //     ("FiraSansExtraCondensed-ExtraBold.ttf"), not truncated/
+            //     ambiguous family names ("...Extra", which also collided
+            //     with ExtraLight — FONT_FORMAT_SPEC.md section 11.13).
+            // UA: ВИКЛЮЧЕНО — курсивні (Italic) файли. Причина: реальний прогін
+            //     показав, що FiraSans-BlackItalic.ttf виграє 3 з 5 розмірів
+            //     BF2 (large/medium/small) за сумарним відхиленням aspect+
+            //     density. Це артефакт вимірювання, а не правильний вибір:
+            //     курсив нахиляє контур, тому його bounding-box ширший за
+            //     той самий гліф у прямому накресленні — це підвищує
+            //     "природний" InkWidth і випадково зближує aspect до цілі,
+            //     але не робить курсив придатним для заміни ПРЯМИХ англійських
+            //     капітелей у грі. У грі кирилиця має бути прямою (як
+            //     оригінал — п.1 стандартних правил), тож курсив як кандидат
+            //     на продакшн-шрифт взагалі не розглядається — виключаємо
+            //     ще на етапі списку кандидатів, а не покладаємось на
+            //     сортування/вердикт.
+            // EN: EXCLUDED — Italic files. Reason: a real run showed
+            //     FiraSans-BlackItalic.ttf winning 3 of 5 BF2 sizes
+            //     (large/medium/small) by combined aspect+density deviation.
+            //     That's a measurement artifact, not a correct pick: slanting
+            //     the outline widens its bounding box relative to the same
+            //     glyph upright, which inflates "natural" InkWidth and
+            //     coincidentally pulls aspect toward the target — it does not
+            //     make italic suitable for replacing UPRIGHT English capitals
+            //     in-game. In-game Cyrillic must be upright (matching the
+            //     original — rule 1), so italic is never a valid production
+            //     candidate — excluded at the candidate-list stage rather than
+            //     relying on sorting/verdict to catch it.
             candidates = PrivateFontRegistry.LoadedPaths()
                 .Where(n => !n.Contains("Italic", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)

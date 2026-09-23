@@ -2,9 +2,9 @@
 // BF1LocalizationTool.Diagnostic — UvRectBoundsCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Одна з передумовних перевірок для GlyphAtlasPatcher.
-//     GlyphAtlasPatcher писатиме пікселі за адресою
+// UA: GlyphAtlasPatcher писатиме пікселі за адресою
 //     (row*texW + col)*2 у масив BODY конкретної сторінки — якщо
 //     x0/x1/y0/y1 хоч одного донора вийде за межі texW/texH через
 //     похибку округлення round(U×texW), запис вилізе за масив.
@@ -14,8 +14,7 @@
 //     FontGlyphRecord.PageIndex (розділ 4.1 специфікації) — сторінка
 //     для перевірки MinX/MaxX/MinY/MaxY береться саме та, якій гліф
 //     фізично належить, а не перша-ліпша.
-// EN: One of the precondition checks for GlyphAtlasPatcher.
-//     GlyphAtlasPatcher will write pixels at address
+// EN: GlyphAtlasPatcher will write pixels at address
 //     (row*texW + col)*2 into a specific page's BODY array — if any
 //     donor's x0/x1/y0/y1 exceeds texW/texH due to round(U×texW)
 //     rounding error, the write goes out of array bounds.

@@ -4,19 +4,19 @@
 // Ліцензія / License: MIT
 // =============================================================================
 // UA: Будує ПОВНИЙ font-чанк (UcfbChunk-дерево) з нуля з FontResourceData —
-//     симетрично до FontResourceReader. Це ключова НОВА здатність: досі ми
-//     лише ПАТЧИЛИ наявні атласи через донорів (обмежено розміром чужих
-//     слотів); тепер можемо згенерувати повністю СВІЖИЙ ресурс власного
-//     розміру (усі гліфи начисто з TTF, без донорської тісноти) — і для
-//     BF2, і для BF1 (формат спільний, FONT_FORMAT_SPEC.md).
+//     симетрично до FontResourceReader. Дає змогу згенерувати повністю
+//     СВІЖИЙ ресурс власного розміру (усі гліфи начисто з TTF, без
+//     донорської тісноти) — незалежно від ПАТЧИНГУ наявних атласів через
+//     донорів (обмеженого розміром чужих слотів) — і для BF2, і для BF1
+//     (формат спільний, FONT_FORMAT_SPEC.md).
 //
 //     Точна структура дерева (перевірено на реальному core.lvl BF2, усі 5
 //     шрифтів):
 //       font
 //       ├── NAME  = baseName + '\0'
 //       ├── HEAD  = glyphCount(u16 LE) | pageCount(u8) | fontHeightPx(u8) | 00 00
-//       │           (не "E2 00" константа, а кількість гліфів,
-//       │           FONT_FORMAT_SPEC.md §11.2, детально нижче біля
+//       │           (це КІЛЬКІСТЬ ГЛІФІВ, а не константа —
+//       │           FONT_FORMAT_SPEC.md §7.1, детально нижче біля
 //       │           BuildHead)
 //       ├── FTEX
 //       │   ├── NAME = '{baseName}_tex0\0'   (сусідній до tex_, ПЕРЕД ним)
@@ -39,17 +39,17 @@
 //     перераховує його сам (підтверджено в UcfbWriter.cs). Вирівнювання на
 //     4 байти й padding робить UcfbWriter при серіалізації.
 // EN: Builds a COMPLETE font chunk (UcfbChunk tree) from scratch out of a
-//     FontResourceData — symmetric to FontResourceReader. This is the key
-//     NEW capability: until now we only PATCHED existing atlases via donors
-//     (bounded by other glyphs' slot sizes); now we can generate a fully
-//     FRESH resource at our own size (all glyphs rendered clean from a TTF,
-//     no donor tightness) — for both BF2 and BF1 (shared format, see
-//     FONT_FORMAT_SPEC.md).
+//     FontResourceData — symmetric to FontResourceReader. This makes a
+//     fully FRESH resource generatable at any size (all glyphs rendered
+//     clean from a TTF, no donor tightness) — for both BF2 and BF1
+//     (shared format, see
+//     FONT_FORMAT_SPEC.md), independent of PATCHING existing atlases via
+//     donors (bounded by other glyphs' slot sizes).
 //
 //     Exact tree structure (verified against real core.lvl BF2, all 5
 //     fonts) — see the UA block above. All FourCCs in the font
-//     tree are PRINTABLE (no hashed IDs), so we build via
-//     UcfbChunk.FourCcToId. We do NOT set DataSize (=0) — UcfbWriter
+//     tree are PRINTABLE (no hashed IDs), so it is built via
+//     UcfbChunk.FourCcToId. DataSize is NOT set (=0) — UcfbWriter
 //     recomputes it (confirmed in UcfbWriter.cs). 4-byte alignment/padding
 //     is handled by UcfbWriter at serialization time.
 // =============================================================================
@@ -94,23 +94,23 @@ public static class FontResourceBuilder
 
     // -------------------------------------------------------------------------
     // UA: HEAD (6 байт): glyphCount(u16 LE) | pageCount(u8) | fontHeightPx(u8) | 00 00.
-    //     Перші 2 байти HEAD — це КІЛЬКІСТЬ ГЛІФІВ шрифту, критична для
-    //     того, щоб гра побачила ВСІ записи FBOD (інакше читає лише перші
-    //     N=старе значення). Тому glyphCount тут завжди похідне від
-    //     font.Glyphs.Count (див. коментар біля виклику вище), а не
-    //     хардкоджене число: розсинхронізація HEAD і FBOD означала б, що
-    //     гра прочитає лише перші N записів (усі англійські, оскільки FBOD
-    //     відсортований за кодом — розділ 11.3) і не побачить жодного
-    //     гліфа понад це число.
+    //     Перші 2 байти HEAD — це КІЛЬКІСТЬ ГЛІФІВ шрифту, а НЕ стала
+    //     константа: гра читає рівно стільки записів FBOD, скільки заявлено
+    //     тут (FONT_FORMAT_SPEC.md §7.1). Якщо це число менше реальної
+    //     кількості гліфів у FBOD (наприклад, 226 замість 292 на
+    //     кириличному шрифті), гра побачить лише перші N записів
+    //     (відсортованих за кодом — розділ 7.2) і пропустить решту — тому
+    //     Build() завжди передає (ushort)font.Glyphs.Count, а не
+    //     захардкожене значення.
     // EN: HEAD (6 bytes): glyphCount(u16 LE) | pageCount(u8) | fontHeightPx(u8) | 00 00.
-    //     HEAD's first 2 bytes are the font's GLYPH COUNT, critical for
-    //     the game to see ALL FBOD records (otherwise it only reads the
-    //     first N=old value). That's why glyphCount here is always
-    //     derived from font.Glyphs.Count (see the comment at the call
-    //     site above), never a hardcoded number: a HEAD/FBOD mismatch
-    //     would mean the game reads only the first N records (all
-    //     English, since FBOD is sorted by code — section 11.3) and never
-    //     sees any glyph beyond that count.
+    //     HEAD's first 2 bytes are the font's GLYPH COUNT, not a fixed
+    //     constant: the game reads exactly as many FBOD records as this
+    //     number states (FONT_FORMAT_SPEC.md §7.1). If it is lower than
+    //     the actual FBOD glyph count (e.g. 226 instead of 292 on a
+    //     Cyrillic font), the game only sees the first N records (FBOD is
+    //     sorted by code — section 7.2) and never sees the rest — which is
+    //     why Build() always passes (ushort)font.Glyphs.Count rather than a
+    //     hardcoded value.
     // -------------------------------------------------------------------------
     private static byte[] BuildHead(ushort glyphCount, byte pageCount, byte fontHeightPx)
     {

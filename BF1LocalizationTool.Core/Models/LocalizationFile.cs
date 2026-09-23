@@ -33,12 +33,13 @@ public class LocalizationFile
     //     записів статистично неможливі для випадкового 32-бітного хеша
     //     — очікується ~0,0007) і не помилка запису/парсингу — так
     //     влаштовані самі дані гри. У BF1 і BF2, у ВСІХ 6 мовах кожної
-    //     гри, максимум 2 входження на хеш (жодного потрійного). Саме тому
-    //     індекс зберігає List<LocalizationEntry> на хеш (ГРУПУ), а не
-    //     єдиний запис — інакше довелось би довільно обирати, який із двох
-    //     варіантів "перемагає", і зіставлення оригінал↔переклад між
-    //     різними файлами для будь-якого рядка з дубльованим хешем було б
-    //     непередбачуваним.
+    //     гри, максимум 2 входження на хеш (жодного потрійного).
+    //     Звичайний Dictionary<uint, LocalizationEntry> ("останній
+    //     виграє") дозволив би другому варіанту мовчки замінити перший в
+    //     індексі — обидва рядки з однаковим хешем отримували б ОДИН И
+    //     ТОЙ САМИЙ результат GetByHash, що спричиняло б помилкове
+    //     зіставлення оригінал↔переклад між різними файлами для
+    //     будь-якого рядка з дубльованим хешем.
     // EN: Fast access to entries by hash — a GROUP, not a single entry.
     //     EMPIRICALLY CONFIRMED (direct byte-level parsing of core.lvl,
     //     both games): the same 32-bit hash is deliberately used for TWO
@@ -50,11 +51,11 @@ public class LocalizationFile
     //     expected) and not a read/parse bug — it's how the game's own
     //     data is structured. In BOTH BF1 and BF2, across ALL 6 languages
     //     of each game, at most 2 occurrences per hash (never three).
-    //     That's exactly why the index stores a List<LocalizationEntry>
-    //     per hash (a GROUP), not a single entry — otherwise one of the
-    //     two variants would have to arbitrarily "win", and
-    //     original↔translation pairing across files would be
-    //     unpredictable for any duplicated-hash row.
+    //     A plain Dictionary<uint, LocalizationEntry> ("last wins") would
+    //     let the second variant silently overwrite the first in the
+    //     index — both strings sharing a hash would get the SAME
+    //     GetByHash result, causing wrong original↔translation pairing
+    //     across files for any duplicated-hash row.
     private Dictionary<uint, List<LocalizationEntry>>? _hashGroups;
 
     // UA: Будує індекс для швидкого пошуку (викликається після завантаження)

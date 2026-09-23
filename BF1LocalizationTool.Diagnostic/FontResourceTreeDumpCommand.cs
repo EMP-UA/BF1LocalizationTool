@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontResourceTreeDumpCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Структурний факт-чек кількості FBOD-чанків. Проходить УСІ шрифти
 //     ОБОХ ігор автоматично (FontChunkLocator.FindAll) — не один вручну

@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GlyphSizeConsistencyCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перевіряє, ЧИ ЗБІГАЄТЬСЯ розмір, який дає FBOD (ink_width, cell_h),
 //     з розміром, який дає UV-прямокутник (round(U1×w)-round(U0×w),

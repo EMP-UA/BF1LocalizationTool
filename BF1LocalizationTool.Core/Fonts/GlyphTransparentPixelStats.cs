@@ -20,11 +20,11 @@ public sealed record GlyphTransparentPixelStats
     public required int TotalGlyphs { get; init; }
     public required long TotalPixelsChecked { get; init; }
 
-    // UA: Alpha=0, RGB=білий — конвенція, яку ми бачили в BF1.
+    // UA: Alpha=0, RGB=білий — конвенція, яка трапляється в BF1.
     // EN: Alpha=0, RGB=white — the convention observed in BF1.
     public required long ZeroAlphaWhiteRgbCount { get; init; }
 
-    // UA: Alpha=0, RGB=0 — конвенція, яку ми бачили в BF2.
+    // UA: Alpha=0, RGB=0 — конвенція, яка трапляється в BF2.
     // EN: Alpha=0, RGB=0 — the convention observed in BF2.
     public required long ZeroAlphaZeroRgbCount { get; init; }
 

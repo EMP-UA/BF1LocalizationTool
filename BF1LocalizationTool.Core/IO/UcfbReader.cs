@@ -9,16 +9,21 @@
 //     зберігаються як RawData.
 //     Магічний рядок файлу: "ucfb" (0x62666375 LE)
 //
-//     Певні FourCC за форматом ЗАВЖДИ листкові (сирі дані) — навіть якщо
-//     перші байти їхнього вмісту випадково нагадують валідний заголовок
-//     вкладеного чанку (Id+DataSize). Без явного винятку статистично
-//     "шумні" бінарні дані (звукові семпли в snd_>DATA/PVS_, шейдерні
-//     параметри в PIPE>INFO тощо) можуть ВИПАДКОВО, "успішно" розпарситись
-//     як дерево фантомних дітей — перевірка "повне покриття end" (нижче,
-//     розділ 6 специфікації) випадково ВИКОНУЄТЬСЯ для таких даних, тому
-//     НЕ ловиться захистом hitInvalidChild. Оскільки UcfbWriter серіалізує
-//     ВЕСЬ root, будь-яке таке хибне розпарсення призвело б до втрати
-//     "слеку" цих ділянок навіть при read→write БЕЗ жодних навмисних змін.
+//     РИЗИК (виявлено FourCCPhantomChildScanCommand +
+//     FontBodyPhantomChildCheckCommand): статистично "шумні" бінарні
+//     дані (звукові семпли в snd_>DATA/PVS_) можуть ВИПАДКОВО, "успішно"
+//     розпарситись як дерево фантомних дітей — перевірка "повне покриття
+//     end" (нижче, розділ 6 специфікації) випадково ВИКОНУЄТЬСЯ для
+//     таких даних, тому НЕ ловиться захистом hitInvalidChild. Підтверджено
+//     хекс-дампом: snd_>DATA (DataSize=9) містило сире 4-байтне числове
+//     значення 0x5FD56DF9 + padding, перші 4 байти якого випадково
+//     читались як Id фантомної дитини. Це НЕ впливає на шрифтові BODY
+//     (перевірено — 0 із 16+7 уражені), але ЛЮБЕ збереження файлу через
+//     UcfbWriter (навіть без жодних навмисних змін) втрачає "слек" цих
+//     фантомно розпарсених ділянок — підтверджено: 1024 байти BF1,
+//     1308 байт BF2 зникають навіть при read→write БЕЗ жодних замін.
+//     Оскільки UcfbWriter серіалізує ВЕСЬ root, це псує звукові дані
+//     НЕЗАЛЕЖНО від того, що саме патчиться.
 //
 //     Захист: явний список AlwaysLeafFourCC — чанки з цими FourCC
 //     НІКОЛИ не намагаються парситись як контейнери, незалежно від того,
@@ -29,21 +34,25 @@
 //     stored as RawData.
 //     File magic: "ucfb" (0x62666375 LE)
 //
-//     Certain FourCC are, by format, ALWAYS leaves (raw data) — even if
-//     the first bytes of their content coincidentally resemble a valid
-//     nested chunk header (Id+DataSize). Without an explicit exception,
-//     statistically "noisy" binary data (sound samples in snd_>DATA/PVS_,
-//     shader parameters in PIPE>INFO, etc.) can COINCIDENTALLY,
-//     "successfully" parse as a tree of phantom children — the "full end
-//     coverage" check (below, spec section 6) accidentally SUCCEEDS for
-//     such data, so it isn't caught by the hitInvalidChild guard. Since
-//     UcfbWriter serializes the ENTIRE root, any such misparse would lose
-//     the "slack" of these regions even on a read→write with zero
-//     intentional changes.
+//     RISK (found by FourCCPhantomChildScanCommand +
+//     FontBodyPhantomChildCheckCommand): statistically "noisy" binary
+//     data (sound samples in snd_>DATA/PVS_) can COINCIDENTALLY,
+//     "successfully" parse as a tree of phantom children — the "full
+//     end coverage" check (below, spec section 6) accidentally SUCCEEDS
+//     for such data, so it isn't caught by the hitInvalidChild guard.
+//     Confirmed by hex dump: snd_>DATA (DataSize=9) held a raw 4-byte
+//     numeric value 0x5FD56DF9 + padding, whose first 4 bytes were
+//     coincidentally read as a phantom child's Id. This does NOT affect
+//     font BODY chunks (verified — 0 of 16+7 affected), but ANY file
+//     save via UcfbWriter (even with zero intentional changes) loses
+//     the "slack" of these phantom-parsed regions — confirmed: 1024
+//     bytes BF1, 1308 bytes BF2 vanish even on a read→write with no
+//     replacements. Since UcfbWriter serializes the ENTIRE root, this
+//     corrupts sound data REGARDLESS of what's actually being patched.
 //
-//     Guard: an explicit AlwaysLeafFourCC list — chunks with these FourCC
-//     are NEVER attempted as containers, regardless of whether their
-//     content coincidentally "looks like" a valid subtree.
+//     Safeguard: an explicit AlwaysLeafFourCC list — chunks with these
+//     FourCC are NEVER attempted as containers, regardless of whether
+//     their content coincidentally "looks like" a valid subtree.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;
@@ -165,10 +174,11 @@ public static class UcfbReader
     //     Якщо вміст не відповідає структурі — повертає порожній список.
     //     Умова валідності: перший дочірній чанк має dataSize <= доступного місця.
     //
-    //     parentFourCC перевіряється ПЕРШИМ, до будь-якої спроби парсингу.
-    //     Якщо він у AlwaysLeafFourCC — одразу повертаємо порожній список,
-    //     НЕ намагаючись інтерпретувати сирі байти як дерево, незалежно
-    //     від того, чи вони випадково "успішно" покрили б увесь end.
+    //     parentFourCC перевіряється ПЕРШИМ, до будь-якої спроби
+    //     парсингу. Якщо він у AlwaysLeafFourCC — одразу повертаємо
+    //     порожній список, НЕ намагаючись інтерпретувати сирі байти як
+    //     дерево, незалежно від того, чи вони випадково "успішно"
+    //     покрили б увесь end.
     // EN: Tries to parse chunk contents as a set of nested chunks.
     //     Returns empty list if content does not match the structure.
     //     Validity condition: first child chunk dataSize <= available space.

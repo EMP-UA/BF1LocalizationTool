@@ -4,10 +4,10 @@
 // Ліцензія / License: MIT
 // =============================================================================
 // UA: Рендерить символ так, щоб він ЩІЛЬНО заповнив донорський слот
-//     точно (targetWidth×targetHeight): БЕЗ ОБРІЗАННЯ (ламає форму
-//     штриха), лише масштабування (навіть нерівномірне, якщо
-//     GlyphDonorMatcher не знайшов ідеальної пропорції — це помітно менш
-//     руйнівно за обрізання).
+//     точно (targetWidth×targetHeight):
+//     БЕЗ ОБРІЗАННЯ (ламає форму штриха), лише масштабування (навіть
+//     нерівномірне, якщо GlyphDonorMatcher не знайшов ідеальної
+//     пропорції — це помітно менш руйнівно за обрізання).
 //
 //     Кроки:
 //       1. Растеризувати символ на ВЕЛИКОМУ нейтральному canvas (той
@@ -20,9 +20,10 @@
 //          bicubic) — тут і відбувається компенсація невдалого підбору
 //          донора, якщо пропорції не збіглись ідеально.
 // EN: Renders a character so it TIGHTLY fills the donor slot exactly
-//     (targetWidth×targetHeight): NO CROPPING (breaks stroke shape), only
-//     scaling (even non-uniform, if GlyphDonorMatcher didn't find a
-//     perfect ratio match — noticeably less destructive than cropping).
+//     (targetWidth×targetHeight): NO
+//     CROPPING (breaks stroke shape), only scaling (even non-uniform, if
+//     GlyphDonorMatcher didn't find a perfect ratio match — noticeably
+//     less destructive than cropping).
 //
 //     Steps:
 //       1. Rasterize the character on a LARGE neutral canvas (same
@@ -59,70 +60,70 @@ public static class GlyphBoxFitRenderer
 
     // UA: Гарантований прозорий буфер з УСІХ чотирьох боків слоту, для
     //     КОЖНОЇ літери (обидва регістри, RenderToFit і
-    //     RenderWithCoreAndMargin). ПРИЧИНА: для ШИРОКИХ літер (natWidth
-    //     >= boxWidth — Ж/Ф/Х/Ш/Щ/Д-подібні) тіло масштабується РІВНО під
-    //     boxWidth — чорнило впритул до лівого/правого краю слоту, 0px
-    //     поля. Це класичний тригер білінійної/mip GPU-фільтрації
-    //     текстур: коли чорнило впритул до межі UV-прямокутника,
-    //     фільтрація "просочує" сусідній слот на межі — видима тонка
-    //     рамка САМЕ на щільно заповнених літерах (підтверджено:
-    //     GlyphOccupancyOverlayCommand показує, що самі дані текстури
-    //     чисті — кути слотів чорні, жодної рамки в пікселях, тобто
-    //     артефакт виникає у GPU-фільтрації, а не в даних). 1px
-    //     гарантованого прозорого поля з кожного боку прибирає джерело
-    //     (чорнило більше НІКОЛИ не торкається межі слоту), незалежно
-    //     від того, чи причина справді у фільтрації.
+    //     RenderWithCoreAndMargin). ПРИЧИНА: тонка рамка навколо деяких
+    //     капітелей у грі (А/Х/Д/Ц/Ф/К/Ь) — GlyphOccupancyOverlayCommand
+    //     підтвердив, що САМІ ДАНІ ТЕКСТУРИ чисті (кути слотів чорні,
+    //     жодної рамки в пікселях), тобто це НЕ пошкоджені дані
+    //     генератора. Для ШИРОКИХ літер (natWidth >= boxWidth —
+    //     Ж/Ф/Х/Ш/Щ/Д-подібні) тіло масштабується РІВНО під boxWidth —
+    //     чорнило впритул до лівого/правого краю слоту, 0px поля. Це
+    //     класичний тригер білінійної/mip GPU-фільтрації текстур: коли
+    //     чорнило впритул до межі UV-прямокутника, фільтрація "просочує"
+    //     сусідній слот на межі — видима тонка рамка САМЕ на щільно
+    //     заповнених літерах. 1px гарантованого прозорого поля з кожного
+    //     боку прибирає джерело (чорнило більше НІКОЛИ не торкається межі
+    //     слоту), незалежно від того, чи причина справді у фільтрації.
     // EN: A guaranteed transparent buffer on ALL FOUR sides of the slot,
     //     for EVERY letter (both cases, RenderToFit and
-    //     RenderWithCoreAndMargin). REASON: for WIDE letters (natWidth >=
+    //     RenderWithCoreAndMargin). REASON: a thin frame around some
+    //     capitals in-game (А/Х/Д/Ц/Ф/К/Ь) — GlyphOccupancyOverlayCommand
+    //     confirmed the TEXTURE DATA ITSELF is clean (slot corners are
+    //     black, no frame baked into the pixels), so this is NOT
+    //     corrupted generator output. For WIDE letters (natWidth >=
     //     boxWidth — Ж/Ф/Х/Ш/Щ/Д-type) the core is scaled to EXACTLY
     //     boxWidth — ink flush against the slot's left/right edge, 0px
     //     margin. That's the classic trigger for GPU bilinear/mip texture
     //     filtering: when ink sits flush against the UV rect boundary,
     //     filtering bleeds the neighboring slot in at the edge — a
-    //     visible thin frame on exactly the tightly-packed letters
-    //     (confirmed: GlyphOccupancyOverlayCommand shows the texture data
-    //     itself is clean — slot corners are black, no frame baked into
-    //     the pixels, so the artifact originates in GPU filtering, not
-    //     the data). A guaranteed 1px transparent margin on every side
-    //     removes the source (ink never touches the slot boundary
-    //     again), regardless of whether filtering bleed is the exact
-    //     mechanism.
-    // UA: Оголошено internal (не private), бо
-    //     GlyphMetricModel.ComputeLowercaseCoreMetric МУСИТЬ ЗНАТИ це
+    //     visible thin frame on exactly the tightly-packed letters. A
+    //     guaranteed 1px transparent margin on every side removes the
+    //     source (ink never touches the slot boundary again), regardless
+    //     of whether filtering bleed is the exact mechanism.
+    // UA: З private на internal. ПРИЧИНА:
+    //     GlyphMetricModel.ComputeLowercaseCoreMetric мусить ЗНАТИ це
     //     число, щоб додати 2×EdgeInsetPx запасу до фінального boxHeight,
     //     який повертає (див. коментар там) — інакше той самий
-    //     гарантований відступ віднімався б ДВІЧІ: раз під час
-    //     "натурального" виміру (де він не мав би ефекту — probe-запас
-    //     250px величезний), і ще раз під час фінального рендеру (де
-    //     тісний бокс уже точно під натуральний розмір, тож -2px там
-    //     непотрібно "з'їдали" б виступ, якого не мали чіпати).
-    // EN: Declared internal (not private), because
-    //     GlyphMetricModel.ComputeLowercaseCoreMetric MUST KNOW this
+    //     гарантований відступ, щойно введений тут, ВІДНІМАВСЯ Б ДВІЧІ:
+    //     раз під час "натурального" виміру (де він не мав ефекту —
+    //     probe-запас 250px величезний), і ще раз під час фінального
+    //     рендеру (де тісний бокс уже точно під натуральний розмір, тож
+    //     -2px там непотрібно "з'їдали" б виступ, якого не мали чіпати).
+    // EN: From private to internal. REASON:
+    //     GlyphMetricModel.ComputeLowercaseCoreMetric needs to KNOW this
     //     number to add 2×EdgeInsetPx of headroom to the final boxHeight
     //     it returns (see the comment there) — otherwise the same
-    //     guaranteed margin would get subtracted TWICE: once during the
-    //     "natural" measurement pass (where it would have no effect — the
-    //     250px probe headroom is huge), and once during the final render
-    //     pass (where the box is already sized exactly to the natural
-    //     extent, so an extra -2px there would needlessly "eat into" an
-    //     extension that was never supposed to be touched).
-    // UA: Це "поле, на яке викликач РОЗШИРЮЄ слот навколо незмінного
+    //     guaranteed margin just introduced here would get subtracted
+    //     TWICE: once during the "natural" measurement pass (where it had
+    //     no effect — the 250px probe headroom is huge), and once during
+    //     the final render pass (where the box is already sized exactly
+    //     to the natural extent, so an extra -2px there would needlessly
+    //     "eat into" an extension that was never supposed to be touched).
+    // UA: "Поле, на яке викликач РОЗШИРЮЄ слот навколо незмінного
     //     чорнила": фізичний UV-прямокутник = чорнило + 2×SlotPaddingPx з
     //     кожної осі, чорнило рендериться у свій повний розмір і
     //     центрується. Курсорні метрики (InkWidth/XAdvance) лишаються від
-    //     ЧОРНИЛА, тож міжлітерні відстані не змінюються; Bearing/
-    //     CellHeight розширюються на 1px з кожного боку, щоб екранний
-    //     бокс ріс разом зі слотом і масштаб лишався 1:1 (інакше гра
-    //     стиснула б вищий слот у ту саму екранну висоту й літера
-    //     знову змаліла б).
-    // EN: This is "the margin the caller GROWS the slot by, around
-    //     unchanged ink": the physical UV rect = ink + 2×SlotPaddingPx on
-    //     each axis, the ink is rendered at its full size and centred.
-    //     Cursor metrics (InkWidth/XAdvance) stay derived from the INK,
-    //     so letter spacing is unchanged; Bearing/CellHeight are extended
-    //     by 1px on each side so the on-screen box grows with the slot
-    //     and the mapping stays 1:1 (otherwise the game would squeeze the
+    //     ЧОРНИЛА, тож міжлітерні відстані не змінюються;
+    //     Bearing/CellHeight розширюються на 1px з кожного боку, щоб
+    //     екранний бокс ріс разом зі слотом і масштаб лишався 1:1
+    //     (інакше гра стиснула б вищий слот у ту саму екранну висоту й
+    //     літера знову змаліла б).
+    // EN: "The margin the caller GROWS the slot by, around unchanged
+    //     ink": the physical UV rect = ink + 2×SlotPaddingPx on each
+    //     axis, the ink is rendered at its full size and centred. Cursor
+    //     metrics (InkWidth/XAdvance) stay derived from the INK, so
+    //     letter spacing is unchanged; Bearing/CellHeight are extended by
+    //     1px on each side so the on-screen box grows with the slot and
+    //     the mapping stays 1:1 (otherwise the game would squeeze the
     //     taller slot into the same screen height and the letter would
     //     shrink again).
     public const int SlotPaddingPx = 1;
@@ -133,11 +134,12 @@ public static class GlyphBoxFitRenderer
     //     used to subtract from the ink.
     internal const int EdgeInsetPx = 1;
 
-    // UA: "Спільна висота для регістру + доповнення" замість "розтягнути
-    //     точно під розмір донора". Причина: без спільного обмеження по
-    //     висоті та нижній лінії RenderToFit розтягує (навіть НЕРІВНОМІРНО
-    //     по X і Y окремо) КОЖНУ
-    //     літеру рівно під розмір ЇЇ ВЛАСНОГО донора — а розміри донорів
+    // UA: НОВИЙ метод — "спільна висота для регістру + доповнення" замість
+    //     "розтягнути точно під розмір донора". Причина (реальний
+    //     скріншот BF1/BF2, "стрибучі" літери): RenderToFit не має
+    //     спільного обмеження по висоті та нижній лінії — розтягує (навіть
+    //     НЕРІВНОМІРНО по X і Y окремо) КОЖНУ літеру рівно під розмір ЇЇ
+    //     ВЛАСНОГО донора — а розміри донорів
     //     фізично різні (успадковані від чужих гліфів), тож навіть коли
     //     підбір пропорції вдалий для КОЖНОЇ літери окремо, візуально
     //     сусідні літери в одному слові виглядають різного розміру, бо
@@ -166,11 +168,12 @@ public static class GlyphBoxFitRenderer
     //     нерівномірним розтягуванням by X vs Y окремо (RenderToFit МІГ
     //     розтягувати по X і Y різними коефіцієнтами — цей метод завжди
     //     зберігає один спільний коефіцієнт).
-    // EN: "Shared height per case + padding" instead of "stretch to
-    //     exactly fill the donor's size". Reason: without a shared
-    //     height/baseline constraint, RenderToFit stretches (even
-    //     NON-UNIFORMLY in X and Y separately) EVERY
-    //     letter to exactly fill ITS OWN donor's size — but donor sizes
+    // EN: NEW method — "shared height per case + padding" instead of
+    //     "stretch to exactly fill the donor's size". Reason (real BF1/BF2
+    //     screenshots, "jumping" letters): RenderToFit has no shared
+    //     height/baseline constraint — it stretches (even NON-UNIFORMLY in
+    //     X and Y separately) EVERY letter to exactly fill ITS OWN donor's
+    //     size — but donor sizes
     //     are physically different (inherited from unrelated glyphs), so
     //     even when the ratio match is good for EACH letter individually,
     //     neighboring letters in the same word visually look
@@ -223,29 +226,37 @@ public static class GlyphBoxFitRenderer
 
         var naturalAspect = ink.Width / (double)ink.Height;
 
-        // UA: Малювання нижче ГАРАНТОВАНО влазить у [0,boxWidth]x
-        //     [0,boxHeight] — жодного обрізання пікселів немає, лише
-        //     масштабування. heightLimit = МЕНША з (targetHeight,
-        //     boxHeight) — ОБМЕЖЕНА одразу, ДО того, як рахуємо ширину.
-        //     Ширина рахується ВІД heightLimit, тож завжди узгоджена з
-        //     висотою (для НАЙТІСНІШИХ донорів — боксів МЕНШИХ за
-        //     targetHeight — обмеження висоти ДО обчислення ширини
-        //     критично важливе: інакше ширина й висота розходяться і
-        //     пропорція СПОТВОРЮЄТЬСЯ, нерівномірне стиснення). Якщо
-        //     навіть ця ширина не влазить у boxWidth — зменшуємо висоту
-        //     ще раз ВІД цієї ширини (той самий прийом, коректний в обидва
+        // UA: Пряме обрізання пікселів тут НІКОЛИ не відбувається — цей
+        //     блок лише рахує effectiveWidth/effectiveHeight, а малювання
+        //     нижче ГАРАНТОВАНО влазить у [0,boxWidth]x[0,boxHeight].
+        //
+        //     heightLimit = МЕНША з (targetHeight, boxHeight) — ОБМЕЖЕНА
+        //     одразу, ДО того, як рахується ширина, щоб для НАЙТІСНІШИХ
+        //     донорів (боксів МЕНШИХ за targetHeight) ширина рахувалась
+        //     ВІД уже обмеженої висоти, а не від targetHeight — інакше
+        //     ширина й висота переставали б відповідати одна одній —
+        //     СПОТВОРЕННЯ пропорції (нерівномірне стиснення), саме те,
+        //     від чого має уберігати цей метод. Ширина рахується ВІД
+        //     heightLimit, тож завжди узгоджена з висотою. Якщо навіть
+        //     ця ширина не влазить у boxWidth — висота зменшується ще
+        //     раз ВІД цієї ширини (той самий прийом, коректний в обидва
         //     боки).
-        // EN: The draw call below is GUARANTEED to fit within
-        //     [0,boxWidth]x[0,boxHeight] — no pixel cropping happens,
-        //     only scaling. heightLimit = the SMALLER of (targetHeight,
-        //     boxHeight) — capped UP FRONT, BEFORE computing width. Width
+        // EN: Literal pixel cropping never happens here — this block
+        //     only computes effectiveWidth/effectiveHeight, and the draw
+        //     call below is GUARANTEED to fit within
+        //     [0,boxWidth]x[0,boxHeight].
+        //
+        //     heightLimit = the SMALLER of (targetHeight, boxHeight) —
+        //     capped UP FRONT, BEFORE computing width, so that for the
+        //     TIGHTEST donors (boxes SMALLER than targetHeight) width is
+        //     derived from the already-capped height rather than from
+        //     targetHeight — otherwise width and height would no longer
+        //     match each other, a DISTORTED proportion (non-uniform
+        //     squeeze), exactly what this method is meant to avoid. Width
         //     is derived FROM heightLimit, so it's always consistent with
-        //     the height (for the TIGHTEST donors — boxes SMALLER than
-        //     targetHeight — capping height before deriving width matters:
-        //     otherwise width and height would no longer match each
-        //     other, DISTORTING the proportion via a non-uniform squeeze).
-        //     If even that width doesn't fit boxWidth — shrink the height
-        //     again FROM that width (the same trick, correct both ways).
+        //     the height. If even that width doesn't fit boxWidth — the
+        //     height is shrunk again FROM that width (the same trick,
+        //     correct both ways).
         var heightLimit = Math.Min(targetHeight, boxHeight);
         var effectiveHeight = heightLimit;
         var effectiveWidth = (int)Math.Round(effectiveHeight * naturalAspect);
@@ -258,11 +269,11 @@ public static class GlyphBoxFitRenderer
         effectiveWidth = Math.Clamp(effectiveWidth, 1, boxWidth);
 
         // UA: "і" і "у" обидві "виносні", але виступ у РІЗНІ боки —
-        //     крапка над "і" має сідати на СПІЛЬНУ БАЗОВУ ЛІНІЮ знизу, як
-        //     і звичайні літери, а хвіст "у" має звисати ПІД цю лінію.
-        //     Приклеювання ВСІХ "високих" літер до низу клітинки вирівняло
-        //     б їх за верхом хвоста "у", а не за базовою лінією — для "і"
-        //     це неправильно.
+        //     крапка над "і" сідає на СПІЛЬНУ БАЗОВУ ЛІНІЮ знизу, як і
+        //     звичайні літери, а хвіст "у" звисає ПІД цю лінію.
+        //     Приклеювання ВСІХ "високих" літер до низу клітинки
+        //     вирівняло б їх за верхом хвоста "у", а не за базовою
+        //     лінією — для "і" це неправильно.
         //
         //     ProbeBaselineY (=300, той самий канвас, що й в усіх
         //     вимірах цього алфавіту) — СПІЛЬНА базова лінія для КОЖНОЇ
@@ -286,18 +297,18 @@ public static class GlyphBoxFitRenderer
         //     спільну ціль-висоту через кластеризацію в
         //     CyrillicFontInjector).
         // EN: "і" and "у" are both "tall", but the extra height goes in
-        //     OPPOSITE directions — the dot above "і" should sit on the
-        //     SAME shared BASELINE at the bottom, like ordinary letters,
-        //     while "у"'s tail should hang BELOW that line.
-        //     Bottom-anchoring ALL "tall" letters would align them by the
-        //     top of "у"'s tail, not by the baseline — wrong for "і".
+        //     OPPOSITE directions — the dot above "і" sits on the SAME
+        //     shared BASELINE at the bottom, like ordinary letters, while
+        //     "у"'s tail hangs BELOW that line. Bottom-anchoring ALL
+        //     "tall" letters would align them by the top of "у"'s tail,
+        //     not by the baseline — wrong for "і".
         //
         //     ProbeBaselineY (=300, the same canvas used for every
         //     measurement in this alphabet) is a SHARED baseline for
         //     EVERY letter, since all are rasterized with the SAME
-        //     BaselineY. So ink.Bottom-ProbeBaselineY tells us: does THIS
-        //     SPECIFIC letter physically hang below the baseline (a real
-        //     descender, "у","р","ц","щ") or does it sit entirely ON or
+        //     BaselineY. So ink.Bottom-ProbeBaselineY shows whether THIS
+        //     SPECIFIC letter physically hangs below the baseline (a real
+        //     descender, "у","р","ц","щ") or sits entirely ON or
         //     ABOVE it (ordinary letters, and "і"/"ї"/"й"/"б"/"ф" — those
         //     are TALLER because of extension ABOVE, not a tail below). An
         //     8%-of-own-height threshold guards against rendering/rounding
@@ -343,30 +354,28 @@ public static class GlyphBoxFitRenderer
         };
     }
 
-    // UA: Альтернатива RenderWithSharedHeight для рендеру з окремим
-    //     масштабуванням тіла й виступів (RenderWithSharedHeight лишається
-    //     в файлі як єдиний affine-варіант, не викликається продакшн-кодом,
-    //     лишена для довідки; основний рендер ін'єкції — RenderToFit,
-    //     CyrillicFontInjector.GrowAndRenderGlyphs).
-    //     ПРИЧИНА: RenderWithSharedHeight масштабує ВЕСЬ гліф ОДНИМ
+    // UA: НОВИЙ метод — замінює RenderWithSharedHeight для КІНЦЕВОГО
+    //     рендеру (RenderWithSharedHeight лишається в файлі, як і
+    //     RenderToFit до нього, — історія, більше не викликається).
+    //     ПРИЧИНА (реальні дані з діагностичного звіту, перевірено, а не
+    //     припущено): RenderWithSharedHeight масштабує ВЕСЬ гліф ОДНИМ
     //     спільним коефіцієнтом до targetHeight = scale × TargetHeightFraction.
     //     Це МАТЕМАТИЧНО єдиний affine-масштаб на всю літеру — а отже і
     //     "тіло" (x-height частина), і "хвіст"/"виступ" (діакритика,
     //     висхідний/спускний елемент) масштабуються РАЗОМ, на ту саму
-    //     пропорцію. Виміряні TargetHeightFraction ('ф'=113%, 'й'=110%,
-    //     'у'/'р'/'б'=101%, 'ц'/'д'/'щ'=90% проти 'а'/'о'=74%) означають,
-    //     що 'ф' виходить ~53% БІЛЬШОЮ за 'а' ЦІЛКОМ — включно з тілом, не
-    //     лише виступом. У грі, на дрібних піксельних шрифтах (бокси
-    //     7-30px), це читається як "інша, більша літера" (капсоподібний
-    //     ефект), а не як природний виступ.
+    //     пропорцію. Реальні виміряні TargetHeightFraction ('ф'=113%,
+    //     'й'=110%, 'у'/'р'/'б'=101%, 'ц'/'д'/'щ'=90% проти 'а'/'о'=74%)
+    //     означають, що 'ф' виходить ~53% БІЛЬШОЮ за 'а' ЦІЛКОМ — включно
+    //     з тілом, не лише виступом. У грі, на дрібних піксельних
+    //     шрифтах (бокси 7-30px), це читається як "інша, більша літера"
+    //     (капсоподібний ефект), а не як природний виступ.
     //
-    //     Підхід — резервувати частину клітинки зверху й знизу під
-    //     виносні елементи, а не масштабувати всю літеру одним
-    //     коефіцієнтом (запозичено з SteamWorld Heist), — вимагає ОКРЕМОГО
-    //     масштабування тіла й виступів, тож не міг бути реалізований у
-    //     межах RenderWithSharedHeight, який математично не може
-    //     розділити тіло й виступ (один affine-коефіцієнт масштабує все
-    //     разом).
+    //     Метод резервує 10% клітинки вгорі та знизу під ці виступи — там,
+    //     куди інші літери не заходять, але "особливі" можуть; на
+    //     відміну від RenderWithSharedHeight, який цього НЕ реалізовував
+    //     (переплутано зі звичайним "спільна висота" підходом, який
+    //     математично не може розділити тіло й виступ — один
+    //     affine-коефіцієнт масштабує все разом).
     //
     //     Цей метод РОЗДІЛЯЄ гліф по вертикалі на "тіло" (core — перетин
     //     природного чорнила з еталонною смугою x-height [coreTopY,
@@ -384,31 +393,29 @@ public static class GlyphBoxFitRenderer
     //       3. Якщо тіло+виступи разом не влазять у boxHeight — спершу
     //          стискаються виступи (другорядні), і лише як останній
     //          засіб — тіло теж (рідкісний випадок найтісніших донорів).
-    // EN: An alternative to RenderWithSharedHeight that scales the core
-    //     and extensions separately (RenderWithSharedHeight stays in the
-    //     file as the single-affine variant, not called by production
-    //     code, kept for reference; the injection's actual render path is
-    //     RenderToFit, via CyrillicFontInjector.GrowAndRenderGlyphs).
-    //     REASON: RenderWithSharedHeight scales the WHOLE glyph by ONE
+    // EN: NEW method — replaces RenderWithSharedHeight for the FINAL
+    //     render (RenderWithSharedHeight stays in the file, like
+    //     RenderToFit before it — history, no longer called).
+    //     REASON (real data from the diagnostic report, verified, not
+    //     assumed): RenderWithSharedHeight scales the WHOLE glyph by ONE
     //     shared factor to targetHeight = scale × TargetHeightFraction.
     //     That is MATHEMATICALLY a single affine scale for the entire
     //     letter — so both the "core" (x-height part) and the
     //     "tail"/"extension" (diacritic, ascender/descender) get scaled
-    //     TOGETHER, by the same ratio. Measured TargetHeightFraction
-    //     values ('ф'=113%, 'й'=110%, 'у'/'р'/'б'=101%, 'ц'/'д'/'щ'=90%
-    //     vs 'а'/'о'=74%) mean 'ф' comes out ~53% BIGGER than 'а'
-    //     ENTIRELY — including the core, not just the extension. In-game,
-    //     on tiny pixel fonts (7-30px boxes), that reads as "a different,
-    //     bigger letter" (a capital-like artifact), not a natural
-    //     extension.
+    //     TOGETHER, by the same ratio. The real measured
+    //     TargetHeightFraction values ('ф'=113%, 'й'=110%, 'у'/'р'/'б'=101%,
+    //     'ц'/'д'/'щ'=90% vs 'а'/'о'=74%) mean 'ф' comes out ~53% BIGGER
+    //     than 'а' ENTIRELY — including the core, not just the
+    //     extension. In-game, on tiny pixel fonts (7-30px boxes), that
+    //     reads as "a different, bigger letter" (a capital-like
+    //     artifact), not a natural extension.
     //
-    //     The approach — reserving part of the cell at the top and
-    //     bottom for extensions instead of scaling the whole letter by
-    //     one factor (borrowed from SteamWorld Heist) — requires scaling
-    //     the core and the extensions SEPARATELY, so it could not be
-    //     implemented within RenderWithSharedHeight, which mathematically
-    //     cannot separate core from extension (one affine factor scales
-    //     everything together).
+    //     The method reserves 10% of the cell at the top and bottom for
+    //     these extensions — where other letters don't go, but "special"
+    //     ones can — unlike RenderWithSharedHeight, which did NOT
+    //     implement this (conflated with a plain "shared height"
+    //     approach, which mathematically cannot separate core from
+    //     extension — one affine factor scales everything together).
     //
     //     This method SPLITS the glyph vertically into a "core" (the
     //     overlap of natural ink with the reference x-height band
@@ -486,30 +493,31 @@ public static class GlyphBoxFitRenderer
         return ComputeLayout(ink, coreHeight, coreTopY, marginCapPx, boxWidth, boxHeight, aboveScale, belowScale);
     }
 
-    // UA: Рахує ОДИН спільний aboveScale/belowScale для ВСЬОГО алфавіту
-    //     малих літер цього шрифту (не для однієї літери). ПРИЧИНА: на
-    //     розмірах BF2 (CapHeightGame 7-11px) CoreMarginCapPx = лише
-    //     2-3px. Клампінг КОЖНОЇ літери окремо до marginCapPx незалежно
-    //     від природного розміру виступу дав би: "і" (природно потребує
-    //     1-2px під крапку) і "б" (природно потребує 3-6px під петлю)
-    //     ОБИДВІ обрізались би до РІВНО того самого marginCapPx і виходили
-    //     б однаковою висотою (підтверджено: BF2 gamefont_medium 'і'
-    //     BoxHeight=11px, 'б' BoxHeight=11px — буквально ідентично при
-    //     такому клампінгу). Замість цього: перший прохід по ВСЬОМУ
-    //     алфавіту регістру знаходить НАЙБІЛЬШИЙ природний виступ (до
-    //     жодного клампу), і рахує коефіцієнт, що стискає САМЕ ЙОГО рівно
-    //     до marginCapPx — решта літер масштабується ТІЄЮ Ж пропорцією,
-    //     тож "і" лишається ПОМІТНО меншою за "б", а не зливається з нею.
-    // EN: Computes ONE shared aboveScale/belowScale for the WHOLE
-    //     lowercase alphabet of this font (not a single letter). REASON:
+    // UA: Рахує ОДИН спільний aboveScale/belowScale
+    //     для ВСЬОГО алфавіту малих літер цього шрифту (не для однієї
+    //     літери). ПРИЧИНА (реальні дані): на розмірах BF2 (CapHeightGame 7-11px)
+    //     CoreMarginCapPx = лише 2-3px. Стара логіка різала КОЖНУ літеру
+    //     окремо до marginCapPx незалежно від природного розміру виступу —
+    //     тож "і" (природно потребує 1-2px під крапку) і "б" (природно
+    //     потребує 3-6px під петлю) ОБИДВІ обрізались до РІВНО того
+    //     самого marginCapPx і виходили однаковою висотою (підтверджено:
+    //     BF2 gamefont_medium 'і' BoxHeight=11px, 'б' BoxHeight=11px —
+    //     буквально ідентично). Тут: перший прохід по ВСЬОМУ алфавіту
+    //     регістру знаходить НАЙБІЛЬШИЙ природний виступ (до жодного
+    //     клампу), і рахує коефіцієнт, що стискає САМЕ ЙОГО рівно до
+    //     marginCapPx — решта літер масштабується ТІЄЮ Ж пропорцією, тож
+    //     "і" лишається ПОМІТНО меншою за "б", а не зливається з нею.
+    // EN: Computes ONE shared aboveScale/belowScale for
+    //     the WHOLE lowercase alphabet of this font (not a single letter).
+    //     REASON (real data):
     //     at BF2's sizes (CapHeightGame 7-11px), CoreMarginCapPx is only
-    //     2-3px. Clamping EVERY letter individually down to marginCapPx
-    //     regardless of its natural extension size would give: "і"
+    //     2-3px. The old logic cut EVERY letter individually down to
+    //     marginCapPx regardless of its natural extension size — so "і"
     //     (naturally needs 1-2px for the dot) and "б" (naturally needs
-    //     3-6px for the loop) BOTH cut to EXACTLY the same marginCapPx
-    //     and coming out the same height (confirmed: BF2 gamefont_medium
-    //     'і' BoxHeight=11px, 'б' BoxHeight=11px — literally identical
-    //     under that clamping). Instead: a first pass over the WHOLE case
+    //     3-6px for the loop) BOTH got cut to EXACTLY the same
+    //     marginCapPx and came out the same height (confirmed: BF2
+    //     gamefont_medium 'і' BoxHeight=11px, 'б' BoxHeight=11px —
+    //     literally identical). Here: a first pass over the WHOLE case
     //     alphabet finds the LARGEST natural extension (before any
     //     clamping), and computes the factor that shrinks THAT ONE down
     //     to exactly marginCapPx — every other letter is scaled by the
@@ -572,23 +580,24 @@ public static class GlyphBoxFitRenderer
         Rectangle ink, int coreHeight, int coreTopY, int marginCapPx, int boxWidth, int boxHeight,
         double aboveScale = 1.0, double belowScale = 1.0)
     {
-        // UA: usableWidth/usableHeight — розмір слоту, доступний тілу й
-        //     виступам для розміщення. Рівний ПОВНОМУ переданому боксу
-        //     (boxWidth/boxHeight): чорнило займає ввесь переданий бокс, а
-        //     не бокс мінус EdgeInsetPx. Гарантований прозорий буфер
-        //     (SlotPaddingPx) додає ВИКЛИКАЧ, збільшуючи САМ СЛОТ ПЕРЕД
-        //     викликом цього методу, а не цей метод — забирати місце в
-        //     готового чорнила означало б звужувати штрих (див. коментар
-        //     біля SlotPaddingPx і в RenderToFit нижче).
-        // EN: usableWidth/usableHeight — the slot size available for the
-        //     core and extensions to lay out in. Equal to the FULL box
-        //     passed in (boxWidth/boxHeight): the ink fills the entire
-        //     passed-in box, not box minus EdgeInsetPx. The guaranteed
-        //     transparent buffer (SlotPaddingPx) is added by the CALLER,
-        //     by growing the SLOT ITSELF before calling this method, not
-        //     by this method — taking space away from finished ink would
-        //     narrow the stroke (see the comment by SlotPaddingPx and in
-        //     RenderToFit below).
+        // UA: Робочий "корисний" розмір слоту — boxWidth/boxHeight МІНУС
+        //     гарантований край з усіх боків (EdgeInsetPx, див. коментар
+        //     біля константи вище). Усе нижче рахує межу як "влазить у
+        //     usableWidth/usableHeight", а не в повний boxWidth/boxHeight
+        //     — тіло/виступи ніколи не торкаються фізичної межі слоту.
+        // EN: The working "usable" slot size — boxWidth/boxHeight MINUS
+        //     the guaranteed edge on every side (EdgeInsetPx, see the
+        //     comment by the constant above). Everything below checks the
+        //     boundary against usableWidth/usableHeight, not the full
+        //     boxWidth/boxHeight — the core/extensions never touch the
+        //     slot's physical boundary.
+        // UA: Усе чорнило займає ПОВНИЙ переданий бокс. Прозоре поле
+        //     додає викликач, збільшуючи САМ СЛОТ, а не забираючи місце
+        //     в літери — див. коментар у RenderToFit вище.
+        // EN: Ink fills the FULL box passed in. The transparent margin is
+        //     added by the caller GROWING THE SLOT itself, rather than
+        //     taking space away from the letter — see the RenderToFit
+        //     comment above.
         var usableWidth = boxWidth;
         var usableHeight = boxHeight;
 
@@ -638,35 +647,45 @@ public static class GlyphBoxFitRenderer
         var belowRenderW = belowSrcH > 0 ? natWidth : 0;
 
         // UA: Якщо натуральна ширина (та сама для всіх трьох шматків) не
-        //     влазить у бокс — стискаємо ЛИШЕ ШИРИНУ всіх трьох шматків,
-        //     ВИСОТУ не чіпаємо. Висота тіла МАЄ лишатись ЗАВЖДИ рівно
-        //     coreHeight, однакова для КОЖНОЇ малої літери регістру,
-        //     незалежно від того, наскільки вузький слот — інакше
-        //     виникає розсинхронізація з Bearing (рахується в
-        //     ComputeLowercaseCoreMetric від ПОВНОГО CoreHeightGame): якщо
-        //     тіло стиснути й по висоті теж, вужчі літери (напр. 'і')
-        //     не діставали б до спільної базової лінії (інша висота
-        //     клітинки, ніж у решти) і візуально "висіли б у повітрі".
-        //     Тому занадто широке чорнило стискається ЛИШЕ по
+        //     влазить у бокс — стискаємо ВСІ три шматки РАЗОМ, тим самим
+        //     коефіцієнтом (щоб пропорції між тілом і виступом лишались
+        //     узгодженими).
+        // EN: If the natural width (same for all three pieces) doesn't
+        //     fit the box — shrink ALL three pieces TOGETHER, by the same
+        //     factor (so core/extension proportions stay consistent).
+        // UA: Підгонка під ширину НЕ чіпає ВИСОТУ. ПРИЧИНА (реальні виміри
+        //     згенерованого файлу, BF2 gamefont_medium): якщо стискати
+        //     при natWidth > доступної ширини УСІ три шматки РАЗОМ (зі
+        //     збереженням аспекту), тіло 'і' виходить 8px проти 10px у
+        //     'а' — при тому, що Bearing у ComputeLowercaseCoreMetric
+        //     рахується від ПОВНОГО CoreHeightGame. Через цю
+        //     розсинхронізацію 'і' не діставала б базової лінії (cell=22
+        //     проти 23 в усіх інших) і візуально "висіла б у повітрі".
+        //
+        //     Тому висота тіла — ЗАВЖДИ рівно coreHeight, однакова для
+        //     КОЖНОЇ малої літери регістру, незалежно від того, наскільки
+        //     вузький слот. Занадто широке чорнило стискається ЛИШЕ по
         //     горизонталі. Так, це неоднорідний масштаб (аспект трохи
         //     спотворюється) — але для вузьких літер ('і' — фактично
         //     вертикальна риска) це візуально непомітно, тоді як РІЗНА
         //     висота тіла помітна одразу й ламає спільну базову лінію.
-        // EN: If the natural width (same for all three pieces) doesn't
-        //     fit the box — shrink ONLY the WIDTH of all three pieces,
-        //     HEIGHT is left untouched. The core height MUST always stay
-        //     exactly coreHeight, identical for EVERY lowercase letter of
-        //     the case, no matter how narrow the slot — otherwise it gets
-        //     out of sync with Bearing (derived in
-        //     ComputeLowercaseCoreMetric from the FULL CoreHeightGame): if
-        //     the core were also shrunk vertically, narrower letters
-        //     (e.g. 'і') would fall short of the shared baseline (a
-        //     different cell height than everything else) and visually
-        //     "float". So over-wide ink is squeezed HORIZONTALLY only.
-        //     Yes, that's a non-uniform scale (slight aspect distortion)
-        //     — but on narrow letters ('і' is effectively a vertical bar)
-        //     it's visually unnoticeable, whereas a DIFFERENT core height
-        //     is immediately obvious and breaks the shared baseline.
+        // EN: The width fit does not touch HEIGHT. REASON (real
+        //     measurements of the generated file, BF2 gamefont_medium):
+        //     shrinking all three pieces TOGETHER (preserving aspect)
+        //     when natWidth exceeds the available width would leave 'і'
+        //     with an 8px core vs 10px for 'а' — while Bearing in
+        //     ComputeLowercaseCoreMetric is derived from the FULL
+        //     CoreHeightGame. That mismatch would leave 'і' short of the
+        //     baseline (cell=22 vs 23 for everything else) and visually
+        //     "floating".
+        //
+        //     So the core height is ALWAYS exactly coreHeight, identical
+        //     for EVERY lowercase letter, no matter how narrow the slot.
+        //     Over-wide ink is squeezed HORIZONTALLY only. Yes, that's a
+        //     non-uniform scale (slight aspect distortion) — but on narrow
+        //     letters ('і' is effectively a vertical bar) it's visually
+        //     unnoticeable, whereas a DIFFERENT core height is immediately
+        //     obvious and breaks the shared baseline.
         if (natWidth > usableWidth)
         {
             coreRenderW = usableWidth;
@@ -694,23 +713,22 @@ public static class GlyphBoxFitRenderer
         //     consistent scaling above) still exceeds marginCapPx —
         //     shrink ONLY IT (preserving its own aspect), the core is
         //     left untouched.
-        // UA: Обмеження ПРОПОРЦІЙНЕ (aboveScale/belowScale, див. коментар
-        //     біля ComputeAlphabetExtensionScale вище), а не жорсткий
-        //     кламп "усе понад marginCapPx = рівно marginCapPx" — інакше
-        //     всі виступи, що перевищують marginCapPx, зливались би в
-        //     однакову висоту (див. ComputeAlphabetExtensionScale). Виклик
-        //     БЕЗ явного aboveScale/belowScale (default 1.0) зводиться до
-        //     жорсткого клампу через safety-стелю нижче (запобіжник для
-        //     викликачів, які не порахували scale).
-        // EN: The limiting is PROPORTIONAL (aboveScale/belowScale, see the
-        //     comment by ComputeAlphabetExtensionScale above), not a hard
-        //     "everything above marginCapPx = exactly marginCapPx" clamp
-        //     — otherwise every extension exceeding marginCapPx would
-        //     collapse to the same height (see
-        //     ComputeAlphabetExtensionScale). A call WITHOUT an explicit
-        //     aboveScale/belowScale (default 1.0) reduces to the hard
-        //     clamp via the safety ceiling below (a guard for callers
-        //     that didn't compute a scale).
+        // UA: ПРОПОРЦІЙНЕ обмеження
+        //     (aboveScale/belowScale, див. коментар біля
+        //     ComputeAlphabetExtensionScale вище) замість жорсткого
+        //     клампу "усе понад marginCapPx = рівно marginCapPx". Виклик
+        //     БЕЗ явного aboveScale/belowScale (default 1.0) означає, що
+        //     пропорційне стиснення не застосовується — спрацьовує лише
+        //     safety-стеля нижче, як жорсткий кламп (запобіжник для
+        //     випадків, коли викликач не порахував scale).
+        // EN: PROPORTIONAL limiting
+        //     (aboveScale/belowScale, see the comment by
+        //     ComputeAlphabetExtensionScale above) instead of a hard
+        //     "everything above marginCapPx = exactly marginCapPx" clamp.
+        //     A call WITHOUT an explicit aboveScale/belowScale (default
+        //     1.0) means no proportional scaling is applied — only the
+        //     safety ceiling below kicks in, as a hard clamp (a guard for
+        //     callers that didn't compute a scale).
         if (aboveRenderH > 0)
         {
             aboveRenderW = Math.Max(1, (int)Math.Round(aboveRenderW * aboveScale));
@@ -931,33 +949,32 @@ public static class GlyphBoxFitRenderer
         //     texture mipmaps).
         // UA: Той самий гарантований 1px прозорий буфер, що й у
         //     RenderWithCoreAndMargin (EdgeInsetPx, див. коментар біля
-        //     константи вище) — без нього чорнило впритул до
-        //     targetWidth×targetHeight (0px поля з усіх боків для КОЖНОЇ
-        //     великої літери) провокує ту саму GPU-фільтраційну "рамку",
-        //     описану біля SlotPaddingPx.
-        //
-        //     Чорнило рендериться в ПОВНИЙ переданий розмір (targetWidth×
-        //     targetHeight), а не в `targetWidth - 2*EdgeInsetPx`: віднімати
-        //     відступ ВІД ЧОРНИЛА всередині слоту незмінного розміру
-        //     звужує штрих (виміряно: BF1 'І' — чорнило 3px замість 5,
-        //     'А' — 10 замість 13; вузькі літери втрачали б до 40% товщини
-        //     штриха, широкі — до чверті). Замість цього прозоре поле
-        //     створює ВИКЛИКАЧ, передаючи слот, БІЛЬШИЙ за чорнило на
-        //     2×SlotPaddingPx (див. GenerateNoDonorCyrillicCoreCommand).
+        //     константи вище). Без нього RenderToFit розтягує чорнило
+        //     РІВНО під targetWidth×targetHeight — 0px поля з усіх боків
+        //     для КОЖНОЇ великої літери, точний механізм тонкої "рамки",
+        //     що видно в грі (BF1).
         // EN: The same guaranteed 1px transparent buffer as in
-        //     RenderWithCoreAndMargin (EdgeInsetPx, see the comment by the
-        //     constant above) — without it, ink flush against
-        //     targetWidth×targetHeight (0px margin on every side for
-        //     EVERY capital letter) triggers the same GPU filtering
-        //     "frame" artifact described by SlotPaddingPx.
-        //
-        //     The ink is rendered at the FULL size passed in (targetWidth×
-        //     targetHeight), not at `targetWidth - 2*EdgeInsetPx`:
-        //     subtracting the margin FROM THE INK inside a fixed-size slot
-        //     narrows the stroke (measured: BF1 'І' ink 3px instead of 5,
-        //     'А' 10 instead of 13; narrow letters would lose up to 40% of
-        //     stroke thickness, wide ones up to a quarter). Instead, the
-        //     transparent margin is created by the CALLER passing a slot
+        //     RenderWithCoreAndMargin (EdgeInsetPx, see the comment by
+        //     the constant above). Without it, RenderToFit stretches ink
+        //     to EXACTLY targetWidth×targetHeight — 0px margin on every
+        //     side for EVERY capital letter, the exact mechanism of the
+        //     thin "frame" visible in-game (BF1).
+        // UA: Віднімати відступ ВІД ЧОРНИЛА всередині слоту незмінного
+        //     розміру (`targetWidth - 2*EdgeInsetPx`) — ПОМИЛКОВИЙ
+        //     ВАРІАНТ, якого слід уникати: підтверджено вимірами (BF1 'І'
+        //     — чорнило 3px замість 5, 'А' — 10 замість 13), що вузькі
+        //     літери втрачають до 40% товщини штриха, широкі — до чверті.
+        //     Замість цього чорнило рендериться в ПОВНИЙ переданий
+        //     розмір, а прозоре поле створює викликач, передаючи слот,
+        //     БІЛЬШИЙ за чорнило на 2×SlotPaddingPx (див.
+        //     GenerateNoDonorCyrillicCoreCommand).
+        // EN: Taking the margin OUT OF THE INK inside a fixed-size slot
+        //     (`targetWidth - 2*EdgeInsetPx`) is a MISTAKE TO AVOID:
+        //     confirmed by measurement (BF1 'І' ink 3px instead of 5, 'А'
+        //     10 instead of 13) that narrow letters lose up to 40% of
+        //     stroke thickness, wide ones up to a quarter. Instead, the
+        //     ink is rendered at the FULL size passed in, and the
+        //     transparent margin is created by the caller passing a slot
         //     LARGER than the ink by 2×SlotPaddingPx (see
         //     GenerateNoDonorCyrillicCoreCommand).
         var insetWidth = targetWidth;

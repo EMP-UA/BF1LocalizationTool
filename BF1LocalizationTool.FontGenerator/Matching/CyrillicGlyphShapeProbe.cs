@@ -9,28 +9,30 @@
 //     GdiGlyphRasterizer. Мета — дізнатись "яка ця літера за формою" ще
 //     ДО вибору донора, щоб підібрати донора під форму, а не навпаки.
 //
-//     Повертає і пропорцію (AspectRatio), і InkBounds.Height, бо самої
-//     пропорції для підбору донора недостатньо: FilterOutTooSmall
-//     пропускає донорів від 50% до 100%+ висоти великої літери — тобто в
-//     межах "безпечних" донорів висота лишається дуже різною, а
+//     MeasureShape повертає і AspectRatio, і InkBounds.Height — не лише
+//     пропорцію. Це важливо: GlyphDonorMatcher підбирає донора не лише
+//     за пропорцією, а й за АБСОЛЮТНОЮ висотою, бо FilterOutTooSmall
+//     пропускає донорів від 50% до 100%+ висоти великої літери — тобто
+//     в межах "безпечних" донорів висота лишається дуже різною, а
 //     GlyphBoxFitRenderer розтягує кожну літеру рівно під розмір ЇЇ
-//     ВЛАСНОГО донора, без жодного узгодження з сусідніми літерами. Тому
-//     GlyphDonorMatcher враховує при підборі ще й АБСОЛЮТНУ висоту
-//     (InkBounds.Height), не лише пропорцію.
+//     ВЛАСНОГО донора, без жодного узгодження з сусідніми літерами. Без
+//     урахування абсолютної висоти це призводить до "стрибучих" за
+//     розміром літер у тому самому слові.
 // EN: Measures a letter's NATURAL shape — rasterizes it on a LARGE
 //     neutral square canvas (not tied to any specific donor slot) and
 //     takes InkBounds from the already-verified GdiGlyphRasterizer.
 //     Goal — learn "what shape is this letter" BEFORE picking a donor,
 //     so the donor is matched to the shape, not the other way around.
 //
-//     Returns both the ratio (AspectRatio) and InkBounds.Height, because
-//     the ratio alone is not enough to pick a good donor: FilterOutTooSmall
-//     lets through donors anywhere from 50% to 100%+ of the capital
-//     letter's height — so even among "safe" donors, height varies
-//     wildly, and GlyphBoxFitRenderer stretches each letter to exactly
-//     fill ITS OWN donor's size, with zero coordination with neighboring
-//     letters. GlyphDonorMatcher therefore factors in ABSOLUTE height
-//     (InkBounds.Height) too, not just ratio.
+//     MeasureShape returns both AspectRatio and InkBounds.Height — not
+//     just the ratio. This matters: GlyphDonorMatcher matches a donor by
+//     both ratio and ABSOLUTE height, because FilterOutTooSmall lets
+//     through donors anywhere from 50% to 100%+ of the capital letter's
+//     height — so even among "safe" donors, height varies wildly, and
+//     GlyphBoxFitRenderer stretches each letter to exactly fill ITS OWN
+//     donor's size, with zero coordination with neighboring letters.
+//     Without factoring in absolute height, this leads to letters that
+//     visibly "jump" in size within the same word.
 // =============================================================================
 
 using BF1LocalizationTool.FontGenerator.Rasterization;
@@ -47,10 +49,10 @@ namespace BF1LocalizationTool.FontGenerator.Matching;
 //     InkTop напряму порівнюваний між літерами — дає змогу визначити, чи
 //     літера виступає ВИЩЕ звичайного "x-height" (вершник/діакритика:
 //     б, і, ї, й, ф) чи має хвіст НИЖЧЕ базової лінії (у, р, ц, щ), а не
-//     лише "наскільки вона вища за звичайні". Використовується для
-//     розділення на "тіло" (core, спільного розміру для всіх літер
-//     регістру) і "виступ" (margin, обмежений зверху/знизу — підхід,
-//     запозичений з SteamWorld Heist) у GlyphBoxFitRenderer.
+//     лише "наскільки вона вища за звичайні". Додано для розділення
+//     "тіло" (core, спільного розміру для всіх літер регістру) і
+//     "виступ" (margin, обмежений зверху/знизу — SteamWorld Heist-підхід,
+//     явно застосований підхід) у GlyphBoxFitRenderer.
 // EN: AspectRatio — Width/Height of the letter's natural shape.
 //     InkHeight — height in pixels on the PROBE canvas (all letters are
 //     rasterized at the SAME ProbeFontSizePx, so InkHeight is directly
@@ -58,13 +60,14 @@ namespace BF1LocalizationTool.FontGenerator.Matching;
 //     "on the fly" normalization needed).
 //     InkTop — the TOP edge of the ink in ABSOLUTE probe-canvas
 //     coordinates (the SAME BaselineY=300 for every letter of the
-//     alphabet, so InkTop is directly comparable across letters) — lets
-//     us tell whether a letter extends ABOVE the ordinary x-height
+//     alphabet, so InkTop is directly comparable across letters) — this
+//     shows whether a letter extends ABOVE the ordinary x-height
 //     (ascender/diacritic: б, і, ї, й, ф) or has a tail BELOW the
 //     baseline (у, р, ц, щ), not just "how much taller than normal it
-//     is overall". Used to split a letter into "core" (shared size
+//     is overall". Added to split a letter into "core" (shared size
 //     across the whole case) and "extension" (capped top/bottom margin —
-//     an approach borrowed from SteamWorld Heist) in GlyphBoxFitRenderer.
+//     the SteamWorld Heist approach) in
+//     GlyphBoxFitRenderer.
 public readonly record struct GlyphShapeMeasurement(double AspectRatio, int InkHeight, int InkTop);
 
 public static class CyrillicGlyphShapeProbe

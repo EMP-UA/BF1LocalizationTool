@@ -2,9 +2,10 @@
 // BF1LocalizationTool.Diagnostic — CellHeightHypothesisTestCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
 // UA: КОНТРОЛЬОВАНИЙ ЕКСПЕРИМЕНТ, не постійне виправлення. Мета — дати
-//     відповідь на ОДНЕ конкретне питання, ізольовано від
+//     відповідь на ОДНЕ конкретне питання, перш ніж чіпати
 //     GlyphBoxFitRenderer/GrowthResolver: чи керує FBOD-поле CellHeight
 //     вертикальним масштабуванням/позиціюванням гліфа в самій грі?
 //
@@ -12,12 +13,11 @@
 //     CellHeight для НОВИХ кириличних записів ЗАВЖДИ копіюється з донора
 //     без змін (GlyphAtlasPatcher.BuildReplacements) — і воно РЕАЛЬНО
 //     різне: більшість gamefont_large-записів мають CellHeight=30, але
-//     є явні "викиди" (е/в=34, ю=32, і=28, ж=19). CellHeight корелює з
-//     розміром чорнила, але ця кореляція сама по собі не доводить, що
-//     саме воно керує видимим розміром/позицією гліфа — цей інструмент
-//     ізолює це питання окремо від кореляції. Симптом: "ж" (CellHeight=19,
-//     майже вдвічі менше за сусідів) у грі сидить явно вище базової лінії
-//     сусідніх літер.
+//     є явні "викиди" (е/в=34, ю=32, і=28, ж=19). FontGlyphRecord.cs
+//     перевіряє ЛИШЕ кореляцію CellHeight з розміром чорнила — чи саме
+//     воно керує видимим розміром/позицією, ця перевірка не покриває.
+//     У грі спостерігається: "ж" (з CellHeight=19, майже вдвічі менше за
+//     сусідів) "левітує" — сидить явно вище базової лінії сусідніх літер.
 //
 //     Що робить цей інструмент:
 //       1. Читає ВЖЕ згенерований output/core.lvl (не оригінал — щоб не
@@ -41,7 +41,7 @@
 //     а не лише в тестовій теці. Якщо нічого не зміниться — гіпотеза
 //     відхилена, і треба шукати причину деінде.
 // EN: A CONTROLLED EXPERIMENT, not a permanent fix. Goal — answer ONE
-//     specific question, isolated from GlyphBoxFitRenderer/GrowthResolver:
+//     specific question before touching GlyphBoxFitRenderer/GrowthResolver:
 //     does the FBOD field CellHeight drive a glyph's vertical
 //     scaling/positioning in the actual game?
 //
@@ -49,12 +49,12 @@
 //     CellHeight for NEW Cyrillic records is ALWAYS copied from the donor
 //     unchanged (GlyphAtlasPatcher.BuildReplacements) — and it genuinely
 //     varies: most gamefont_large records have CellHeight=30, but there
-//     are clear outliers (е/в=34, ю=32, і=28, ж=19). CellHeight correlates
-//     with ink size, but that correlation alone doesn't prove it drives
-//     visible size/position — this tool isolates that question separately
-//     from the correlation. Symptom: "ж" (CellHeight=19, almost half its
-//     neighbors') sits noticeably above the neighboring letters' baseline
-//     in-game.
+//     are clear outliers (е/в=34, ю=32, і=28, ж=19). FontGlyphRecord.cs
+//     checks ONLY the CORRELATION of CellHeight with ink size — whether
+//     it actually drives visible size/position is not covered by that
+//     check. Observed in-game: "ж" (CellHeight=19, almost
+//     half its neighbors') "levitates" — sits noticeably above the
+//     neighboring letters' baseline.
 //
 //     What this tool does:
 //       1. Reads the ALREADY-generated output/core.lvl (not the original —
@@ -92,8 +92,8 @@ public static class CellHeightHypothesisTestCommand
     //     читаємо ГОТОВЕ дерево з коректно вставленими пікселями/UV).
     //     testOutputCoreLvlPath — куди писати варіант із примусовим
     //     CellHeight (окрема тека, "output" не чіпається).
-    // EN: outputCoreLvlPath — the already-generated output/core.lvl (we
-    //     read the READY tree with correctly inserted pixels/UV from
+    // EN: outputCoreLvlPath — the already-generated output/core.lvl (the
+    //     READY tree with correctly inserted pixels/UV is read from
     //     here). testOutputCoreLvlPath — where to write the forced-
     //     CellHeight variant (a separate folder, "output" is untouched).
     public static void Run(DiagnosticReport report, string outputCoreLvlPath, string testOutputCoreLvlPath, string label)

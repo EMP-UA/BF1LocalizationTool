@@ -2,9 +2,9 @@
 // BF1LocalizationTool.Diagnostic — GlyphSlotUniquenessCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Одна з передумовних перевірок для GlyphAtlasPatcher.
-//     GlyphAtlasPatcher перезаписує пікселі donor-коду
+// UA: GlyphAtlasPatcher перезаписує пікселі donor-коду
 //     ЗА ЙОГО ФІЗИЧНИМ СЛОТОМ (PageIndex + піксельний прямокутник). Якщо
 //     раптом ІНШИЙ код (напр. використовуваний мовою символ) вказує на
 //     ТОЙ САМИЙ фізичний слот — перезапис одного зіпсує інший.
@@ -14,8 +14,7 @@
 //     перевірка шукає РІВНО ОДНАКОВІ прямокутники (PageIndex + округлені
 //     x0/x1/y0/y1 збігаються АБСОЛЮТНО) — саме такий випадок і означає
 //     "два коди ділять один слот".
-// EN: One of the precondition checks for GlyphAtlasPatcher.
-//     GlyphAtlasPatcher overwrites a donor code's
+// EN: GlyphAtlasPatcher overwrites a donor code's
 //     pixels AT ITS PHYSICAL SLOT (PageIndex + pixel rectangle). If some
 //     OTHER code (e.g. a character actually used by a language) points
 //     at the SAME physical slot — overwriting one corrupts the other.

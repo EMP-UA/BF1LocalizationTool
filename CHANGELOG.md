@@ -1,9 +1,7 @@
 # Changelog
 
-Формат базується на [Keep a Changelog](https://keepachangelog.com/uk/1.0.0/).
-Based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
-## [Unreleased]
+Формат базується на [Keep a Changelog](https://keepachangelog.com/uk/1.1.0/).
+Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.0.0] — 2026-08-04
 
@@ -28,12 +26,6 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Експорт/імпорт CSV для зовнішнього batch-перекладу
 - `BF1LocalizationTool.Diagnostic` — консольний аналізатор байтової
   структури `.loc`/`.lvl` і генератор кириличних шрифтів
-
-### UA: Відомі обмеження
-- Коефіцієнт збільшення шрифту BF2 (×1.5) підібраний емпірично, не
-  гарантовано оптимальний для кожного UI-екрана
-- Підсистема "BF2 widescreen" (верстка меню під 1080p) — експериментальна,
-  не інтегрована в основний робочий процес
 
 ---
 
@@ -60,8 +52,3 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `BF1LocalizationTool.Diagnostic` — console byte-structure analyzer for
   `.loc`/`.lvl` and Cyrillic font generator
 
-### EN: Known limitations
-- The BF2 font enlargement factor (×1.5) was chosen empirically and
-  isn't guaranteed optimal for every UI screen
-- The "BF2 widescreen" subsystem (1080p menu layout) is experimental
-  and not integrated into the main workflow

@@ -1,0 +1,103 @@
+# =============================================================================
+# UA: НЕЗАЛЕЖНА, ПУБЛІЧНА перевірка походження d3d9.dll — доказ для модерації
+#     (NexusMods тощо), що НЕ залежить від того, чи є mingw-w64 на машині
+#     користувача/модератора (локальний аналог — пункт меню "★★ ПОХОДЖЕННЯ
+#     d3d9.dll" у BF1LocalizationTool.Diagnostic, GenerateD3D9FixProvenance
+#     ReportCommand.cs). Тут те саме робить GitHub, а не машина автора:
+#     на чистому ubuntu-раннері встановлюється i686-w64-mingw32-g++, з
+#     ТОГО САМОГО вихідного коду репозиторію (tools/bf2_d3d9_widescreen_fix/)
+#     ЗБИРАЄТЬСЯ d3d9.dll ТОЧНО тим самим задокументованим рецептом, і
+#     результат звіряється БАЙТ-У-БАЙТ із бінарником, що лежить у
+#     репозиторії (BF1LocalizationTool.Core/Bf2Widescreen/Data/
+#     MovieSubtitleD3D9Fix.dll). Якщо хтось підмінить вбудований бінарник
+#     на щось, чого немає у відкритому джерелі поруч, — цей workflow
+#     впаде червоним, публічно і незалежно від автора репозиторію.
+# EN: An INDEPENDENT, PUBLIC check of d3d9.dll's provenance — evidence for
+#     moderation (NexusMods etc) that does NOT depend on whether the user's
+#     or a moderator's own machine has mingw-w64 (the local analogue is the
+#     "★★ PROVENANCE of d3d9.dll" menu item in BF1LocalizationTool.
+#     Diagnostic, GenerateD3D9FixProvenanceReportCommand.cs). Here GitHub
+#     itself does the same check, not the author's machine: on a clean
+#     ubuntu runner, i686-w64-mingw32-g++ is installed, d3d9.dll is built
+#     from THIS repository's own source (tools/bf2_d3d9_widescreen_fix/)
+#     with the EXACT same documented recipe, and the result is compared
+#     BYTE-FOR-BYTE against the binary committed to the repository
+#     (BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll).
+#     If anyone ever swaps the bundled binary for something not matching
+#     the open source next to it, this workflow fails red, publicly, and
+#     independently of the repo's own author.
+# =============================================================================
+name: Verify d3d9 fix reproducibility
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tools/bf2_d3d9_widescreen_fix/**"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixProvenance.cs"
+      - ".github/workflows/verify-d3d9-fix.yml"
+  pull_request:
+    paths:
+      - "tools/bf2_d3d9_widescreen_fix/**"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
+      - "BF1LocalizationTool.Core/Bf2Widescreen/MovieSubtitleD3D9FixProvenance.cs"
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    # UA: Ubuntu, НЕ Windows — саме тут (і саме так) верифіковано рецепт
+    #     збірки: g++-mingw-w64-i686 з apt, той самий, яким збирався
+    #     бінарник, що лежить у репозиторії.
+    # EN: Ubuntu, NOT Windows — this is exactly where (and how) the build
+    #     recipe was verified: g++-mingw-w64-i686 from apt, the same
+    #     toolchain the binary committed to this repository was built with.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout / Клонування
+        uses: actions/checkout@v4
+
+      - name: Install i686-w64-mingw32-g++ (apt)
+        run: sudo apt-get update && sudo apt-get install -y g++-mingw-w64-i686
+
+      - name: Rebuild d3d9.dll from tools/bf2_d3d9_widescreen_fix/ (exact documented recipe)
+        working-directory: tools/bf2_d3d9_widescreen_fix
+        run: >
+          i686-w64-mingw32-g++ -shared -O2 -s -static -static-libgcc -static-libstdc++
+          d3d9_proxy.cpp d3d9_proxy.def -o d3d9.dll
+          -Wl,--enable-stdcall-fixup -Wl,--no-insert-timestamp
+
+      - name: Compare rebuilt DLL against the one committed to the repo (byte-for-byte)
+        run: |
+          COMMITTED="BF1LocalizationTool.Core/Bf2Widescreen/Data/MovieSubtitleD3D9Fix.dll"
+          REBUILT="tools/bf2_d3d9_widescreen_fix/d3d9.dll"
+
+          echo "UA: SHA-256 вбудованого в репозиторій файла / EN: SHA-256 of the file committed to the repo:"
+          sha256sum "$COMMITTED"
+          echo "UA: SHA-256 щойно пересібраного файла / EN: SHA-256 of the just-rebuilt file:"
+          sha256sum "$REBUILT"
+
+          if cmp -s "$COMMITTED" "$REBUILT"; then
+            echo "UA: ЗБІГАЄТЬСЯ БАЙТ-У-БАЙТ — джерело в репозиторії === бінарник у репозиторії."
+            echo "EN: MATCHES BYTE-FOR-BYTE — the source in this repo === the binary in this repo."
+          else
+            echo "UA: НЕ ЗБІГАЄТЬСЯ! Вбудований бінарник НЕ відповідає джерелу поруч у репозиторії."
+            echo "EN: DOES NOT MATCH! The committed binary does NOT correspond to the source next to it in this repository."
+            exit 1
+          fi
+
+      - name: Sanity-check exports/imports/format (objdump)
+        # UA: Звичайний системний objdump (binutils, він уже є на ubuntu-latest)
+        #     читає PE/COFF так само добре — окремий mingw-специфічний
+        #     objdump не потрібен.
+        # EN: The plain system objdump (binutils, already on ubuntu-latest)
+        #     reads PE/COFF just fine — no separate mingw-specific objdump
+        #     is needed.
+        run: objdump -p tools/bf2_d3d9_widescreen_fix/d3d9.dll
+
+      - name: Upload rebuilt DLL as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: d3d9-rebuilt-from-source
+          path: tools/bf2_d3d9_widescreen_fix/d3d9.dll
+          retention-days: 90

@@ -2,12 +2,14 @@
 // BF1LocalizationTool.Diagnostic — InfoChunkExhaustiveCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Вичерпна перевірка КОЖНОГО чанку "INFO" у дереві (незалежно від
-//     батька — PIPE, FMT_, LVL_, tex_ тощо). PIPE>INFO чанки мають
-//     структуру [1, N, ID, N] — саме той шаблон, що дає фантомну дитину
-//     (8+N байт), коли N<=8, і коректно лишається листком, коли N>8
-//     (bounds-перевірка природно спрацьовує).
+//     батька — PIPE, FMT_, LVL_, tex_ тощо), народжена з
+//     PipeInfoHexDumpCommand: один конкретний PIPE>INFO (DataSize=16)
+//     показав структуру [1, N, ID, N] де N=9 — саме той шаблон, що дає
+//     фантомну дитину (8+N байт), коли N<=8, і коректно лишається
+//     листком, коли N>8 (bounds-перевірка природно спрацьовує).
 //
 //     Класифікує КОЖЕН INFO-чанк на три категорії:
 //       1. СПРАВЖНІЙ ЛИСТОК (Children.Count==0) — bounds-перевірка
@@ -21,10 +23,12 @@
 //          дитина не відповідає шаблону N=N) — це БУЛО Б винятком,
 //          який заперечує додавання INFO в AlwaysLeafFourCC цілком.
 // EN: Exhaustive check of EVERY "INFO" chunk in the tree (regardless of
-//     parent — PIPE, FMT_, LVL_, tex_, etc.). PIPE>INFO chunks have the
-//     structure [1, N, ID, N] — exactly the pattern that produces a
-//     phantom child (8+N bytes) when N<=8, and correctly stays a leaf
-//     when N>8 (the bounds check naturally triggers).
+//     parent — PIPE, FMT_, LVL_, tex_, etc.), born from
+//     PipeInfoHexDumpCommand: one specific PIPE>INFO (DataSize=16)
+//     showed the structure [1, N, ID, N] where N=9 — exactly the
+//     pattern that produces a phantom child (8+N bytes) when N<=8, and
+//     correctly stays a leaf when N>8 (the bounds check naturally
+//     triggers).
 //
 //     Classifies EVERY INFO chunk into three categories:
 //       1. GENUINE LEAF (Children.Count==0) — the bounds check naturally
@@ -105,22 +109,20 @@ public static class InfoChunkExhaustiveCheckCommand
 
                 var realLeftoverBytes = (int)chunk.DataSize - pos;
 
-                // UA: Коректний критерій "це природне (хай і хибне)
+                // UA: ЄДИНИЙ коректний критерій "це природне (хай і хибне)
                 //     завершення TryParseChildren, а не справжня
                 //     підструктура" — залишок після циклу МЕНШЕ 8 байт,
                 //     незалежно від конкретного числового значення хвоста.
-                //     Вимога рівності tailValue==child.DataSize НЕ є
-                //     загальною вимогою формату (це властивість лише
-                //     одного конкретного прикладу), тому її невиконання
-                //     саме по собі не означає аномалію.
-                // EN: The correct criterion for "this is natural (if
+                //     Вимога tailValue==child.DataSize НЕ Є загальною вимогою
+                //     формату — це лише ілюстрація ОДНОГО прикладу; її
+                //     невиконання не означає аномалію.
+                // EN: The ONLY correct criterion for "this is natural (if
                 //     flawed) TryParseChildren termination, not real
                 //     substructure" — leftover after the loop is LESS THAN 8
                 //     bytes, regardless of the tail's specific numeric value.
-                //     Requiring tailValue==child.DataSize is NOT a general
-                //     format requirement (it's a property of a single
-                //     specific example), so failing it alone doesn't
-                //     indicate an anomaly.
+                //     A tailValue==child.DataSize requirement is NOT a general
+                //     format requirement — it is just an illustration of ONE
+                //     example; its failure doesn't indicate an anomaly.
                 if (realLeftoverBytes is >= 0 and < 8)
                 {
                     suspectedPhantom++;

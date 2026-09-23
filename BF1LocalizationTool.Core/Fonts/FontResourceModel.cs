@@ -13,16 +13,16 @@
 //     щоб згенерувати повністю НОВИЙ ресурс з нуля (свіжий атлас), а не
 //     лише патчити наявний через донорів.
 //
-//     Формат HEAD (6 байт, FONT_FORMAT_SPEC.md §11.2,
+//     Формат HEAD (6 байт, FONT_FORMAT_SPEC.md §7.1,
 //     `FontResourceBuilder.BuildHead`): `glyphCount(u16 LE) |
 //     pageCount(u8) | fontHeightPx(u8) | 00 00`. Перші 2 байти — це
-//     КІЛЬКІСТЬ ГЛІФІВ шрифту (=226 для всіх ВАНІЛЬНИХ шрифтів).
-//     fontHeightPx корелює з розміром шрифту (large=22, medium=19,
-//     small=17, tiny=13, super_tiny=13). Останні два байти (00 00) —
-//     сталі на всіх шрифтах. glyphCount у цій моделі НЕ зберігається
-//     окремим полем — `FontResourceBuilder.Build` завжди виводить його з
-//     `Glyphs.Count` (розділ нижче), тож розсинхронізація HEAD/FBOD
-//     неможлива за конструкцією.
+//     КІЛЬКІСТЬ ГЛІФІВ шрифту (=226 для всіх ВАНІЛЬНИХ шрифтів; на
+//     кириличних — більше). fontHeightPx корелює з розміром шрифту
+//     (large=22, medium=19, small=17, tiny=13, super_tiny=13). Останні два
+//     байти (00 00) — сталі на всіх шрифтах. glyphCount у цій моделі НЕ
+//     зберігається окремим полем — `FontResourceBuilder.Build` завжди
+//     виводить його з `Glyphs.Count` (розділ нижче), тож розсинхронізація
+//     HEAD/FBOD неможлива за конструкцією.
 // EN: A simple, fully-parsed model of ONE font resource — exactly enough
 //     fields to REPRODUCE a font chunk byte-for-byte (FontResourceBuilder)
 //     or read an existing one (FontResourceReader).
@@ -33,15 +33,16 @@
 //     completely NEW resource from scratch (a fresh atlas), not just patch
 //     an existing one via donors.
 //
-//     HEAD format (6 bytes, FONT_FORMAT_SPEC.md §11.2,
+//     HEAD format (6 bytes, FONT_FORMAT_SPEC.md §7.1,
 //     `FontResourceBuilder.BuildHead`): `glyphCount(u16 LE) | pageCount(u8)
 //     | fontHeightPx(u8) | 00 00`. The first 2 bytes are the font's GLYPH
-//     COUNT (=226 for all VANILLA fonts). fontHeightPx correlates with
-//     font size (large=22, medium=19, small=17, tiny=13, super_tiny=13).
-//     The last two bytes (00 00) are constant across all fonts. glyphCount
-//     isn't stored as a separate field in this model —
-//     `FontResourceBuilder.Build` always derives it from `Glyphs.Count`
-//     (below), so HEAD/FBOD can never desync by construction.
+//     COUNT (=226 for all VANILLA fonts; higher on Cyrillic ones).
+//     fontHeightPx correlates with font size (large=22, medium=19,
+//     small=17, tiny=13, super_tiny=13). The last two bytes (00 00) are
+//     constant across all fonts. glyphCount isn't stored as a separate
+//     field in this model — `FontResourceBuilder.Build` always derives it
+//     from `Glyphs.Count` (below), so HEAD/FBOD can never desync by
+//     construction.
 // =============================================================================
 
 namespace BF1LocalizationTool.Core.Fonts;

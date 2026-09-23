@@ -170,12 +170,36 @@ BF1LocalizationTool/
 │   │   ├── LocalizationParser.cs          # Plain-text 0xHASH формат / Plain-text parser
 │   │   ├── LoclChunkParser.cs             # Бінарний Locl (UTF-16LE) / Binary Locl parser
 │   │   └── LvlLocalizationService.cs      # Фасад, автодетект BF1/BF2 / Facade, BF1/BF2 autodetect
-│   └── Models/
-│       ├── LocalizationEntry.cs           # Один рядок / Single string
-│       └── LocalizationFile.cs            # Один мовний файл / One language file
+│   ├── Models/
+│   │   ├── LocalizationEntry.cs           # Один рядок / Single string
+│   │   └── LocalizationFile.cs            # Один мовний файл / One language file
+│   ├── Fonts/                              # Розбір і патчинг бінарного формату шрифту
+│   │                                        # (таблиця гліфів, донорський підбір,
+│   │                                        # HEAD-фікс висоти) — FONT_FORMAT_SPEC.md
+│   │                                        # Font binary format parsing/patching
+│   │                                        # (glyph table, donor matching, HEAD height fix)
+│   ├── Scripts/                            # Lua 5.0 bytecode: читання/запис,
+│   │                                        # побудова функцій для BF2-скриптів
+│   │                                        # Lua 5.0 bytecode read/write,
+│   │                                        # function builder for BF2 scripts
+│   ├── Bf2Widescreen/                      # BF2: розкладка меню під нестандартну
+│   │                                        # роздільність (Data/Bf2LayoutTable.txt),
+│   │                                        # субтитри вступного ролика кампанії,
+│   │                                        # d3d9.dll-проксі для субтитрів роликів —
+│   │                                        # docs/BF2_UI_LAYOUT_FIX.md
+│   │                                        # BF2: menu layout for non-standard
+│   │                                        # resolutions, campaign intro subtitles,
+│   │                                        # d3d9.dll proxy for movie subtitles
+│   ├── Bf2Movies/                          # BF2: шрифт субтитрів вступних роликів
+│   │                                        # BF2: intro movie subtitle font
+│   └── Bf2Exe/                             # BF2: аналіз .exe БЕЗ його патчингу
+│                                            # (файл .exe гри не змінюється)
+│                                            # BF2: .exe analysis without patching it
+│                                            # (the game's .exe is never modified)
 │
 ├── BF1LocalizationTool.GUI/                # WPF інтерфейс / WPF interface
 │   ├── App.xaml / MainWindow.xaml(.cs)     # UI, EntryRow (статуси, поріг довжини)
+│   ├── CompareWindow.xaml(.cs)             # Порівняння перекладів / Translation comparison
 │   └── Services/
 │       ├── ValidationService.cs           # Перевірка маркерів / Marker validation
 │       ├── TechnicalStringService.cs      # Детектор технічних рядків / Technical string detector
@@ -201,15 +225,76 @@ BF1LocalizationTool/
 │                                            # only, not part of the release)
 │                                            # — see FONT_FORMAT_SPEC.md
 │
-└── installer/                              # Inno Setup: встановлювач готового
+└── installer/                              # Inno Setup: встановлювачі готового
                                              # перекладу (GameData\ + Readme.txt)
                                              # для кінцевого користувача гри,
                                              # поза .NET-рішенням інструменту
-                                             # Inno Setup: end-user installer
+                                             # Inno Setup: end-user installers
                                              # for the finished translation
                                              # (GameData\ + Readme.txt),
                                              # outside the tool's .NET solution
+    ├── bf1_installer.iss                   # Battlefront (2004) / Star Wars: Battlefront
+    └── bf2_installer.iss                   # Battlefront II (2005) / Star Wars: Battlefront II
 ```
+
+---
+
+## Документація / Documentation
+
+**UA:** Технічні деталі виправлень локалізації — по одному файлу на
+тему в `docs/`. Усі шість — нові файли (жоден не замінює наявний
+документ, кожен покриває свою, окрему частину):
+
+- [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) — верстка
+  меню під ширші роздільності: прив'язки елементів, обрізаний фон,
+  вкладки, спливне вікно довідки, бойовий HUD.
+- [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)
+  — окремо екран вибору місії (`ifs_missionselect` /
+  `ifs_missionselect_pcMulti`): найскладніший екран меню, для якого
+  загальне правило з `BF2_UI_LAYOUT_FIX.md` не сходиться до нуля
+  дефектів, тому значення виміряні й задокументовані окремо.
+- [`docs/BF2_FONT_SCALING.md`](docs/BF2_FONT_SCALING.md) — збільшення
+  шрифту під 1080p: значення поля `HEAD` до/після на шрифт, формула
+  розрахунку нової висоти, джерело кириличних гліфів.
+- [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md) —
+  фікс зникнення субтитрів під заголовком відеоролика на будь-якій
+  роздільності, відмінній від 4:3/5:4 (підтверджений баг оригінальної
+  гри, відтворюється і на ванільних файлах).
+- [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
+  — зазор між написом "Кількість бійців" і кнопкою "Відродження" на
+  екрані вибору бійця (`ingame.lvl`), потрібен через збільшений
+  кириличний шрифт.
+- [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
+  — локалізація офіційного аддону Tat3 для BF1: власний `core.lvl`
+  аддону та переведення назви карти на звичайний механізм `Locl`.
+
+**EN:** Technical detail on the localization fixes — one file per
+topic under `docs/`. All six are new files (none replaces an existing
+document, each covers its own separate part):
+
+- [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) — menu
+  layout for wider resolutions: element anchors, the clipped
+  background, tabs, the help popup, the combat HUD.
+- [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)
+  — the mission-select screen on its own (`ifs_missionselect` /
+  `ifs_missionselect_pcMulti`): the most complex menu screen, where the
+  general rule from `BF2_UI_LAYOUT_FIX.md` doesn't converge to zero
+  defects, so its values are measured and documented separately.
+- [`docs/BF2_FONT_SCALING.md`](docs/BF2_FONT_SCALING.md) — font
+  enlargement for 1080p: each font's `HEAD` field value before/after,
+  the new-height formula, the Cyrillic glyph source.
+- [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md) —
+  fixing the movie-title subtitle that disappears at any resolution
+  other than 4:3/5:4 (a confirmed vanilla-game bug, reproducible on
+  unmodified files too).
+- [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
+  — the gap between the "Кількість бійців" label and the
+  "Відродження" button on the unit-selection screen (`ingame.lvl`),
+  needed because of the enlarged Cyrillic font.
+- [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
+  — localizing the official Tat3 add-on for BF1: its own separate
+  `core.lvl` and switching the map name to the ordinary `Locl`
+  mechanism.
 
 ---
 
@@ -260,6 +345,149 @@ ready-to-run `.zip` with the GUI editor (`win-x64`/`win-x86`/`generic`).
 The release contains the GUI only; `BF1LocalizationTool.Diagnostic` is
 built from source separately.
 
+**Інсталятор (Inno Setup) / Inno Setup installer:**
+Інсталятор — не альтернатива WPF-редактору для лінивих, а інструмент з
+іншим призначенням. WPF-редактор потрібен тим, хто хоче сам щось
+виправити в тексті перекладу. Інсталятор, натомість, — перевірюваний
+доказ того, що `.exe` локалізації не робить нічого зайвого: увесь його
+вихідний код відкритий (скрипти нижче), а сама дія зводиться до
+копіювання файлів гри й запису версії в реєстр користувача — це видно
+з коду, а не лише зі слів. У `installer/` є два готові скрипти Inno
+Setup — по одному на кожну гру:
+
+- [`installer/bf1_installer.iss`](installer/bf1_installer.iss) — Star
+  Wars: Battlefront (Classic, 2004), Steam AppID `1058020`.
+- [`installer/bf2_installer.iss`](installer/bf2_installer.iss) — Star
+  Wars: Battlefront II (Classic, 2005), Steam AppID `6060`.
+
+Обидва скрипти самостійно шукають теку гри в Steam через реєстр Windows
+(з фолбеком на типовий шлях `steamapps\common\...`), пишуть версію в
+реєстр користувача для виявлення повторного встановлення й дають
+однокнопкове видалення. Компілятор Inno Setup бере локалізовані файли з
+теки `GameData\` поряд зі скриптом (генерується інструментом окремо —
+у репозиторії її нема, оскільки це похідні файли, а не вихідний код) і
+пакує їх у самостійний `.exe`.
+
+The installer isn't an alternative to the WPF editor for people who'd
+rather skip it — it serves a different purpose. The WPF editor is for
+anyone who wants to edit the translation text themselves. The
+installer, instead, is verifiable proof that the localization's
+`.exe` does nothing extra: its full source is open (the scripts
+below), and the action itself amounts to copying the game's files and
+writing a version marker to the user's own registry — visible in the
+code, not just claimed. `installer/` has two ready Inno Setup scripts,
+one per game:
+
+- [`installer/bf1_installer.iss`](installer/bf1_installer.iss) — Star
+  Wars: Battlefront (Classic, 2004), Steam AppID `1058020`.
+- [`installer/bf2_installer.iss`](installer/bf2_installer.iss) — Star
+  Wars: Battlefront II (Classic, 2005), Steam AppID `6060`.
+
+Both scripts locate the game's Steam folder on their own via the Windows
+registry (falling back to the default `steamapps\common\...` path),
+record the installed version in the user's registry for reinstall
+detection, and provide one-click uninstall. The Inno Setup compiler
+pulls the localized files from a `GameData\` folder next to the script
+(generated by the tool separately — not checked into the repository,
+since it's derived output rather than source) and packages them into a
+self-contained `.exe`.
+
+---
+
+## Файли гри: що замінюється, що нове / Game files: what's replaced, what's new
+
+**UA:**
+
+**Battlefront (Classic, 2004):**
+- **Замінюється:**
+  - `Data\_LVL_PC\core.lvl` — локалізація записує в нього українські
+    рядки інтерфейсу та додає кириличні гліфи (реальними Unicode-кодами,
+    без заміни наявних латинських слотів) поверх ванільного файла.
+    Рушій цієї гри вже коректно масштабує інтерфейс на будь-якій
+    роздільності, тому правки верстки чи розміру шрифту не знадобились.
+  - `GameData\AddOn\Tat3\Data\_lvl_pc\core.lvl` — окрема таблиця
+    локалізації офіційного аддону Tat3 ("Jabba's Palace"): 22 власні
+    нові рядки місії поверх 2369 дубльованих з бази; без власних
+    шрифтів — аддон використовує вже завантажений атлас основної гри.
+    Деталі — [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md).
+  - `GameData\AddOn\Tat3\addme.script` — назва карти аддону переведена
+    зі жорстко заданого англійського рядка на звичайний ключ
+    локалізації, щоб перекладатись тим самим шляхом, що й решта тексту.
+- **Нових файлів немає.**
+
+**Battlefront II (Classic, 2005):**
+- **Замінюється:**
+  - `Data\_lvl_pc\core.lvl` — українські рядки, кириличні гліфи (як і
+    для BF1) та збільшена висота шрифтів (поле `HEAD`; значення до/після
+    — [`docs/BF2_FONT_SCALING.md`](docs/BF2_FONT_SCALING.md)) для
+    читабельності кирилиці на сучасних екранах.
+  - `Data\_lvl_pc\shell.lvl` — прив'язки елементів меню під широкі
+    екрани ([`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md),
+    [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)):
+    на відміну від першої частини, рушій цієї гри розрахований лише під
+    800×600 і сам широкий екран не підтримує.
+  - `Data\_lvl_pc\ingame.lvl` — зазор між написом "Кількість бійців" і
+    кнопкою "Відродження" на екрані вибору бійця, щоб збільшений
+    кириличний шрифт не перекривав кнопку —
+    [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
+- **Новий файл:** `d3d9.dll` — ставиться в теку гри поряд із
+  `BattlefrontII.exe` (стандартний порядок пошуку DLL у Windows: тека
+  застосунку перевіряється раніше за System32). Виправляє зникнення
+  субтитрів відеороликів на будь-якій роздільності, відмінній від
+  4:3/5:4 — деталі й підтвердження в реальній грі —
+  [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
+  Перед перезаписом чужого файла з такою назвою робиться резервна копія
+  (`d3d9.dll.bf1backup`); під час роботи пише лог
+  `bf2_widescreen_fix.log` у тій самій теці.
+
+**EN:**
+
+**Battlefront (Classic, 2004):**
+- **Replaced:**
+  - `Data\_LVL_PC\core.lvl` — the localization writes Ukrainian
+    interface strings into it and adds Cyrillic glyphs (as real Unicode
+    code points, with no existing Latin slot replaced) on top of the
+    vanilla file. This game's engine already scales the interface
+    correctly at any resolution, so no layout or font-size changes were
+    needed.
+  - `GameData\AddOn\Tat3\Data\_lvl_pc\core.lvl` — a separate
+    localization table for the official Tat3 add-on ("Jabba's
+    Palace"): 22 of its own new mission strings on top of 2369 entries
+    duplicated from the base table; no fonts of its own — the add-on
+    reuses the base game's already-loaded atlas. Details —
+    [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md).
+  - `GameData\AddOn\Tat3\addme.script` — the add-on's map name is
+    switched from a hardcoded English string to an ordinary
+    localization key, so it translates through the same path as
+    everything else.
+- **No new files.**
+
+**Battlefront II (Classic, 2005):**
+- **Replaced:**
+  - `Data\_lvl_pc\core.lvl` — Ukrainian strings, Cyrillic glyphs (same
+    as BF1), and enlarged font height (the `HEAD` field; before/after
+    values in
+    [`docs/BF2_FONT_SCALING.md`](docs/BF2_FONT_SCALING.md)) for Cyrillic
+    readability on modern screens.
+  - `Data\_lvl_pc\shell.lvl` — menu element anchors for wide screens
+    ([`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md),
+    [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)):
+    unlike the first game, this engine is built for 800x600 only and has
+    no native widescreen support.
+  - `Data\_lvl_pc\ingame.lvl` — a gap between the "Кількість бійців"
+    label and the "Відродження" button on the unit-selection screen, so
+    the enlarged Cyrillic font doesn't cover the button —
+    [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
+- **New file:** `d3d9.dll` — placed in the game folder next to
+  `BattlefrontII.exe` (the standard Windows DLL search order: the
+  application folder is checked before System32). Fixes movie subtitles
+  disappearing at any resolution other than 4:3/5:4 — details and
+  in-game confirmation in
+  [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
+  Before overwriting an existing file of the same name, a backup is made
+  (`d3d9.dll.bf1backup`); at runtime it writes a `bf2_widescreen_fix.log`
+  log file in the same folder.
+
 ---
 
 ## Подяки / Credits
@@ -280,12 +508,32 @@ built from source separately.
   потрібних файлів і куди їх класти: `FONT_FORMAT_SPEC.md` §7.6.
   Обрані навмисно замість системного `Bahnschrift` (заборона
   розповсюдження).
+
+  Який файл рендерить який ігровий шрифт:
+
+  | Гра | Розмір | Файл |
+  |---|---|---|
+  | BF1 | усі 5 розмірів | `SofiaSansExtraCondensed-Bold.ttf` |
+  | BF2 | `gamefont_large` | `Unbounded-Bold.ttf` |
+  | BF2 | `gamefont_medium` | `Unbounded-Black.ttf` |
+  | BF2 | `gamefont_small` | `Unbounded-ExtraBold.ttf` |
+  | BF2 | `gamefont_tiny` / `gamefont_super_tiny` | `Exo2-ExtraBold.ttf` |
   EN: all three are **SIL Open Font License**, freely available on
   Google Fonts. **This repository does NOT bundle `.ttf` files** (they
   are public, and the links above go straight to the source) — the
   exact list of files and where to put them is in
   `FONT_FORMAT_SPEC.md` §7.6. Chosen deliberately instead of the
   system `Bahnschrift` font (redistribution forbidden).
+
+  Which file renders which in-game font:
+
+  | Game | Size | File |
+  |---|---|---|
+  | BF1 | all 5 sizes | `SofiaSansExtraCondensed-Bold.ttf` |
+  | BF2 | `gamefont_large` | `Unbounded-Bold.ttf` |
+  | BF2 | `gamefont_medium` | `Unbounded-Black.ttf` |
+  | BF2 | `gamefont_small` | `Unbounded-ExtraBold.ttf` |
+  | BF2 | `gamefont_tiny` / `gamefont_super_tiny` | `Exo2-ExtraBold.ttf` |
 
 ---
 
@@ -303,7 +551,7 @@ built from source separately.
 ## 📺 Автор / Author
 
 **EMP_UA** — **UA:** Український контент-мейкер та локалізатор ігор. **EN:** Ukrainian content creator & game localizer.
-[YouTube](https://www.youtube.com/@EMPs_UA) • [Twitch](https://www.twitch.tv/emp_ua) • [Discord](https://discord.gg/QdmgsCgPkp) • [Telegram](https://t.me/EMP_UA) • [Website](https://emp-ua-site.pages.dev)
+[YouTube](https://www.youtube.com/@EMPs_UA) • [Twitch](https://www.twitch.tv/emp_ua) • [Discord](https://discord.gg/QdmgsCgPkp) • [Telegram](https://t.me/EMP_UA) • [Website](https://emp-ua.com)
 
 ---
 

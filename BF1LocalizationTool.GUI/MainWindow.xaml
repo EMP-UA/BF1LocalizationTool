@@ -25,30 +25,29 @@
         </x:Array>
 
         <!-- ══════════════════════════════════════════════════════════════
-             UA: Кольорове кодування РЯДКА ЦІЛКОМ (той самий підхід, що й у
-             SWH.LocEditor, MainWindow.xaml, стиль "RowStyle") — заливка
-             рядка ЦІЛКОМ + тонка рамка в тон, а не лише маленький кружечок
-             у першій колонці ("●") плюс колір тексту перекладу, щоб рядки,
-             що потребують уваги, одразу кидались в око. Порядок тригерів =
-             ПРІОРИТЕТ (пізніший тригер ПЕРЕМАГАЄ, якщо кілька умов
-             збігаються одночасно):
+             UA: Кольорове кодування РЯДКА ЦІЛКОМ — за зразком SWH.LocEditor
+             (MainWindow.xaml, стиль "RowStyle"): рядок отримує заливку
+             ЦІЛКОМ + тонку рамку в тон, а не лише маленький кружечок у
+             першій колонці ("●") плюс колір тексту перекладу —
+             рядки, що потребують уваги, мають одразу кидатись в око.
+             Порядок тригерів = ПРІОРИТЕТ (пізніший тригер ПЕРЕМАГАЄ,
+             якщо кілька умов збігаються одночасно):
                Без перекладу (база) < Перекладено < Дублі з розбіжним
                перекладом < Проблема (задовгий/недійсний) < Технічний (не
                потребує перекладу взагалі) < Змінено й не збережено
-               (найвищий пріоритет — саме такі рядки треба зберегти
-               НАЙПЕРШИМИ).
-             EN: Color-codes the WHOLE ROW (same approach as SWH.LocEditor,
-             MainWindow.xaml, the "RowStyle" style) — a full row fill plus a
-             thin matching border, rather than just the small dot in the
-             first column ("●") plus the translation text color, so rows
-             needing attention immediately catch the eye. Trigger order =
-             PRIORITY (a later trigger WINS if multiple conditions match at
-             once):
+               (найвищий — саме це користувачу треба зберегти НАЙПЕРШИМ).
+             EN: Color-codes the WHOLE ROW — modeled after SWH.LocEditor
+             (MainWindow.xaml, the "RowStyle" style): the row gets a full
+             fill + a thin matching border, not just a small dot in the
+             first column ("●") plus the translation text color — rows
+             needing attention should immediately catch the eye. Trigger
+             order = PRIORITY (a later trigger WINS if multiple conditions
+             match at once):
                Untranslated (base) < Translated < Duplicates with
                inconsistent translation < Issue (too long/invalid) <
                Technical (doesn't need translation at all) <
-               Modified-and-unsaved (highest priority — these are exactly
-               the rows that need to be saved FIRST).
+               Modified-and-unsaved (highest — this is exactly what the
+               user needs to save FIRST).
              ══════════════════════════════════════════════════════════════ -->
         <Style x:Key="RowStyle" TargetType="DataGridRow">
             <Setter Property="Background"      Value="{DynamicResource RowUntranslatedBg}"/>
@@ -352,12 +351,16 @@
                 <!-- Переклад — DataGridTemplateColumn для відображення технічних рядків.
                      SortMemberPath ОБОВ'ЯЗКОВИЙ: TemplateColumn без нього не сортується
                      кліком по заголовку (на відміну від TextColumn, де сортування "з коробки").
-                     UA: Колір тексту за статусом (перекладено/не перекладено) визначає
-                     заливка ЦІЛОГО РЯДКА (RowStyle вище); ця колонка лишає лише
-                     нейтральний TextPrimaryBrush + виділення технічних рядків курсивом/жирним.
-                     EN: Per-status text coloring (translated/untranslated) is handled by
-                     the WHOLE-ROW fill (RowStyle above); this column keeps only a neutral
-                     TextPrimaryBrush plus italic/bold for technical rows. -->
+                     UA: Колір тексту за статусом (перекладено/не перекладено) прибрано —
+                     тепер за це відповідає заливка ЦІЛОГО РЯДКА (RowStyle вище), а тут
+                     лишається лише нейтральний TextPrimaryBrush + виділення технічних
+                     рядків курсивом/жирним (за зразком SWH.LocEditor, де так само після
+                     появи RowStyle прибрано дублювання кольору в тексті колонки перекладу).
+                     EN: Per-status text color (translated/untranslated) removed — that's
+                     now the job of the WHOLE-ROW fill (RowStyle above); this column keeps
+                     only a neutral TextPrimaryBrush plus italic/bold for technical rows
+                     (modeled after SWH.LocEditor, which likewise dropped the duplicate
+                     text-color signal from the translation column once RowStyle existed). -->
                 <DataGridTemplateColumn x:Name="ColTranslation" Header="UA: Переклад / EN: Translation" Width="2*"
                                          SortMemberPath="Translation">
                     <DataGridTemplateColumn.CellTemplate>
@@ -441,14 +444,15 @@
 
             </DataGrid.Columns>
 
-            <!-- UA: Технічні рядки мають фон рядка (RowTechnicalBg, див.
-                 RowStyle вище) плюс текст курсивом/жирним у колонці
-                 перекладу; фон іде через DynamicResource і міняється
-                 разом з темою (ApplyTheme). -->
-            <!-- EN: Technical rows get a row background (RowTechnicalBg,
-                 see RowStyle above) plus italic/bold text in the
-                 translation column; the background goes through
-                 DynamicResource and changes with the theme (ApplyTheme). -->
+            <!-- UA: Технічні рядки тепер ТЕЖ мають фон рядка (RowTechnicalBg,
+                 див. RowStyle вище) плюс текст курсивом/жирним у колонці
+                 перекладу — фон більше не "хардкоджений", а йде через
+                 DynamicResource і міняється разом з темою (ApplyTheme). -->
+            <!-- EN: Technical rows now ALSO get a row background
+                 (RowTechnicalBg, see RowStyle above) plus italic/bold text
+                 in the translation column — the background is no longer
+                 "hardcoded", it goes through DynamicResource and changes
+                 with the theme (ApplyTheme). -->
         </DataGrid>
 
         <!-- ══ STATUS BAR ════════════════════════════════════════════════════════════ -->
@@ -467,10 +471,12 @@
                            Text="UA: Відкрийте core.lvl для початку / EN: Open core.lvl to start"
                            TextTrimming="CharacterEllipsis"/>
 
-                <!-- UA: Налаштування порогу "задовгого" перекладу (падає в Проблемні) —
-                     розміщено поруч зі статусом автозбереження в статус-барі. -->
-                <!-- EN: "Too long translation" threshold settings (flags into Issues) —
-                     placed next to the autosave status in the status bar. -->
+                <!-- UA: Налаштування порогу "задовгого" перекладу (падає в Проблемні).
+                     Окремого меню налаштувань у GUI ще не було — додано тут,
+                     поруч зі статусом автозбереження. -->
+                <!-- EN: "Too long translation" threshold settings (flags into Issues).
+                     There was no dedicated settings menu in the GUI yet — added
+                     here, next to the autosave status. -->
                 <Button x:Name="BtnLengthSettings" Grid.Column="1"
                         Content="⚙" Width="22" Height="22" Margin="8,0,0,0"
                         Padding="0" FontSize="12"

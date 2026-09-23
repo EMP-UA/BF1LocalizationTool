@@ -2,8 +2,9 @@
 // BF1LocalizationTool.Diagnostic — MetricBaselineTestCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
-// UA: КОНТРОЛЬОВАНИЙ ЕКСПЕРИМЕНТ — доводить ПОВНУ модель рендеру,
+// UA: ДРУГИЙ КОНТРОЛЬОВАНИЙ ЕКСПЕРИМЕНТ — доводить ПОВНУ модель рендеру,
 //     виведену з англійського шрифту, перш ніж переписувати продакшн.
 //
 //     ВИВЕДЕНА МОДЕЛЬ (інваріант перевірено на 28 англійських літерах
@@ -36,7 +37,7 @@
 //     що ВЕСЬ рядок вирівнявся по низу (літери перестали стрибати по
 //     вертикалі). Якщо так — модель підтверджено, і продакшн-фікс уже
 //     рахуватиме descent коректно (CellHeight = базовий_відступ + хвіст).
-// EN: A CONTROLLED EXPERIMENT — proves the FULL render model
+// EN: A SECOND CONTROLLED EXPERIMENT — proves the FULL render model
 //     derived from the English font, before rewriting production.
 //
 //     DERIVED MODEL (invariant verified on 28 English gamefont_large

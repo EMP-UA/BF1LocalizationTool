@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontResourceIdentityCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Побайтове порівняння ДВОХ шрифтових ресурсів — FBOD і КОЖНОЇ
 //     текстурної сторінки. Привід: GlyphDonorAssignmentPreviewCommand

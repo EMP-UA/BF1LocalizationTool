@@ -7,51 +7,55 @@
 //     шрифту в одну дію: ріст без конфліктів → рендер кожної з 66 літер →
 //     конвертація в пікселі → патч BODY+FBOD.
 //
-//     Призначення "літера→байт-код" робиться ОДИН РАЗ на всю гру, ЗОВНІ
-//     (GenerateLocalizedCoreCommand, на перетині безпечних кодів УСІХ
-//     шрифтів — емпірично підтверджено PerFontSafeDonorCommand: 74 коди
-//     для BF1, 91 для BF2, за потреби 66), і передається сюди вже готовим
-//     списком `assignments`. Причина СПІЛЬНОЇ таблиці кодів на всю гру:
-//     донорський пул різних розмірів шрифту різний (перевірено
-//     PerFontSafeDonorCommand), тож без узгодження та сама літера могла б
-//     отримати РІЗНИЙ байт-код у gamefont_large і в gamefont_tiny — а
-//     оскільки локалізаційний ТЕКСТ (байти) спільний для всієї гри
+//     СПІЛЬНА таблиця кодів: цей клас НЕ викликає GlyphDonorMatcher.Assign
+//     (крок "яка літера → який донор") сам, окремо для КОЖНОГО шрифту —
+//     бо донорський пул різних розмірів шрифту різний (перевірено
+//     PerFontSafeDonorCommand), і за такої схеми та сама літера могла б
+//     отримати РІЗНИЙ байт-код у gamefont_large і в gamefont_tiny.
+//     Оскільки локалізаційний ТЕКСТ (байти) спільний для всієї гри
 //     незалежно від того, яким шрифтом його намалюють у конкретному
 //     UI-елементі, це означало б, що той самий байт 0xB5 — 'х' в одному
 //     розмірі шрифту і зовсім інша літера в іншому.
 //
-//     Цей клас НЕ викликає GlyphDonorMatcher.Assign — лише розділяє
-//     призначення по сторінках ЦЬОГО шрифту й росте/рендерить/патчить,
-//     використовуючи ВЛАСНУ геометрію цього шрифту (donorRectsByCode) для
-//     фактичних розмірів — GrowthResolver рахує width/height/currentRatio
-//     заново з переданого прямокутника (перевірено,
-//     Matching/GrowthResolver.cs), тож коректність росту не залежить від
-//     того, з якого шрифту обчислювався сам assignment.
+//     Призначення "літера→код" робиться ОДИН РАЗ на всю гру, ЗОВНІ
+//     (GenerateLocalizedCoreCommand, на перетині безпечних кодів УСІХ
+//     шрифтів — емпірично підтверджено PerFontSafeDonorCommand: 74 коди
+//     для BF1, 91 для BF2, за потреби 66), і передається сюди вже
+//     готовим списком `assignments`. Цей клас НЕ викликає
+//     GlyphDonorMatcher.Assign — лише розділяє призначення по сторінках
+//     ЦЬОГО шрифту й росте/рендерить/патчить, використовуючи ВЛАСНУ
+//     геометрію цього шрифту (donorRectsByCode) для фактичних розмірів —
+//     GrowthResolver рахує width/height/currentRatio заново з переданого
+//     прямокутника (перевірено, Matching/GrowthResolver.cs), тож
+//     коректність росту не залежить від того, з якого шрифту
+//     обчислювався сам assignment.
 // EN: Orchestrator — stitches together already-written and verified
 //     pieces for ONE font into a single action: conflict-free growth →
 //     rendering each of the 66 letters → converting to pixels → patching
 //     BODY+FBOD.
 //
-//     The "letter→byte-code" assignment is made ONCE for the whole game,
+//     SHARED code table: this class does NOT call GlyphDonorMatcher.Assign
+//     itself (the "which letter → which donor" step) separately for
+//     EACH font — because the donor pool differs per font size
+//     (confirmed by PerFontSafeDonorCommand), and under that scheme the
+//     same letter could end up on a DIFFERENT byte-code in
+//     gamefont_large vs gamefont_tiny. Since localization TEXT (bytes)
+//     is shared across the whole game regardless of which font renders
+//     it in a given UI element, that would mean the same byte 0xB5 is
+//     'х' in one font size and a completely different letter in
+//     another.
+//
+//     The "letter→code" assignment is made ONCE for the whole game,
 //     EXTERNALLY (GenerateLocalizedCoreCommand, on the intersection of
 //     ALL fonts' safe codes — empirically confirmed by
 //     PerFontSafeDonorCommand: 74 codes for BF1, 91 for BF2, against 66
 //     needed), and handed to this class as a ready `assignments` list.
-//     Reason for a code table SHARED across the whole game: the donor
-//     pool differs per font size (confirmed by PerFontSafeDonorCommand),
-//     so without a shared assignment the same letter could end up on a
-//     DIFFERENT byte-code in gamefont_large vs gamefont_tiny — and since
-//     localization TEXT (bytes) is shared across the whole game
-//     regardless of which font renders it in a given UI element, that
-//     would mean the same byte 0xB5 is 'х' in one font size and a
-//     completely different letter in another.
-//
-//     This class does not call GlyphDonorMatcher.Assign — it only splits
-//     the assignment by THIS font's pages and grows/renders/patches using
-//     THIS font's OWN geometry (donorRectsByCode) for the actual sizes —
-//     GrowthResolver recomputes width/height/currentRatio fresh from the
-//     passed-in rectangle (confirmed, Matching/GrowthResolver.cs), so
-//     growth correctness does not depend on which font the assignment
+//     This class does not call GlyphDonorMatcher.Assign — it only
+//     splits the assignment by THIS font's pages and grows/renders/patches
+//     using THIS font's OWN geometry (donorRectsByCode) for the actual
+//     sizes — GrowthResolver recomputes width/height/currentRatio fresh
+//     from the passed-in rectangle (confirmed, Matching/GrowthResolver.cs),
+//     so growth correctness does not depend on which font the assignment
 //     itself was computed from.
 //
 //     СВІДОМО НЕ робить: не вирішує, які донори безпечні (мовний аналіз,
@@ -127,15 +131,19 @@ public sealed record GrowAndRenderResult(
 //     окремо (замість того, щоб лишати це деталлю реалізації InjectFont),
 //     щоб ТОЧНО ТОЙ САМИЙ код (GrowAndRenderGlyphs), який пише пікселі в
 //     реальну гру, можна було перевикористати в діагностичному прев'ю
-//     (напр. інструмент для збільшеного перегляду конкретного слова) —
-//     БЕЗ ризику, що прев'ю з часом розійдеться з реальною ін'єкцією.
+//     (напр. новий інструмент для збільшеного перегляду конкретного
+//     слова) — БЕЗ ризику, що прев'ю з часом розійдеться з реальною
+//     ін'єкцією (уже траплялось: GlyphFitRenderPreviewCommand.cs
+//     використовує СТАРИЙ RenderToFit і не показує актуальну картину).
 // EN: The result of growing+rendering ONE letter — BEFORE building a
 //     patch. Pulled out separately (instead of leaving it as an
 //     implementation detail of InjectFont) so the EXACT SAME code
 //     (GrowAndRenderGlyphs) that writes pixels into the real game can be
-//     reused by diagnostic previews (e.g. a tool for a zoomed view of a
-//     specific word) — WITHOUT the risk of the preview drifting out of
-//     sync with the real injection.
+//     reused by diagnostic previews (e.g. a new tool for a zoomed view of
+//     a specific word) — WITHOUT the risk of the preview drifting out of
+//     sync with the real injection over time (already happened once:
+//     GlyphFitRenderPreviewCommand.cs uses the OLD RenderToFit and
+//     doesn't show the current picture).
 public sealed record RenderedGlyphPlacement(
     char Character, ushort DonorCode, GlyphRectBounds Rect, RasterizedGlyph Rendered,
     // UA: Метричні поля FBOD ЦІЄЇ літери (GlyphMetricModel) — пишуться в
@@ -218,12 +226,12 @@ public static class CyrillicFontInjector
     }
 
     // UA: Кроки 1-3 (ріст без конфліктів → еталонна геометрія "тіла" на
-    //     регістр → рендер КОЖНОЇ літери через RenderToFit) —
+    //     регістр → рендер КОЖНОЇ літери через RenderWithCoreAndMargin) —
     //     винесено з InjectFont ОКРЕМИМ публічним методом, щоб діагностичні
     //     прев'ю могли викликати ТОЧНО ТОЙ САМИЙ код, що й реальна
     //     ін'єкція (див. коментар біля RenderedGlyphPlacement).
     // EN: Steps 1-3 (conflict-free growth → per-case "core" reference
-    //     geometry → render EVERY letter via RenderToFit) —
+    //     geometry → render EVERY letter via RenderWithCoreAndMargin) —
     //     pulled out of InjectFont as a SEPARATE public method, so
     //     diagnostic previews can call the EXACT SAME code as the real
     //     injection (see the comment next to RenderedGlyphPlacement).
@@ -242,11 +250,12 @@ public static class CyrillicFontInjector
         //     — see file header. Only the metric model + render FOR THIS
         //     font remain here.
         //
-        //     Метрична модель (GlyphMetricModel): вертикальне позиціювання
-        //     ("стрибання" літери відносно базової лінії) залежить не від
-        //     пікселів текстури, а від вертикальних метрик FBOD
-        //     (Bearing/CellHeight) — вони МАЮТЬ рахуватись з природної
-        //     форми конкретної літери, а не копіюватися з донора. Доведено
+        //     ПЕРЕРОБЛЕНО НА МЕТРИЧНУ МОДЕЛЬ (GlyphMetricModel): увесь
+        //     попередній піксельний core/margin-підхід (і shared-height, і
+        //     4 цілі-висоти, і core/margin) розв'язував НЕ ТУ задачу —
+        //     проблема "стрибання" була не в пікселях текстури, а в тому,
+        //     що вертикальні метрики FBOD (Bearing/CellHeight) сліпо
+        //     копіювались із випадкового англійського донора. Доведено
         //     двома контрольованими експериментами (див. GlyphMetricModel):
         //       - CellHeight керує вертикальним масштабом (ж: 19→30 виросла
         //         й сіла на лінію);
@@ -254,26 +263,10 @@ public static class CyrillicFontInjector
         //         англійських літер, без винятку);
         //       - метричний тест (Bearing = CellHeight − бокс) вирівняв
         //         базову лінію в грі.
-        //     Тому: рахуємо правильні Bearing/CellHeight/розмір бокса з
+        //     Тепер: рахуємо правильні Bearing/CellHeight/розмір бокса з
         //     ПРИРОДНОЇ форми кожної літери, розміщуємо слот цільового
         //     розміру, рендеримо тісним кропом (RenderToFit) і пишемо
         //     метрики в FBOD (GlyphAtlasPatcher).
-        // EN: Metric model (GlyphMetricModel): vertical positioning (a
-        //     letter "jumping" relative to the baseline) does not depend on
-        //     texture pixels but on the FBOD vertical metrics
-        //     (Bearing/CellHeight) — they MUST be computed from each
-        //     letter's natural shape, not copied from the donor. Proven by
-        //     two controlled experiments (see GlyphMetricModel):
-        //       - CellHeight controls the vertical scale (ж: 19→30 grew and
-        //         sat on the baseline);
-        //       - the game's invariant Bearing + box_height = CellHeight
-        //         (28 English letters, no exceptions);
-        //       - the metric test (Bearing = CellHeight − box) aligned the
-        //         baseline in-game.
-        //     So: compute correct Bearing/CellHeight/box size from each
-        //     letter's NATURAL shape, place a slot of the target size,
-        //     render with a tight crop (RenderToFit), and write the metrics
-        //     into FBOD (GlyphAtlasPatcher).
 
         // UA: Крок 2 — опорні метрики ЦЬОГО шрифту з його РЕАЛЬНИХ
         //     англійських записів (baselineOffset, capHeightGame) + пробний

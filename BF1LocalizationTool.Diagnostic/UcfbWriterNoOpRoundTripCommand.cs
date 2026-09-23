@@ -2,26 +2,27 @@
 // BF1LocalizationTool.Diagnostic — UcfbWriterNoOpRoundTripCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: КОНТРОЛЬНИЙ тест, що доповнює UcfbWriteRoundTripCommand:
-//     UcfbFileSizeDiscrepancyCommand виключає гіпотезу "хвіст поза
-//     деревом" (0 байт різниці) — отже, будь-яка розбіжність розміру
-//     виникає ВСЕРЕДИНІ серіалізації UcfbWriter, а не поза нею. Ця
-//     команда перевіряє: чи розбіжність з'являється НАВІТЬ БЕЗ жодної
-//     заміни (replacements=null) — тобто чи сам цикл read → write (без
-//     будь-яких змін) вже змінює розмір файлу.
+// UA: КОНТРОЛЬНИЙ тест, якого бракувало в UcfbWriteRoundTripCommand:
+//     UcfbFileSizeDiscrepancyCommand спростував гіпотезу "хвіст поза
+//     деревом" (0 байт різниці) — отже, розбіжність 1024 байти виникає
+//     ВСЕРЕДИНІ серіалізації UcfbWriter, а не поза нею. Ця команда
+//     перевіряє: чи розбіжність з'являється НАВІТЬ БЕЗ жодної заміни
+//     (replacements=null) — тобто чи сам цикл read → write (без будь-
+//     яких змін) вже змінює розмір файлу.
 //
 //     Якщо ТАК — це системна проблема вирівнювання (padding) в
 //     UcfbWriter/UcfbReader, що загрожує КОЖНОМУ збереженню файлу цим
 //     інструментом, а не лише запису гліфів. GlyphAtlasPatcher НЕ можна
 //     писати, поки це не виправлено — інакше кожен збережений файл буде
 //     мати непередбачувану структурну розбіжність з оригіналом.
-// EN: The CONTROL test that complements UcfbWriteRoundTripCommand:
-//     UcfbFileSizeDiscrepancyCommand rules out the "tail outside the
-//     tree" hypothesis (0 bytes difference) — so any size discrepancy
-//     arises INSIDE UcfbWriter's serialization, not outside it. This
-//     command checks: does a discrepancy appear even WITHOUT any
-//     replacement (replacements=null) — i.e. does the read → write
+// EN: The CONTROL test missing from UcfbWriteRoundTripCommand:
+//     UcfbFileSizeDiscrepancyCommand disproved the "tail outside the
+//     tree" hypothesis (0 bytes difference) — so the 1024-byte
+//     discrepancy arises INSIDE UcfbWriter's serialization, not outside
+//     it. This command checks: does the discrepancy appear even WITHOUT
+//     any replacement (replacements=null) — i.e. does the read → write
 //     cycle alone (with zero changes) already alter the file size?
 //
 //     If YES — this is a systemic alignment (padding) problem in

@@ -2,16 +2,16 @@
 // BF1LocalizationTool.Diagnostic — TargetedGrowthDonorAssignmentPreviewCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: На відміну від GrowthAwareDonorAssignmentPreviewCommand, який
-//     росте КОЖЕН донор МАКСИМАЛЬНО в усіх напрямках ще ДО призначення —
-//     такий підхід перекручує пропорції в гірший бік (середнє відхилення
-//     зростає замість зменшитись — 0,045→0,285 у [BF2] gamefont_large,
-//     0,462→0,657 у [BF1] gamefont_large), ця команда росте donor slots
-//     ЦІЛЕСПРЯМОВАНО, ПІСЛЯ призначення, і лише настільки, наскільки
-//     потрібно для КОНКРЕТНОЇ вже призначеної пари (літера, донор).
+// UA: Ця перевірка вирощує донори ЦІЛЕСПРЯМОВАНО — на відміну від
+//     GrowthAwareDonorAssignmentPreviewCommand, який росте КОЖЕН донор
+//     МАКСИМАЛЬНО в усіх напрямках ще ДО призначення, що перекручує
+//     пропорції в гірший бік (середнє відхилення зростає замість
+//     зменшуватись — 0,045→0,285 у [BF2] gamefont_large, 0,462→0,657 у
+//     [BF1] gamefont_large).
 //
-//     Порядок:
+//     Правильний порядок:
 //       1. Спершу звичайне призначення НА ПОТОЧНИХ (не вирощених)
 //          розмірах — той самий GlyphDonorMatcher, що й завжди.
 //       2. Для КОЖНОЇ вже призначеної пари (літера, донор) — рахуємо,
@@ -28,15 +28,14 @@
 //     елементом; з рискою/крапкою над літерою) проти звичайних
 //     baseline-літер — щоб бачити, чи справді "особливі" літери
 //     системно гірше вписуються в наявних донорів.
-// EN: Unlike GrowthAwareDonorAssignmentPreviewCommand, which grows EVERY
-//     donor MAXIMALLY in all directions BEFORE assignment — an approach
-//     that distorts ratios for the worse (average deviation goes UP
-//     instead of down — 0.045→0.285 in [BF2] gamefont_large,
-//     0.462→0.657 in [BF1] gamefont_large) — this command grows donor
-//     slots in a TARGETED way, AFTER assignment, and only as much as the
-//     SPECIFIC already-assigned pair (letter, donor) needs.
+// EN: This check grows donors in a TARGETED way — unlike
+//     GrowthAwareDonorAssignmentPreviewCommand, which grows EVERY donor
+//     MAXIMALLY in all directions BEFORE assignment, distorting ratios
+//     for the worse (average deviation increases instead of decreasing
+//     — 0.045→0.285 in [BF2] gamefont_large, 0.462→0.657 in
+//     [BF1] gamefont_large).
 //
-//     Order:
+//     Correct order:
 //       1. First, ordinary assignment on CURRENT (non-grown) sizes — the
 //          same GlyphDonorMatcher as always.
 //       2. For EACH already-assigned pair (letter, donor) — compute
@@ -71,8 +70,8 @@ public static class TargetedGrowthDonorAssignmentPreviewCommand
     //     широка ТА зі спускним елементом), бо перевіряємо "чи має хоч
     //     одну складну рису", а не взаємовиключну категорію.
     // EN: "Special" shapes — deliberately overlapping (e.g. Щ is both
-    //     wide AND has a descender), since we check "has at least one
-    //     complex trait", not a mutually-exclusive category.
+    //     wide AND has a descender), since the check is "has at least
+    //     one complex trait", not a mutually-exclusive category.
     private const string WideMultiStroke = "ЖШЩЮжшщю";
     private const string HasDescender = "РУДФЦЩрудфцщ";
     private const string HasAscenderMark = "ЙЇҐБІйїґбі";
@@ -81,18 +80,17 @@ public static class TargetedGrowthDonorAssignmentPreviewCommand
     {
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII (0x20-0x7E) ЗАВЖДИ вважаються "зайнятими"
-        //     незалежно від Locl-сканування, оскільки гра використовує їх
-        //     і поза таблицею `Locl` (напр. дослівні англійські рядки, що
-        //     не проходять через хеш-пошук — див. `PatchAddOnMapNameCommand`).
-        //     Лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
         //     кандидатами через реальні дані.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is ALWAYS treated as "used"
-        //     regardless of the Locl scan, because the game also uses them
-        //     outside the `Locl` table (e.g. literal English strings that
-        //     bypass the hash lookup — see `PatchAddOnMapNameCommand`).
-        //     Only non-printable control codes (0x00-0x1F, 0x7F) remain
-        //     real-data candidates.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);

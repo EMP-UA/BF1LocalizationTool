@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — LowercaseCoreMarginPreviewCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: READ-ONLY перевірка моделі "ядро+виступ" (GlyphMetricModel.
 //     ComputeLowercaseCoreMetric) — БЕЗ жодного запису файлу, БЕЗ атласу,
@@ -12,12 +13,14 @@
 //     GenerateNoDonorCyrillicCoreCommand — просто НЕ рендерить пікселі й
 //     НЕ пише файл, лише друкує числа в звіт.
 //
-//     Це окремий read-only інструмент, а не частина генератора, з тієї ж
-//     причини, з якої GlyphOccupancyOverlayCommand теж окремий: перевірка
-//     й генерація — різні дії, і перша не повинна вимагати другої. Обидві
-//     перевірки (ця й GlyphOccupancyOverlayCommand через
-//     RunGlyphOccupancyOverlayManualPick) — самостійні пункти меню
-//     категорій ПЕРЕВІРОК, без побічних ефектів.
+//     ПРИЧИНА існування цього файлу: перевірка й генерація — різні дії,
+//     і перша не повинна вимагати другої (та сама причина, з якої
+//     GlyphOccupancyOverlayCommand — окремий read-only інструмент, а не
+//     частина генератора). Ці числа доступні як самостійний,
+//     безефектний пункт меню ПЕРЕВІРОК, без запуску повної
+//     генерації/перезапису core.lvl. Обидві перевірки (ця й
+//     GlyphOccupancyOverlayCommand через RunGlyphOccupancyOverlayManualPick)
+//     — самостійні пункти меню категорій ПЕРЕВІРОК, без побічних ефектів.
 //
 //     ResolveFontFamilyName перевикористовується НАПРЯМУ з
 //     GenerateNoDonorCyrillicCoreCommand (internal) — щоб цей прев'ю
@@ -33,13 +36,15 @@
 //     GenerateNoDonorCyrillicCoreCommand — it just doesn't render pixels or
 //     write a file, only prints the numbers to the report.
 //
-//     This is a separate read-only tool rather than part of the generator,
-//     for the same reason GlyphOccupancyOverlayCommand is also separate:
-//     checking and generating are different actions, and the first
-//     shouldn't require the second. Both checks (this one, and
-//     GlyphOccupancyOverlayCommand via RunGlyphOccupancyOverlayManualPick)
-//     are standalone items in the CHECKS menu categories, with no side
-//     effects.
+//     WHY THIS FILE EXISTS: checking and generating are different
+//     actions, and the first shouldn't require the second (the same
+//     reason GlyphOccupancyOverlayCommand is a separate read-only tool
+//     rather than part of the generator). These numbers are available as
+//     a standalone, side-effect-free item in the CHECKS menu, without
+//     running a full core.lvl generation/rewrite. Both checks (this one,
+//     and GlyphOccupancyOverlayCommand via
+//     RunGlyphOccupancyOverlayManualPick) are standalone items in the
+//     CHECKS menu categories, with no side effects.
 //
 //     ResolveFontFamilyName is reused DIRECTLY from
 //     GenerateNoDonorCyrillicCoreCommand (internal) — so this preview
@@ -60,11 +65,11 @@ public static class LowercaseCoreMarginPreviewCommand
     private static readonly string[] TargetFontBaseNames =
         ["gamefont_large", "gamefont_medium", "gamefont_small", "gamefont_tiny", "gamefont_super_tiny"];
 
-    // UA: і/ї/й — приклад літер із крапкою/дашком над стрижнем. б/ф додані
-    //     як ще два реальні "виступ-зверху" кандидати з коментарів
+    // UA: і/ї/й — приклад літер із верхнім елементом (крапка/дашок). б/ф
+    //     додані як ще два реальні "виступ-зверху" кандидати з коментарів
     //     GlyphMetricModel (стрижень), для повнішої картини за ту саму
     //     ціну проходу.
-    // EN: і/ї/й — an example of letters with a dot/breve above the stem.
+    // EN: і/ї/й — an example of letters with a top element (dot/breve).
     //     б/ф added as two more real "top extension" candidates from
     //     GlyphMetricModel's comments (the stem), for a fuller picture at
     //     the same pass cost.
@@ -156,17 +161,19 @@ public static class LowercaseCoreMarginPreviewCommand
                        $"CoreMarginCapPx={metricReference.CoreMarginCapPx}px (max allowed dot/tail protrusion above the lowercase core).");
 
             // UA: Той самий пропорційний кап, що й
-            //     GenerateNoDonorCyrillicCoreCommand реально застосовує
-            //     при генерації (GlyphBoxFitRenderer.
+            //     GenerateNoDonorCyrillicCoreCommand тепер реально
+            //     застосовує при генерації (GlyphBoxFitRenderer.
             //     ComputeAlphabetExtensionScale, спільна логіка, жодного
-            //     дублювання математики) — так прев'ю лишається в синхроні
-            //     з тим, що генерація насправді робить.
+            //     дублювання математики). БЕЗ цього прев'ю показувало б
+            //     СТАРІ (до фіксу) числа жорсткого per-letter клампу —
+            //     розсинхронізація з тим, що генерація насправді робить.
             // EN: The same proportional cap that
-            //     GenerateNoDonorCyrillicCoreCommand actually applies
+            //     GenerateNoDonorCyrillicCoreCommand now actually applies
             //     during generation (GlyphBoxFitRenderer.
             //     ComputeAlphabetExtensionScale, shared logic, no math
-            //     duplication) — this keeps the preview in sync with what
-            //     generation actually does.
+            //     duplication). WITHOUT this the preview would show the
+            //     OLD (pre-fix) hard per-letter clamp numbers — drifting
+            //     out of sync with what generation actually does.
             // UA: boxSizeForChar повертає LowercaseProbeBoxHeightBound
             //     (НЕ m.BoxHeight) — той самий великий запас, який
             //     ComputeLowercaseCoreMetric сам використовує для

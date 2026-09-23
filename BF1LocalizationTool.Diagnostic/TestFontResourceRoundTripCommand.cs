@@ -2,11 +2,12 @@
 // BF1LocalizationTool.Diagnostic — TestFontResourceRoundTripCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Round-trip перевірка FontResourceReader + FontResourceBuilder: перш
-//     ніж будувати складну логіку (свіжий атлас, bin-packing, рендер),
-//     спершу доводимо, що reader+builder взагалі вміють ВІДТВОРИТИ
-//     наявний font-чанк БАЙТ-У-БАЙТ.
+// UA: Round-trip перевірка FontResourceReader + FontResourceBuilder — той
+//     самий підхід, що вже виправдав себе з Lua-writer'ом: перш ніж будувати
+//     складну логіку (свіжий атлас, bin-packing, рендер), спершу доводимо,
+//     що взагалі можливо ВІДТВОРИТИ наявний font-чанк БАЙТ-У-БАЙТ.
 //
 //     Для КОЖНОГО шрифту в core.lvl:
 //       1. Серіалізуємо оригінальний font-контейнер (UcfbWriter).
@@ -16,9 +17,10 @@
 //     основі можна безпечно будувати генерацію свіжого атласу. Якщо ні —
 //     звіт показує ПЕРШЕ зміщення розбіжності, щоб одразу бачити, яке поле
 //     ще не зрозуміле (а не гадати).
-// EN: Round-trip validation of FontResourceReader + FontResourceBuilder:
-//     before building complex logic (fresh atlas, bin-packing, rendering),
-//     first prove reader+builder can REPRODUCE an existing font chunk
+// EN: Round-trip validation of FontResourceReader + FontResourceBuilder —
+//     the same approach that proved useful with the Lua writer: before
+//     building complex logic (fresh atlas, bin-packing, rendering),
+//     first prove an existing font chunk can even be REPRODUCED
 //     BYTE-FOR-BYTE.
 //
 //     For EACH font in core.lvl:

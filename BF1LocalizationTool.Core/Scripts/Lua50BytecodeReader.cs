@@ -22,14 +22,34 @@
 //     Це НЕ "нестандартний/проприєтарний байткод" — це стандартний dump
 //     Lua 5.0 з одним відомим типовим налаштуванням компіляції.
 //
-//     ПЕРЕВІРЕНО на реальних файлах (Python-прототип): усі 90 "scr_"
-//     чанків shell.lvl і всі 9 чанків ingame.lvl (BF2)
-//     розпарсились без жодної помилки, з очікуваним залишком РІВНО 1 байт
-//     на кожному (той самий "хвостовий" байт, який офіційний LVLTool
-//     (github.com/BAD-AL/LVLTool, MIT) вручну відрізає перед передачею
-//     стороннім деком-тулам — у нас це просто залишок, бо наш парсер сам
-//     знає, скільки байтів структурно споживати, і не потребує EOF).
+//     Перевірено на реальних файлах: усі 90 "scr_" чанків shell.lvl і всі
+//     9 чанків ingame.lvl (BF2) розпарсились без жодної помилки, з
+//     очікуваним залишком РІВНО 1 байт на кожному (той самий "хвостовий"
+//     байт, який офіційний LVLTool (github.com/BAD-AL/LVLTool, MIT)
+//     вручну відрізає перед передачею стороннім деком-тулам — тут це
+//     просто залишок, бо парсер сам знає, скільки байтів структурно
+//     споживати, і не потребує EOF).
 //
+//     Клас декодує не лише пул констант, а й самі інструкції (опкоди):
+//     рядкові/числові константи в пулі НЕ обов'язково пов'язані з
+//     конкретним викликом (порядок пулу — це порядок КОМПІЛЯЦІЇ, не
+//     порядок ВИКОРИСТАННЯ). Щоб знати, яке саме число є аргументом
+//     якого виклику чи полем якої таблиці, потрібно декодувати
+//     інструкції. Таблиця опкодів (36 штук, MOVE..CLOSURE) звірена
+//     побайтово проти офіційного lua.org/source/5.0/lopcodes.h — не
+//     вигадана.
+//
+//     MAXSTACK=128 (поріг "регістр чи константа" для RK-операндів:
+//     RK(x) = якщо x<MAXSTACK то R(x), інакше Kst(x-MAXSTACK)) — ЦЕ
+//     ЄДИНЕ реальне налаштування гри понад офіційний Lua 5.0 (офіційний
+//     дефолт — 250, llimits.h). MAXSTACK — суто компіляторна константа,
+//     у самому dump-форматі її НЕМАЄ — тому підтверджена ЕМПІРИЧНО, не
+//     з заголовка: перебір кандидатів (64/100/128/150/200/250) на
+//     реальних SETTABLE-парах з ifs_vkeyboard (shell.lvl) — лише
+//     MAXSTACK=128 дає 5 із 5 семантично осмислених пар ключ=значення
+//     ("NumRows"=4.0, "NumColumns"=13.0, "MaxLen"=15.0, "MaxWidth"=150.0,
+//     "fnDone"=nil); усі інші кандидати давали або вихід за межі пулу
+//     констант, або безглузді пари рядок+рядок.
 // EN: Parser for compiled Lua 5.0 chunks, which BF2 (Classic) uses to
 //     store UI logic (shell.lvl) and HUD logic (ingame.lvl) inside "scr_"
 //     chunks.
@@ -50,41 +70,21 @@
 //     This is NOT "nonstandard/proprietary bytecode" — it's a standard
 //     Lua 5.0 dump with one well-known, ordinary compile-time setting.
 //
-//     VERIFIED against real files (Python prototype): all 90 "scr_"
-//     chunks of shell.lvl and all 9 chunks of ingame.lvl (BF2)
-//     parsed with zero errors, with the expected leftover of EXACTLY 1
-//     byte on every single one (the same "trailing" byte the official
-//     LVLTool, github.com/BAD-AL/LVLTool, MIT, manually strips before
-//     handing data to third-party decompile tools — for us it's simply a
-//     leftover, since our parser knows exactly how many bytes to
-//     structurally consume and doesn't rely on EOF).
+//     Verified against real files: all 90 "scr_" chunks of shell.lvl and
+//     all 9 chunks of ingame.lvl (BF2) parsed with zero errors, with the
+//     expected leftover of EXACTLY 1 byte on every single one (the same
+//     "trailing" byte the official LVLTool (github.com/BAD-AL/LVLTool,
+//     MIT) manually strips before handing data to third-party decompile
+//     tools — here it's simply a leftover, since the parser knows exactly
+//     how many bytes to structurally consume and doesn't rely on EOF).
 //
-//     Клас декодує самі інструкції (опкоди), не лише пул констант:
-//     рядкові/числові константи в пулі НЕ обов'язково пов'язані з
-//     конкретним викликом (порядок пулу — це порядок КОМПІЛЯЦІЇ, не
-//     порядок ВИКОРИСТАННЯ). Щоб знати, яке саме число є аргументом якого
-//     виклику/полем якої таблиці — потрібно декодувати інструкції.
-//     Таблиця опкодів (36 штук, MOVE..CLOSURE) звірена побайтово проти
-//     офіційного lua.org/source/5.0/lopcodes.h — не вигадана.
-//
-//     MAXSTACK=128 (поріг "регістр чи константа" для RK-операндів:
-//     RK(x) = якщо x<MAXSTACK то R(x), інакше Kst(x-MAXSTACK)) — ЦЕ
-//     ЄДИНЕ реальне налаштування гри понад офіційний Lua 5.0 (офіційний
-//     дефолт — 250, llimits.h). MAXSTACK — суто компіляторна константа,
-//     у самому dump-форматі її НЕМАЄ — тому підтверджена ЕМПІРИЧНО, не
-//     з заголовка: перебір кандидатів (64/100/128/150/200/250) на
-//     реальних SETTABLE-парах з ifs_vkeyboard (shell.lvl) — лише
-//     MAXSTACK=128 дає 5 із 5 семантично осмислених пар ключ=значення
-//     ("NumRows"=4.0, "NumColumns"=13.0, "MaxLen"=15.0, "MaxWidth"=150.0,
-//     "fnDone"=nil); усі інші кандидати давали або вихід за межі пулу
-//     констант, або безглузді пари рядок+рядок.
-// EN: The class decodes the instructions (opcodes) themselves, not just
-//     the constant pool: string/number constants in the pool are NOT
+//     The class decodes not just the constant pool but the instructions
+//     (opcodes) themselves: string/number constants in the pool are NOT
 //     necessarily tied to a specific call site (pool order reflects
 //     COMPILATION order, not USAGE order). To know which number is the
-//     argument of which call, or which field of which table, instructions
-//     must be decoded. The opcode table (36 entries, MOVE..CLOSURE) was
-//     checked byte-for-byte against the official
+//     argument of which call, or which field of which table, the
+//     instructions must be decoded. The opcode table (36 entries,
+//     MOVE..CLOSURE) was checked byte-for-byte against the official
 //     lua.org/source/5.0/lopcodes.h — not invented.
 //
 //     MAXSTACK=128 (the "register vs constant" threshold for RK operands:
@@ -160,18 +160,16 @@ public enum LuaOpcode
     Close,
     Closure,
 
-    // UA: 36-й офіційний опкод lopcodes.h, використовується для "..."
-    //     (vararg-виразів). Жоден з 99 перевірених реальних BF2-чанків не
-    //     містить його напряму (вони використовують ідіому "{...}" +
-    //     SETLISTO, яка вже підтримана) — включений тут заради повноти
-    //     таблиці опкодів: без нього Parse кинув би виняток на БУДЬ-ЯКОМУ
-    //     скрипті, що використовує "..." напряму.
+    // UA: 36-й офіційний опкод lopcodes.h, використовується для "..." —
+    //     vararg-виразів. Жоден з 99 перевірених реальних BF2-чанків
+    //     його не містив, але без нього Parse кине виняток на
+    //     БУДЬ-ЯКОМУ майбутньому скрипті, що використовує "..." напряму
+    //     (а не через ідіому "{...}" + SETLISTO, яка вже підтримана).
     // EN: The 36th official lopcodes.h opcode, used for "..." vararg
-    //     expressions. None of the 99 checked real BF2 chunks use it
-    //     directly (they use the "{...}" + SETLISTO idiom, which is
-    //     already supported) — included here for opcode table
-    //     completeness: without it, Parse would throw on ANY script using
-    //     "..." directly.
+    //     expressions. None of the 99 checked real BF2 chunks contained
+    //     it, but without it Parse would throw on ANY future script
+    //     using "..." directly (as opposed to the "{...}" + SETLISTO
+    //     idiom, which is already supported).
     Vararg,
 }
 
@@ -191,30 +189,47 @@ public sealed record LuaInstruction
     public int? C { get; init; }
     public int? Bx { get; init; }
     public int? SBx { get; init; }
+
+    // UA: Байтове зміщення (від початку BODY-чанка) 4-байтного слова цієї
+    //     інструкції — за тим самим принципом, що й LuaConstant.ValueOffset:
+    //     потрібне для майбутнього in-place hex-патча (замінити ОДИН
+    //     операнд, розмір слова не змінюється). Потрібне для патчингу
+    //     вибору шрифту на екрані ifs_pc_spawnselect — це єдиний випадок,
+    //     коли доводиться патчити саму інструкцію, а не лише константи.
+    // EN: The byte offset (from the start of the BODY chunk) of this
+    //     instruction's 4-byte word — same principle as
+    //     LuaConstant.ValueOffset: needed for a future in-place hex patch
+    //     (replace ONE operand, the word's size never changes). Needed
+    //     for patching the font choice on the ifs_pc_spawnselect screen —
+    //     the only case where an instruction itself must be patched,
+    //     not just constants.
+    public required int WordOffset { get; init; }
 }
 
 // UA: Одна локальна змінна (LoadLocals): ім'я + діапазон інструкцій
 //     (startpc..endpc), у яких вона в області видимості. Lua 5.0 НЕ
 //     зберігає, у якому саме РЕГІСТРІ лежить змінна — лише ім'я+діапазон
-//     (регістр визначається порядком оголошення відносно PC, що ми
-//     свідомо не відтворюємо — це рівень повного компілятора, не потрібний
+//     (регістр визначається порядком оголошення відносно PC, що
+//     свідомо не відтворюється — це рівень повного компілятора, не потрібний
 //     для пошуку layout-констант).
 // EN: A single local variable (LoadLocals): name + instruction range
 //     (startpc..endpc) it's in scope for. Lua 5.0 does NOT store which
 //     REGISTER a variable lives in — only name+range (the register is
-//     determined by declaration order relative to PC, which we
-//     deliberately don't reconstruct — that's full-compiler-level detail,
+//     determined by declaration order relative to PC, which is
+//     deliberately not reconstructed — that's full-compiler-level detail,
 //     not needed for finding layout constants).
 public sealed record LuaLocalVariable(string? Name, int StartPc, int EndPc);
 
 // UA: Ім'я upvalue (LoadUpvalues) — зберігається явно, бо потрібне для
 //     Lua50BytecodeWriter: без реальних імен upvalue неможливо коректно
 //     ЗАПИСАТИ функцію, яка їх використовує (напр. GETUPVAL/SETUPVAL у
-//     наших власних wrapper-функціях widescreen-фікса).
+//     власних wrapper-функціях widescreen-фікса); для самого лише
+//     АНАЛІЗУ константного пулу ім'я не потрібне.
 // EN: An upvalue name (LoadUpvalues) — stored explicitly, because
 //     Lua50BytecodeWriter needs it: a function using GETUPVAL/SETUPVAL
-//     (e.g. our own widescreen-fix wrapper functions) cannot be correctly
-//     WRITTEN back without the real upvalue names.
+//     (e.g. the widescreen fix's own wrapper functions) cannot be
+//     correctly WRITTEN back without the real upvalue names; for
+//     constant-pool-only analysis the name isn't needed.
 public sealed record LuaUpvalue(string? Name);
 
 // UA: Один прототип Lua-функції (Proto в термінах офіційного джерела),
@@ -314,7 +329,7 @@ public static class Lua50BytecodeReader
         //     ніж мовчки розпарсити неправильно.
         // EN: ALL of these values are confirmed STANDARD for official
         //     Lua 5.0 on real BF2 files (including sizeofNumber=4, which
-        //     we also check explicitly rather than assume). If a file
+        //     is also checked explicitly rather than assumed). If a file
         //     with different values ever shows up — that's a signal the
         //     format differs, and it's better to fail loudly than to
         //     silently misparse.
@@ -455,8 +470,9 @@ public static class Lua50BytecodeReader
         var instructions = new List<LuaInstruction>(sizeCode);
         for (var pc = 0; pc < sizeCode; pc++)
         {
+            var wordOffset = c.Pos;
             var word = c.U32();
-            instructions.Add(DecodeInstruction(pc, word));
+            instructions.Add(DecodeInstruction(pc, word, wordOffset));
         }
 
         return new LuaFunctionPrototype
@@ -512,7 +528,7 @@ public static class Lua50BytecodeReader
     //     0-34 range shows up (e.g. an alignment error earlier in
     //     parsing) — throw, don't silently return an "unknown" opcode.
     // -------------------------------------------------------------------------
-    private static LuaInstruction DecodeInstruction(int pc, uint word)
+    private static LuaInstruction DecodeInstruction(int pc, uint word, int wordOffset)
     {
         var opValue = word & 0x3F;
         if (opValue > (uint)LuaOpcode.Vararg)
@@ -526,12 +542,15 @@ public static class Lua50BytecodeReader
         if (AbxOrAsBxOpcodes.Contains(opcode))
         {
             var bx = (int)((word >> 6) & 0x3FFFF);
-            return new LuaInstruction { Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = bx - MaxArgSBx };
+            return new LuaInstruction
+            {
+                Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = bx - MaxArgSBx, WordOffset = wordOffset,
+            };
         }
 
         var b = (int)((word >> 15) & 0x1FF);
         var cVal = (int)((word >> 6) & 0x1FF);
-        return new LuaInstruction { Pc = pc, Opcode = opcode, A = a, B = b, C = cVal };
+        return new LuaInstruction { Pc = pc, Opcode = opcode, A = a, B = b, C = cVal, WordOffset = wordOffset };
     }
 
     // UA: Емпірично підтверджений поріг MAXSTACK (див. коментар класу) —

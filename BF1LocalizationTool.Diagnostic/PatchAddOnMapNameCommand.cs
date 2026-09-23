@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — PatchAddOnMapNameCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ГЕНЕРАТОР (production, входить у фінальний патч) / GENERATOR (production, part of the final patch)
 // =============================================================================
 // UA: Робить назву карти аддону ПЕРЕКЛАДНОЮ.
 //
@@ -22,9 +23,12 @@
 //     РІШЕННЯ (два кроки, обидва цією командою):
 //       1. У `addme.script` замінити значення `showstr` з "TATOOINE: JABBA"
 //          на КЛЮЧ "level.tat3.name".
-//       2. У `core.lvl` аддону додати НОВИЙ запис `Locl` з хешем
-//          `SwbfStringHash.Compute("level.tat3.name")` і англійським
-//          значенням "TATOOINE: JABBA".
+//       2. У `core.lvl` БАЗОВОЇ гри (саме він резолвить ключі екрана
+//          вибору карти — див. CoreTarget нижче) додати НОВИЙ запис
+//          `Locl` з хешем `SwbfStringHash.Compute("level.tat3.name")` і
+//          англійським значенням "TATOOINE: JABBA". Той самий запис
+//          додається і в `core.lvl` аддону — нешкідлива страховка, не
+//          обов'язкова умова роботи.
 //
 //     ЧОМУ значення саме АНГЛІЙСЬКЕ, а не одразу українське: після цієї
 //     команди рядок стає ЗВИЧАЙНИМ рядком локалізації й з'являється в GUI
@@ -40,9 +44,12 @@
 //     оновити чотири поля розміру; команда це явно перевіряє і
 //     відмовляється працювати, а не псує файл мовчки.
 //
-//     ПІДТВЕРДЖЕНО В ГРІ: `IFText_fnSetString` справді робить пошук за
-//     хешем і показує рядок як є, якщо хеш не знайдено (саме тому
-//     непропатчений аддон показує буквальний ключ, а не переклад).
+//     ПІДТВЕРДЖЕНО В ГРІ: те, що `IFText_fnSetString` робить пошук за
+//     хешем із фолбеком на сирий рядок, підтверджено реальним тестом —
+//     запис лише в аддонному core.lvl примушує гру показати буквально
+//     "level.tat3.name" замість перекладу, що й доводить механізм. Той
+//     самий тест показав, що резолвиться запис саме з БАЗОВОГО core.lvl,
+//     а не з аддонного — див. коментар до CoreTarget нижче.
 //
 // EN: Makes an add-on's map name TRANSLATABLE.
 //
@@ -58,7 +65,10 @@
 //     SOLUTION (two steps, both done here): rewrite `showstr` to the key
 //     "level.tat3.name", and add a NEW `Locl` record under
 //     `SwbfStringHash.Compute("level.tat3.name")` holding the English
-//     value. The value is kept ENGLISH on purpose: the string then becomes
+//     value in the BASE game's core.lvl (it is the one that resolves the
+//     map-select screen's keys — see CoreTarget below); the same record is
+//     also added to the add-on's core.lvl as a harmless safety net, not a
+//     requirement. The value is kept ENGLISH on purpose: the string then becomes
 //     an ORDINARY localization row and is translated/reviewed/exported
 //     through the GUI and CSV exactly like every other row, instead of
 //     living in a separate place and drifting out of sync.
@@ -71,10 +81,12 @@
 //     have to be updated in sync; the command checks this explicitly and
 //     refuses rather than silently corrupting the file.
 //
-//     CONFIRMED IN GAME: `IFText_fnSetString` does perform a hash lookup
-//     and displays the raw string verbatim when the hash isn't found
-//     (which is why an unpatched add-on shows the literal key instead of
-//     a translation).
+//     CONFIRMED IN GAME: that `IFText_fnSetString` performs a hash lookup
+//     with a raw-string fallback is confirmed by a real test — a record
+//     placed only in the add-on's core.lvl makes the game display
+//     "level.tat3.name" literally instead of the translation, which is
+//     the proof. The same test showed the record resolves from the BASE
+//     core.lvl, not the add-on's — see the CoreTarget comment below.
 // =============================================================================
 
 using System.Text;
@@ -94,25 +106,41 @@ public static class PatchAddOnMapNameCommand
 
     // UA: coreTargets — файли core.lvl, у які додається новий запис `Locl`.
     //
-    //     КРИТИЧНО: запис МАЄ лежати в core.lvl БАЗОВОЇ ГРИ, а не аддону.
+    //     ⚠ КРИТИЧНО, ПЕРЕВІРЕНО В ГРІ: запис МАЄ лежати в core.lvl
+    //     БАЗОВОЇ ГРИ, а не аддону.
     //     Екран вибору карти — це ШЕЛ, і він резолвить ключі проти таблиці
     //     базової гри; core.lvl аддону на той момент ще не є активною
-    //     таблицею (він вантажиться разом з місією). Доказ конвенції: ключі
-    //     назв базових карт (`planets.tatooine.mapname1` →
-    //     "TATOOINE: DUNE SEA") згадуються в `Shell\ENG\shell.lvl`, а їхні
-    //     ЗНАЧЕННЯ лежать у базовому `core.lvl` — знайдено брутфорсом
-    //     (захешовано всі ASCII-рядки гри).
+    //     таблицею (він вантажиться разом з місією — саме тому зламаний
+    //     аддонний файл гасив текст НА МАПІ, а меню лишалось цілим).
+    //     Доказ конвенції: ключі назв базових карт
+    //     (`planets.tatooine.mapname1` → "TATOOINE: DUNE SEA") згадуються в
+    //     `Shell\ENG\shell.lvl`, а їхні ЗНАЧЕННЯ лежать у базовому
+    //     `core.lvl` — знайдено брутфорсом (захешовано всі ASCII-рядки гри).
+    //
+    //     Запис лише в аддонному core.lvl призводить до того, що гра
+    //     показує буквально "level.tat3.name" — це й є доказ, що
+    //     `IFText_fnSetString` таки робить пошук і має фолбек на сирий
+    //     рядок: механізм правильний, важливий саме адресат.
     // EN: coreTargets — the core.lvl files the new `Locl` record is added to.
     //
-    //     CRITICAL: the record MUST live in the BASE GAME's core.lvl, not
-    //     the add-on's. The map-select screen is the SHELL, and it resolves
-    //     keys against the base game's table; the add-on's core.lvl is not
-    //     the active table at that point (it loads with the mission).
+    //     ⚠ CRITICAL, VERIFIED IN GAME: the record MUST live in the BASE
+    //     GAME's core.lvl,
+    //     not the add-on's. The map-select screen is the SHELL, and it
+    //     resolves keys against the base game's table; the add-on's core.lvl
+    //     is not the active table at that point (it loads with the mission —
+    //     which is precisely why a broken add-on file blanked text ON THE
+    //     MAP while the menus stayed intact).
     //     Convention proof: the base maps' name keys
     //     (`planets.tatooine.mapname1` → "TATOOINE: DUNE SEA") are referenced
     //     from `Shell\ENG\shell.lvl` while their VALUES sit in the base
     //     `core.lvl` — found by brute force (hashing every ASCII string in
     //     the game).
+    //
+    //     Putting the record only into the add-on's core.lvl makes the
+    //     game display "level.tat3.name" literally — which is itself the
+    //     proof that `IFText_fnSetString` does perform a lookup and falls
+    //     back to the raw string: the mechanism is right, only the
+    //     destination matters.
     // UA: Один файл на обробку: звідки взяти і КУДИ його потім класти в грі.
     //     RelativeGamePath — шлях ВІДНОСНО теки гри, напр.
     //     "GameData\Data\_LVL_PC\core.lvl". Саме він визначає розкладку
@@ -120,6 +148,12 @@ public static class PatchAddOnMapNameCommand
     //     користувачеві не треба гадати, який файл куди — структура
     //     збігається з реальною інсталяцією (той самий принцип уже діє в
     //     GUI та інших генеруючих командах).
+    //
+    //     ЧОМУ НЕ СУФІКСИ В ІМЕНІ: базовий і аддонний core.lvl
+    //     називаються однаково, тож іменування на кшталт
+    //     "core._LVL_PC.lvl" і "core.AddOn.lvl" лишає незрозумілим, який
+    //     файл куди йде в реальній інсталяції. Дзеркалення шляху знімає
+    //     це питання повністю.
     // EN: One file to process: where to read it from and WHERE it belongs
     //     in the game. RelativeGamePath is relative to the game folder,
     //     e.g. "GameData\Data\_LVL_PC\core.lvl". It drives the output
@@ -127,6 +161,12 @@ public static class PatchAddOnMapNameCommand
     //     never has to guess which file goes where — the structure matches
     //     a real installation (the same principle already used by the GUI
     //     and other generating commands).
+    //
+    //     WHY NOT NAME SUFFIXES: the base and add-on core.lvl share a
+    //     name, so naming them side by side as "core._LVL_PC.lvl" and
+    //     "core.AddOn.lvl" leaves it unclear which file goes where in a
+    //     real installation. Mirroring the path removes that ambiguity
+    //     entirely.
     public readonly record struct CoreTarget(string SourcePath, string RelativeGamePath);
 
     public static async Task Run(

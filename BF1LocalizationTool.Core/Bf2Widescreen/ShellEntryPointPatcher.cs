@@ -1,56 +1,48 @@
-// =============================================================================
+﻿// =============================================================================
 // BF1LocalizationTool.Core — Bf2Widescreen/ShellEntryPointPatcher.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
 // =============================================================================
 // UA: Побудова мінімального "bootstrap"-хука для entry-point скрипту
-//     shell.lvl ("shell_interface") / ingame.lvl ("game_interface") —
-//     той самий патерн, що емпірично підтверджено в SWBF2 Remaster-моді
-//     (GT Anakin, moddb.com/mods/star-wars-battlefront-ii-full-hd-interface):
+//     shell.lvl ("shell_interface") / ingame.lvl ("game_interface"):
 //     рушій BF2 автоматично викликає РІВНО один скрипт із цим іменем із
 //     завантаженого .lvl — тому єдиний спосіб автозапустити власний код
 //     без ручних дій користувача — підмінити САМЕ цей скрипт.
 //
-//     На відміну від Remaster-мода (який виносить логіку в ЗОВНІШНІ
-//     addon-файли через ReadDataFile з відносним шляхом), наш підхід —
-//     САМОДОСТАТНІЙ: усе (backup-копія оригінального entry-point +
-//     widescreen-обгортка) пакується як ДОДАТКОВІ "scr_"-чанки всередині
-//     ТОГО САМОГО shell.lvl/ingame.lvl. Це не залежить від жодної
-//     сторонньої адон-інфраструктури (Remaster-мода чи іншої) і не
-//     вимагає домовленостей про відносні шляхи файлів.
+//     Застосований підхід — САМОДОСТАТНІЙ: усе (backup-копія оригінального
+//     entry-point + widescreen-обгортка) пакується як ДОДАТКОВІ "scr_"-чанки
+//     всередині ТОГО САМОГО shell.lvl/ingame.lvl. Це не залежить від жодної
+//     сторонньої адон-інфраструктури і не вимагає домовленостей про
+//     відносні шляхи файлів.
 //
 //     Bootstrap-заглушка (BuildBootstrapStub) робить рівно дві речі:
-//       1. ScriptCB_DoFile(wrapperScriptName) — наш widescreen-фікс
+//       1. ScriptCB_DoFile(wrapperScriptName) — widescreen-фікс
 //          (обгортає NewIFContainer/AddIFScreen/тощо формулою
 //          x*W/800, y*H/600 — див. Lua50FunctionBuilder /
-//          WidescreenWrapperBuilder).
+//          білдер конкретного патча).
 //       2. ScriptCB_DoFile(stockScriptName) — попередньо перейменована
 //          КОПІЯ оригінального важкого entry-point скрипту (та сама
 //          логіка побудови меню, що й у vanilla — просто під іншим
 //          іменем, щоб bootstrap міг її викликати).
 //
 // EN: Builds a minimal "bootstrap" hook for shell.lvl's entry-point
-//     script ("shell_interface") / ingame.lvl's ("game_interface") — the
-//     exact same pattern empirically confirmed in the SWBF2 Remaster mod
-//     (GT Anakin, moddb.com/mods/star-wars-battlefront-ii-full-hd-interface):
-//     the BF2 engine automatically calls EXACTLY one script with that
-//     name from the loaded .lvl — so the only way to auto-run our own
+//     script ("shell_interface") / ingame.lvl's ("game_interface"): the
+//     BF2 engine automatically calls EXACTLY one script with that
+//     name from the loaded .lvl — so the only way to auto-run custom
 //     code without any manual user action is to replace THAT SPECIFIC
 //     script.
 //
-//     Unlike the Remaster mod (which pushes logic out to EXTERNAL addon
-//     files via ReadDataFile with a relative path), our approach is
-//     SELF-CONTAINED: everything (a backup copy of the original
-//     entry-point + the widescreen wrapper) is packed as ADDITIONAL
-//     "scr_" chunks inside the SAME shell.lvl/ingame.lvl. This has no
-//     dependency on any third-party addon infrastructure (the Remaster
-//     mod or anything else) and requires no relative-path conventions.
+//     This tool's approach is SELF-CONTAINED: everything (a backup copy
+//     of the original entry-point + the widescreen wrapper) is packed as
+//     ADDITIONAL "scr_" chunks inside the SAME shell.lvl/ingame.lvl. This
+//     has no dependency on any third-party addon infrastructure and
+//     requires no relative-path conventions.
 //
 //     The bootstrap stub (BuildBootstrapStub) does exactly two things:
-//       1. ScriptCB_DoFile(wrapperScriptName) — our widescreen fix
+//       1. ScriptCB_DoFile(wrapperScriptName) — the widescreen fix
 //          (wraps NewIFContainer/AddIFScreen/etc. with the x*W/800,
-//          y*H/600 formula — see Lua50FunctionBuilder /
-//          WidescreenWrapperBuilder).
+//          y*H/600 formula — see Lua50FunctionBuilder / the future
+//          білдер конкретного патча).
 //       2. ScriptCB_DoFile(stockScriptName) — a previously renamed COPY
 //          of the original heavy entry-point script (the same
 //          menu-building logic as vanilla — just under a different name
@@ -68,15 +60,12 @@ public static class ShellEntryPointPatcher
     // -------------------------------------------------------------------------
     // UA: Будує прототип bootstrap-заглушки. Використовує ЛИШЕ
     //     GETGLOBAL/LOADK/CALL/RETURN — найпростіший можливий набір
-    //     опкодів, ідентичний за структурою до реального game_interface
-    //     bootstrap-стабу, знайденого в Remaster-моді (305 байт BODY),
-    //     але БЕЗ жодного скопійованого байткоду — побудовано з нуля за
-    //     формулою через Lua50FunctionBuilder.
+    //     опкодів (305 байт BODY), побудований з нуля за формулою через
+    //     Lua50FunctionBuilder, без жодного скопійованого байткоду.
     // EN: Builds the bootstrap stub prototype. Uses ONLY GETGLOBAL/
-    //     LOADK/CALL/RETURN — the simplest possible opcode set, identical
-    //     in structure to the real game_interface bootstrap stub found in
-    //     the Remaster mod (305-byte BODY), but with NO copied bytecode
-    //     whatsoever — built from scratch via Lua50FunctionBuilder.
+    //     LOADK/CALL/RETURN — the simplest possible opcode set (305-byte
+    //     BODY), built from scratch via Lua50FunctionBuilder, with NO
+    //     copied bytecode whatsoever.
     // -------------------------------------------------------------------------
     public static LuaFunctionPrototype BuildBootstrapStub(string wrapperScriptName, string stockScriptName)
     {
@@ -156,7 +145,7 @@ public static class ShellEntryPointPatcher
     //     BODY bytes (e.g. the result of Lua50BytecodeWriter.Write).
     //     infoByte — the INFO field's value; this field's purpose has NOT
     //     been reverse engineered (see ScriptChunkLocator), in ALL 99
-    //     checked real chunks it's 1 byte — so we default to 0 and
+    //     checked real chunks it's 1 byte — so the default is 0, and
     //     document this as an ASSUMPTION, not a confirmed fact.
     // -------------------------------------------------------------------------
     public static UcfbChunk BuildScriptChunk(string name, byte[] bodyBytes, byte infoByte = 0)
@@ -240,41 +229,39 @@ public static class ShellEntryPointPatcher
         var bootstrapBytes = Lua50BytecodeWriter.Write(bootstrapProto);
         root.Children[entryIndex] = BuildScriptChunk(entryName, bootstrapBytes);
 
-        // 3. UA: Додати наш wrapper-скрипт як новий чанк / EN: Add our wrapper script as a new chunk
+        // 3. UA: Додати wrapper-скрипт як новий чанк / EN: Add the wrapper script as a new chunk
         root.Children.Add(BuildScriptChunk(wrapperName, wrapperBodyBytes));
     }
 
     // =========================================================================
     // UA: !!! НЕ ВИКОРИСТОВУВАТИ ApplyBootstrapPatch ВИЩЕ ДЛЯ РЕАЛЬНОГО ФАЙЛУ !!!
-    //     Цей метод НЕ ПРАЦЮЄ в грі: рушій, судячи з усього, НЕ шукає
-    //     "scr_"-ресурси по всьому файлу довільно за іменем у рантаймі —
-    //     набір top-level ресурсів фіксується десь при завантаженні, і
-    //     чанки, додані ПІСЛЯ факту (як робить ApplyBootstrapPatch вище),
-    //     просто не бачаться — ScriptCB_DoFile не знаходить ні wrapper, ні
-    //     stock, і гра миттєво вилітає до головного меню.
-    //     ПІДТВЕРДЖЕНО порівнянням топ-рівневих чанків vanilla проти
-    //     Remaster shell.lvl: ОДНАКОВА кількість "scr_"-чанків (90 і там, і
-    //     там) — тобто РЕАЛЬНО ПРАЦЮЮЧИЙ мод НЕ додає нових top-level
+    //     Тест у грі показав миттєвий виліт до головного меню.
+    //     Причина знайдена ЕМПІРИЧНО: порівняння топ-рівневих чанків
+    //     vanilla shell.lvl проти реально працюючого перебудованого
+    //     shell.lvl показало ОДНАКОВУ кількість "scr_"-чанків (90 і там, і
+    //     там) — тобто РЕАЛЬНО ПРАЦЮЮЧИЙ варіант НЕ додає нових top-level
     //     "scr_"-чанків у сам shell.lvl, а лише редагує BODY вже наявного
-    //     "shell_interface" НА МІСЦІ; копія оригінальної логіки (stock_*) у
-    //     Remaster-моді живе в ОКРЕМОМУ addon-файлі (remaster_hook.lvl), не
-    //     всередині shell.lvl.
+    //     "shell_interface" НА МІСЦІ. Висновок: рушій, судячи з усього, НЕ
+    //     шукає "scr_"-ресурси по всьому файлу довільно за іменем у
+    //     рантаймі — набір top-level ресурсів фіксується десь при
+    //     завантаженні, і чанки, додані ПІСЛЯ факту (як робить
+    //     ApplyBootstrapPatch вище), просто не бачаться (звідси й виліт —
+    //     ScriptCB_DoFile не знаходить ні wrapper, ні stock).
     //     Використовуйте ApplySplicedInstallerPatch нижче.
     // EN: !!! DO NOT USE ApplyBootstrapPatch ABOVE FOR A REAL FILE !!!
-    //     This method does NOT work in game: the engine, apparently, does
-    //     NOT search for "scr_" resources across the whole file arbitrarily
-    //     by name at runtime — the set of top-level resources is fixed
-    //     somewhere at load time, and chunks added AFTER the fact (as
-    //     ApplyBootstrapPatch above does) are simply never seen —
-    //     ScriptCB_DoFile finds neither the wrapper nor the stock, and the
-    //     game crashes to the main menu immediately.
-    //     CONFIRMED by comparing top-level chunks of vanilla vs Remaster
-    //     shell.lvl: an IDENTICAL "scr_" chunk count (90 in both) — meaning
-    //     the ACTUALLY WORKING mod does NOT add new top-level "scr_" chunks
-    //     to shell.lvl itself, it only edits the BODY of the
-    //     already-existing "shell_interface" IN PLACE; the copy of the
-    //     original logic (stock_*) in the Remaster mod lives in a SEPARATE
-    //     addon file (remaster_hook.lvl), not inside shell.lvl.
+    //     An in-game test showed an immediate crash before the
+    //     main menu. Root cause found EMPIRICALLY: comparing top-level
+    //     chunks of vanilla shell.lvl vs an actually-working rebuilt
+    //     shell.lvl showed an IDENTICAL "scr_" chunk count (90 in both) —
+    //     meaning the ACTUALLY WORKING variant does NOT add new top-level
+    //     "scr_" chunks to shell.lvl itself, it only edits the BODY of the
+    //     already-existing "shell_interface" IN PLACE. Conclusion: the
+    //     engine, apparently, does NOT search for "scr_" resources across
+    //     the whole file arbitrarily by name at runtime — the set of
+    //     top-level resources is fixed somewhere at load time, and chunks
+    //     added AFTER the fact (as ApplyBootstrapPatch above does) are
+    //     simply never seen (hence the crash — ScriptCB_DoFile finds
+    //     neither the wrapper nor the stock).
     //     Use ApplySplicedInstallerPatch below instead.
     // =========================================================================
 
@@ -282,11 +269,11 @@ public static class ShellEntryPointPatcher
     // UA: Емпірично обґрунтований підхід: НІЧОГО не додає до дерева чанків.
     //     Замінює BODY-байти вже наявного entry-point-скрипту на нову версію
     //     ТІЄЇ Ж функції, куди вставлено виклик замикання-інсталятора
-    //     (installerProto — напр. WidescreenWrapperBuilder.
+    //     (installerProto — прототип, побудований білдером
     //     BuildWidescreenWrapperScript).
     //
-    //     ТОЧКА ВСТАВКИ: НЕ pc 0, а перед першим 'ifs_*'-DoFile
-    //     (FindFirstScreenDoFileIndex). Причина — детально
+    //     ТОЧКА ВСТАВКИ: НЕ pc 0, а перед першим
+    //     'ifs_*'-DoFile (FindFirstScreenDoFileIndex). Причина — детально
     //     в коментарі всередині методу: на pc 0 цільові UI-функції ще nil
     //     (визначаються пізніше через DoFile('ifelem_*')), тому хук на pc 0
     //     тихо перезаписувався. Вставка після примітивів і перед екранами
@@ -307,10 +294,10 @@ public static class ShellEntryPointPatcher
     //     Replaces the BODY bytes of the already-existing entry-point
     //     script with a new version of the SAME function, splicing in a
     //     call to an installer closure (installerProto — e.g.
-    //     WidescreenWrapperBuilder.BuildWidescreenWrapperScript).
+    //     конкретного патча).
     //
-    //     INSERTION POINT: NOT pc 0, but before the first 'ifs_*' DoFile
-    //     (FindFirstScreenDoFileIndex). Reason is
+    //     INSERTION POINT: NOT pc 0, but before the
+    //     first 'ifs_*' DoFile (FindFirstScreenDoFileIndex). Reason is
     //     detailed in the comment inside the method: at pc 0 the target UI
     //     functions are still nil (defined later via DoFile('ifelem_*')),
     //     so a pc-0 hook was silently overwritten. Inserting after the
@@ -353,24 +340,24 @@ public static class ShellEntryPointPatcher
         var installerRegister = original.MaxStackSize; // UA: перший НІКОЛИ не використаний регістр (0..MaxStack-1 зайняті) / EN: the first NEVER-used register (0..MaxStack-1 are in use)
         var installerProtoIndex = original.NestedPrototypes.Count; // UA: додаємо ОСТАННІМ / EN: appended LAST
 
-        // UA: Точка вставки — НЕ pc 0.
+        // UA: КЛЮЧОВА ВИМОГА: точка вставки — НЕ pc 0.
         //     shell_interface спочатку завантажує примітиви інтерфейсу
         //     (ScriptCB_DoFile('ifelem_*','interface_util',...)), які
         //     ВИЗНАЧАЮТЬ NewButtonWindow/NewIFContainer як Lua-глобали, і
         //     лише ПОТІМ будує екрани (ScriptCB_DoFile('ifs_*')). Якщо
         //     хукати на pc 0 — цільові функції ще nil, а наступний
-        //     DoFile('ifelem_buttonwindow') перезапише наш wrapper. Тому
+        //     DoFile('ifelem_buttonwindow') перезапише wrapper. Тому
         //     вставляємо ПЕРЕД першим 'ifs_*'-DoFile: примітиви вже
         //     визначені, жоден екран ще не збудований.
-        // EN: The insertion point is NOT pc 0.
+        // EN: KEY REQUIREMENT: the insertion point is NOT pc 0.
         //     shell_interface first loads UI primitives
         //     (ScriptCB_DoFile('ifelem_*','interface_util',...)) which
         //     DEFINE NewButtonWindow/NewIFContainer as Lua globals, and
-        //     only THEN builds the screens (ScriptCB_DoFile('ifs_*')). If
-        //     we hook at pc 0 the target functions are still nil, and the
-        //     later DoFile('ifelem_buttonwindow') overwrites our wrapper.
-        //     So we insert BEFORE the first 'ifs_*' DoFile: primitives are
-        //     already defined, no screen is built yet.
+        //     only THEN builds the screens (ScriptCB_DoFile('ifs_*')). Hooking at
+        //     pc 0 would leave the target functions still nil, and the later
+        //     DoFile('ifelem_buttonwindow') would overwrite the wrapper. So
+        //     the patch is inserted BEFORE the first 'ifs_*' DoFile:
+        //     primitives are already defined, no screen is built yet.
         var insertAt = FindFirstScreenDoFileIndex(original);
 
         var newNested = new List<LuaFunctionPrototype>(original.NestedPrototypes) { installerProto };
@@ -382,13 +369,13 @@ public static class ShellEntryPointPatcher
         // UA: Перевідображення старого індексу інструкції на новий після
         //     вставки insertCount інструкцій у позицію insertAt. ВАЖЛИВО:
         //     ціль, що дорівнює insertAt, ЗАЛИШАЄТЬСЯ на insertAt (=початок
-        //     нашого інсталятора) — так гілки, що стрибали на першу
+        //     інсталятора) — так гілки, що стрибали на першу
         //     екранну інструкцію, тепер спершу виконують інсталятор, а
         //     потім падають у оригінальний код (обидва шляхи — і
         //     fall-through, і стрибок — гарантовано проходять через хук).
         // EN: Maps an old instruction index to the new one after inserting
         //     insertCount instructions at insertAt. IMPORTANT: a target
-        //     equal to insertAt STAYS at insertAt (= start of our
+        //     equal to insertAt STAYS at insertAt (= start of the
         //     installer) — so branches that jumped to the first screen
         //     instruction now run the installer first, then fall through
         //     into the original code (both paths — fall-through and jump —
@@ -417,10 +404,18 @@ public static class ShellEntryPointPatcher
             }
         }
 
+        // UA: WordOffset=-1 — сентинел "немає джерела в реальному файлі"
+        //     (обидві інструкції СИНТЕЗУЮТЬСЯ заново, а не читаються
+        //     байткодом; та сама конвенція, що вже використана в
+        //     Lua50FunctionBuilder).
+        // EN: WordOffset=-1 — the "no source in a real file" sentinel
+        //     (both instructions are SYNTHESIZED from scratch, not parsed
+        //     from bytecode; the same convention already used in
+        //     Lua50FunctionBuilder).
         var newInstructions = new List<LuaInstruction>(original.Instructions.Count + insertCount);
         newInstructions.AddRange(remapped.Take(insertAt));
-        newInstructions.Add(new LuaInstruction { Pc = 0, Opcode = LuaOpcode.Closure, A = installerRegister, Bx = installerProtoIndex });
-        newInstructions.Add(new LuaInstruction { Pc = 0, Opcode = LuaOpcode.Call, A = installerRegister, B = 1, C = 1 }); // 0 args, 0 results
+        newInstructions.Add(new LuaInstruction { Pc = 0, Opcode = LuaOpcode.Closure, A = installerRegister, Bx = installerProtoIndex, WordOffset = -1 });
+        newInstructions.Add(new LuaInstruction { Pc = 0, Opcode = LuaOpcode.Call, A = installerRegister, B = 1, C = 1, WordOffset = -1 }); // 0 args, 0 results
         newInstructions.AddRange(remapped.Skip(insertAt));
         // UA: Перенумерувати Pc (лише для читабельності звітів; Writer Pc не використовує).
         // EN: Renumber Pc (report readability only; the Writer ignores Pc).
@@ -461,15 +456,16 @@ public static class ShellEntryPointPatcher
     //     "ifs_" — тобто перший ЕКРАН (на відміну від примітивів
     //     інтерфейсу "ifelem_*"/"interface_util"/"globals", що йдуть
     //     раніше). Саме перед цією точкою треба встановлювати хук. Якщо
-    //     патерн не знайдено — повертає 0 як запасний варіант, але для
-    //     реального shell_interface він завжди є.
+    //     патерн не знайдено — повертає 0 (безпечний запасний варіант),
+    //     але для реального shell_interface він завжди є.
     // EN: Finds the index of the first GETGLOBAL 'ScriptCB_DoFile'
     //     instruction immediately followed by a LOADK with a string
     //     constant starting with "ifs_" — i.e. the first SCREEN (as
     //     opposed to the UI primitives "ifelem_*"/"interface_util"/
     //     "globals" loaded earlier). The hook must be installed right
-    //     before this point. If the pattern isn't found — returns 0 as a
-    //     fallback, but for a real shell_interface it always exists.
+    //     before this point. If the pattern isn't found — returns 0 (a
+    //     safe fallback), but for a real shell_interface it always
+    //     exists.
     // -------------------------------------------------------------------------
     private static int FindFirstScreenDoFileIndex(LuaFunctionPrototype proto)
     {

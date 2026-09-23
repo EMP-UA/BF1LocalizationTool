@@ -4,13 +4,13 @@
 ##     https://raw.githubusercontent.com/github/gitignore/main/VisualStudio.gitignore
 ##     — той самий файл, який GitHub згенерував би при створенні репо через
 ##     "Add .gitignore" → Visual Studio. Не редагується вручну — при потребі
-##     оновлення просто перезавантажте його звідти і додайте наш блок знову.
+##     оновлення просто перезавантажте його звідти і додайте цей блок знову.
 ## EN: Base part — GitHub's official "Visual Studio" template
 ##     (github/gitignore, VisualStudio.gitignore), taken verbatim from
 ##     https://raw.githubusercontent.com/github/gitignore/main/VisualStudio.gitignore
 ##     — the exact file GitHub would generate via "Add .gitignore" → Visual
 ##     Studio. Not hand-edited — to refresh, just re-download it and
-##     re-append our block below.
+##     re-append this block below.
 ## =============================================================================
 
 ## Ignore Visual Studio temporary files, build results, and
@@ -444,12 +444,12 @@ FodyWeavers.xsd
 *.msp
 
 ## =============================================================================
-## UA: Наш блок — усе, чого шаблон GitHub НЕ покриває, специфічне саме для
+## UA: Додатковий блок — усе, чого шаблон GitHub НЕ покриває, специфічне саме для
 ##     BF1LocalizationTool. Додається ПОВЕРХ шаблону вище, без дублювання
 ##     того, що там вже є (перевірено рядок за рядком: *.pdb/*.log/*.tmp/
 ##     *.obj/*.ilk/*.meta/*.tlog/*.cache/NuGet/*.env/PublishScripts/
 ##     *.publishsettings/.vscode/ — усе це вже в шаблоні вище).
-## EN: Our block — everything the GitHub template does NOT cover, specific
+## EN: Additional block — everything the GitHub template does NOT cover, specific
 ##     to BF1LocalizationTool. Added ON TOP of the template above, without
 ##     duplicating what's already there (checked line by line: *.pdb/*.log/
 ##     *.tmp/*.obj/*.ilk/*.meta/*.tlog/*.cache/NuGet/*.env/PublishScripts/
@@ -509,14 +509,14 @@ translator-cache.json
 translator-review.txt
 
 ## UA: Проєкт BF1LocalizationTool.Translator — свідомо НЕ публікується в
-##     цьому репозиторії (рішення користувача, 2026-08-03). Видалено також
+##     цьому репозиторії (рішення користувача). Видалено також
 ##     з BF1LocalizationTool.sln, щоб `dotnet restore` на реліз-білді
 ##     (.github/workflows/release.yml) не шукав неіснуючий .csproj.
 ##     Локально проєкт лишається на диску — просто поза git і поза цим
 ##     .sln; білдиться/запускається напряму:
 ##     dotnet run --project BF1LocalizationTool.Translator
 ## EN: The BF1LocalizationTool.Translator project is deliberately NOT
-##     published in this repository (user's decision, 2026-08-03). Also
+##     published in this repository (user's decision). Also
 ##     removed from BF1LocalizationTool.sln, so `dotnet restore` in the
 ##     release build (.github/workflows/release.yml) doesn't look for a
 ##     missing .csproj. Locally the project stays on disk — just outside

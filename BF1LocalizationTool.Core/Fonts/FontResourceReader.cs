@@ -18,7 +18,7 @@
 //     Used (1) to round-trip-validate the builder itself (read → rebuild →
 //     compare bytes), and (2) as a BASE for fresh-atlas generation: take
 //     the original's real metadata/glyph table as a starting point,
-//     replacing only pixels and UVs with our own.
+//     replacing only pixels and UVs with freshly generated ones.
 //
 //     Tree navigation follows exactly the FontResourceBuilder structure
 //     (font → NAME/HEAD/FTEX/FBOD; FTEX → NAME+tex_ pairs; tex_ → NAME/

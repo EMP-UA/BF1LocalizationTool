@@ -256,13 +256,13 @@ public static partial class LocalizationParser
     {
         // UA: КРИТИЧНО: ніколи не заходимо всередину "Locl" чанків — це бінарний
         //     UTF-16LE формат (BF2), а не plain-text. Його NAME+BODY структура
-        //     теж містить назву мови, тому без цього захисту ми б помилково
-        //     прийняли бінарні дані за ASCII текст і отримали "сміття".
+        //     теж містить назву мови, тому без цього захисту бінарні дані могли б
+        //     помилково зчитатись як ASCII текст, і вийшло б "сміття".
         //     Бінарні Locl-чанки обробляються окремо в LoclChunkParser.
         // EN: CRITICAL: never recurse into "Locl" chunks — that's binary
         //     UTF-16LE format (BF2), not plain-text. Its NAME+BODY structure
-        //     also contains a language name, so without this guard we'd
-        //     mistakenly treat binary data as ASCII text and get "garbage".
+        //     also contains a language name, so without this guard binary data
+        //     could be mistakenly treated as ASCII text, producing "garbage".
         //     Binary Locl chunks are handled separately in LoclChunkParser.
         if (chunk.FourCC == "Locl")
             return;

@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // BF1LocalizationTool.Core — Scripts/Lua50FunctionBuilder.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
@@ -7,11 +7,11 @@
 //     вручну — інструкція за інструкцією, з менеджментом пулу констант і
 //     patch-механізмом для forward-переходів (JMP на ще не відому pc).
 //
-//     ЦЕ НЕ компілятор Lua-джерела. Ми не пишемо лексер/парсер/довільний
-//     кодогенератор — лише low-level будівельні блоки, якими вручну
+//     ЦЕ НЕ компілятор Lua-джерела: тут немає лексера/парсера/довільного
+//     кодогенератора — лише low-level будівельні блоки, якими вручну
 //     складаються НЕВЕЛИКІ, наперед сплановані функції (bootstrap-
-//     заглушка entry-point, wrapper-обгортки widescreen-фікса).
-//     Це свідомий вибір: наш обсяг задачі — кілька десятків заздалегідь
+//     заглушка entry-point, майбутні wrapper-обгортки widescreen-фікса).
+//     Це свідомий вибір: обсяг задачі — кілька десятків заздалегідь
 //     відомих інструкцій, а не довільний Lua-текст, тому повний
 //     компілятор був би значно дорожчим і непотрібним рівнем складності.
 //
@@ -23,11 +23,11 @@
 //     constant-pool management and a patch mechanism for forward jumps
 //     (a JMP to a not-yet-known pc).
 //
-//     THIS IS NOT a Lua-source compiler. We do not write a lexer/parser/
+//     THIS IS NOT a Lua-source compiler. No lexer/parser/
 //     arbitrary codegen — only low-level building blocks used to hand-
 //     assemble SMALL, pre-planned functions (the bootstrap entry-point
-//     stub, widescreen-fix wrapper functions). This is a
-//     deliberate choice: our task's scope is a few dozen known-in-advance
+//     stub, future widescreen-fix wrapper functions). This is a
+//     deliberate choice: the scope here is a few dozen known-in-advance
 //     instructions, not arbitrary Lua text, so a full compiler would be a
 //     much more expensive, unnecessary level of complexity.
 //
@@ -54,13 +54,20 @@ public sealed class Lua50FunctionBuilder
 
     // -------------------------------------------------------------------------
     // UA: Додає константу в пул (без дедуплікації — дедуплікація не
-    //     обов'язкова для коректності, лише для розміру; наші функції
+    //     обов'язкова для коректності, лише для розміру; ці функції
     //     невеликі, це не критично). Повертає ІНДЕКС у Constants (для
     //     GETGLOBAL/SETGLOBAL/LOADK/CLOSURE — прямий Bx-індекс; для
     //     RK-операндів (SETTABLE/ADD/EQ тощо) — обгорнути через Rk(...)).
-    // EN: Adds a constant to the pool (no dedup — dedup isn't required
-    //     for correctness, only for size; our functions are small, this
-    //     doesn't matter). Returns the INDEX into Constants (for
+    // EN: Adds a constant to the pool (NO DEDUP — see the warning below).
+    //     Returns the INDEX into Constants (for
+    //
+    //     WARNING: because there is no dedup, every call appends a new entry.
+    //     For functions that address constants through RK this matters: the
+    //     C field is 9 bits (0..511) and constants start at MaxStack (128),
+    //     so only indices < 383 are RK-addressable. A generator that emits
+    //     many constants MUST dedup on its own — measured case: 880 constants
+    //     instead of 77 on one generated screen function
+    //     (see Bf2Widescreen/AnchorInheritancePatchBuilder.ConstantCache).
     //     GETGLOBAL/SETGLOBAL/LOADK/CLOSURE — a direct Bx index; for RK
     //     operands (SETTABLE/ADD/EQ etc.) — wrap via Rk(...)).
     // -------------------------------------------------------------------------
@@ -123,7 +130,7 @@ public sealed class Lua50FunctionBuilder
     public int Emit(LuaOpcode opcode, int a, int b = 0, int c = 0)
     {
         var pc = _instructions.Count;
-        _instructions.Add(new LuaInstruction { Pc = pc, Opcode = opcode, A = a, B = b, C = c });
+        _instructions.Add(new LuaInstruction { Pc = pc, Opcode = opcode, A = a, B = b, C = c, WordOffset = -1 });
         return pc;
     }
 
@@ -134,7 +141,10 @@ public sealed class Lua50FunctionBuilder
     public int EmitABx(LuaOpcode opcode, int a, int bx)
     {
         var pc = _instructions.Count;
-        _instructions.Add(new LuaInstruction { Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = bx - MaxArgSBx });
+        _instructions.Add(new LuaInstruction
+        {
+            Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = bx - MaxArgSBx, WordOffset = -1,
+        });
         return pc;
     }
 
@@ -148,7 +158,7 @@ public sealed class Lua50FunctionBuilder
     {
         var pc = _instructions.Count;
         var bx = sbx + MaxArgSBx;
-        _instructions.Add(new LuaInstruction { Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = sbx });
+        _instructions.Add(new LuaInstruction { Pc = pc, Opcode = opcode, A = a, Bx = bx, SBx = sbx, WordOffset = -1 });
         return pc;
     }
 
@@ -157,6 +167,70 @@ public sealed class Lua50FunctionBuilder
     // EN: A placeholder for a forward JMP (target unknown at emission
     //     time) — PatchJump(pc, targetPc) MUST be called before Build().
     public int EmitJumpPlaceholder(int a = 0) => EmitAsBx(LuaOpcode.Jmp, a, sbx: 0);
+
+    // -------------------------------------------------------------------------
+    // UA: !!! КРИТИЧНО !!! Емітує TEST з ПРАВИЛЬНИМ операндом.
+    //
+    //     Офіційна семантика Lua 5.0 (lopcodes.h / lvm.c):
+    //         OP_TEST  A B C:  if (l_isfalse(R(B)) == C) then pc++
+    //                          else { R(A) := R(B); <виконати наступний JMP> }
+    //     Тобто ПЕРЕВІРЯЄТЬСЯ РЕГІСТР **B**, а A — це лише РЕГІСТР-ПРИЙМАЧ
+    //     (куди копіюється значення в "else"-гілці). Це відрізняється від
+    //     Lua 5.1+, де TEST має форму "A C" без B — звідси й помилка.
+    //
+    //     ПОМИЛКОВИЙ ВАРІАНТ, якого слід уникати: Emit(LuaOpcode.Test,
+    //     a: N, c: 0) без явного B — тоді B лишається 0 за замовчуванням,
+    //     і замість поля таблиці перевіряється регістр R(0) (сама
+    //     таблиця-аргумент), який ЗАВЖДИ truthy → умовний блок виконується
+    //     БЕЗУМОВНО → арифметика над nil, коли поля x/y/width/height
+    //     немає → помилка Lua-рантайму на першому ж виклику
+    //     NewIFContainer → ЧОРНИЙ ЕКРАН замість меню.
+    //
+    //     ЕМПІРИЧНО ПІДТВЕРДЖЕНО на реальному байткоді: з 1702 інструкцій
+    //     TEST у vanilla shell.lvl 1671 (98,2%) мають A == B, і ЖОДНА не
+    //     має B=0 при A!=0. Той самий патерн (TEST A=n B=n C=0) — у
+    //     реально працюючому сторонньому wrapper-скрипті (interface_fixes
+    //     root/9 pc 60, root/13 pc 10/39/56/79).
+    //
+    //     Тому цей хелпер НЕ приймає A і B окремо: A=B=register — єдина
+    //     форма, потрібна для ідіоми "if <вираз> then ... end", і саме
+    //     так її генерує офіційний компілятор Lua 5.0.
+    //         c: 0 → "if register then <блок> end"
+    //         c: 1 → "if not register then <блок> end"
+    //     Одразу після TEST має йти JMP на кінець блоку.
+    // EN: !!! CRITICAL !!! Emits TEST with the CORRECT operand.
+    //
+    //     Official Lua 5.0 semantics (lopcodes.h / lvm.c):
+    //         OP_TEST  A B C:  if (l_isfalse(R(B)) == C) then pc++
+    //                          else { R(A) := R(B); <run the next JMP> }
+    //     That is, the register being TESTED is **B**; A is merely the
+    //     DESTINATION register (where the value is copied in the "else"
+    //     branch). This differs from Lua 5.1+, where TEST is "A C" with no
+    //     B — which is exactly where the mistake came from.
+    //
+    //     THE MISTAKE TO AVOID: Emit(LuaOpcode.Test, a: N, c: 0) without
+    //     an explicit B leaves B at its default of 0 — instead of the
+    //     table field, register R(0) (the argument table itself) gets
+    //     tested, and it is ALWAYS truthy — so the conditional block runs
+    //     UNCONDITIONALLY → arithmetic on nil whenever x/y/width/height is
+    //     absent → a Lua runtime error on the very first NewIFContainer
+    //     call → BLACK SCREEN instead of the menu.
+    //
+    //     EMPIRICALLY CONFIRMED against real bytecode: of 1702 TEST
+    //     instructions in vanilla shell.lvl, 1671 (98.2%) have A == B, and
+    //     NONE has B=0 while A!=0. The same pattern (TEST A=n B=n C=0)
+    //     appears in an actually-working third-party wrapper script
+    //     (interface_fixes root/9 pc 60, root/13 pc 10/39/56/79).
+    //
+    //     Hence this helper does NOT take A and B separately: A=B=register
+    //     is the only form needed for the "if <expr> then ... end" idiom,
+    //     and it's exactly what the official Lua 5.0 compiler emits.
+    //         c: 0 → "if register then <block> end"
+    //         c: 1 → "if not register then <block> end"
+    //     A JMP to the end of the block must immediately follow the TEST.
+    // -------------------------------------------------------------------------
+    public int EmitTest(int register, int c = 0) =>
+        Emit(LuaOpcode.Test, a: register, b: register, c: c);
 
     // UA: Патчить раніше емітований JMP/FORLOOP/TFORPREP на реальну
     //     цільову pc. sBx = targetPc − (jmpPc + 1) — офіційна формула

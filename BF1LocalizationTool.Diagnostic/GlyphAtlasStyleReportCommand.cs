@@ -2,28 +2,29 @@
 // BF1LocalizationTool.Diagnostic — GlyphAtlasStyleReportCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Друкує розбивку GlyphAtlasStyleAnalyzer по КОЖНІЙ (шрифт, сторінка)
 //     парі окремо, а тоді — загальний підсумок.
 //
 //     КАТЕГОРІЇ НАЗВАНІ НЕЙТРАЛЬНО, БЕЗ прив'язки до гри (напр. НЕ
-//     "стиль BF1"/"стиль BF2"): реальні дані показують мішанину в межах
+//     "стиль BF1"/"стиль BF2"): повний прогін показує мішанину в межах
 //     ОДНОГО файлу ОДНІЄЇ гри (напр. gamefont_large_tex0 88% білий, tex1
 //     21% білий) — тобто "стиль" не є властивістю гри чи навіть ресурсу,
-//     і приписування категорій до конкретної гри було б неточним.
-//     Інструмент лише РЕЄСТРУЄ факти (скільки пікселів якого типу), і
-//     не робить висновок за нас — висновок робить людина за підсумком.
+//     і приписування категорій до конкретної гри було б передчасним
+//     вгадуванням. Інструмент лише РЕЄСТРУЄ факти (скільки пікселів якого
+//     типу); висновок за підсумком робить людина.
 // EN: Prints GlyphAtlasStyleAnalyzer's breakdown per EACH (font, page)
 //     pair, then an overall summary.
 //
 //     CATEGORIES ARE NAMED NEUTRALLY, with NO game attribution (e.g. NOT
-//     "BF1 style"/"BF2 style"): real data shows a mix WITHIN a SINGLE file
-//     of a SINGLE game (e.g. gamefont_large_tex0 88% white, tex1 21%
-//     white) — meaning "style" is not a property of the game or even the
-//     resource, and attributing categories to a specific game would be
-//     inaccurate. The tool only RECORDS facts (pixel counts per
-//     category), and does not draw the conclusion for us — the human
-//     draws the conclusion from the summary.
+//     "BF1 style"/"BF2 style"): a full run shows a mix WITHIN a SINGLE
+//     file of a SINGLE game (e.g. gamefont_large_tex0 88% white, tex1
+//     21% white) — meaning "style" is not a property of the game or even
+//     the resource, and attributing categories to a specific game would
+//     be premature guessing. The tool only RECORDS facts (pixel counts
+//     per category); drawing the conclusion from the summary is left to
+//     the human reviewer.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Fonts;

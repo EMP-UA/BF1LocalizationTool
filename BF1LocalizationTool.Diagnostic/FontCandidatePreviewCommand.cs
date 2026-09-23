@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontCandidatePreviewCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Одноразовий допоміжний інструмент (НЕ перевірка формату): рендерить
 //     той самий кириличний зразок КОЖНИМ кандидатом шрифту поруч, в

@@ -6,25 +6,26 @@
 // UA: Завантажує шрифти з .ttf-файлів у теці біля .exe (той самий підхід,
 //     що й SWH.FontTool), а НЕ через системний реєстр шрифтів Windows.
 //
-//     ЧОМУ: `new Font(fontFamilyName, ...)` за РЯДКОМ-НАЗВОЮ знаходить
-//     шрифт ЛИШЕ серед тих, що ВСТАНОВЛЕНІ в систему — а ліцензія
-//     системного `Bahnschrift SemiBold` explicitly ЗАБОРОНЯЄ копіювання
-//     на інші системи чи розповсюдження. `PrivateFontCollection`
-//     завантажує .ttf з теки біля .exe, минаючи системний реєстр
-//     шрифтів: відтворюваність збірки + легальне бандлення відкритого
-//     (OFL) шрифту.
+//     ЧОМУ: до цього класу `GdiGlyphRasterizer` створював `Font` за
+//     РЯДКОМ-НАЗВОЮ (`new Font(fontFamilyName, ...)`) — GDI+ шукає таку
+//     назву ЛИШЕ серед шрифтів, ВСТАНОВЛЕНИХ у систему. Досі
+//     використовувався `Bahnschrift SemiBold` — системний шрифт Windows,
+//     ліцензія якого explicitly ЗАБОРОНЯЄ копіювання на інші системи чи
+//     розповсюдження. Перехід на `PrivateFontCollection` вирішує це:
+//     відтворюваність збірки + легальне бандлення відкритого (OFL) шрифту.
 //
-// UA: КЛЮЧ ПОШУКУ — ВІДНОСНИЙ ШЛЯХ ФАЙЛУ, а не назва родини шрифту.
-//     ПРИЧИНА:
+// UA: Ключ пошуку — "ВІДНОСНИЙ ШЛЯХ ФАЙЛУ", а НЕ "назва родини". ПРИЧИНА
+//     (корінь бага, знайденого в реальному лозі):
 //
 //     1. ОБРІЗАННЯ. Win32 `LOGFONT.lfFaceName` = `LF_FACESIZE` (32 байти
 //        з нулем-термінатором → 31 символ). GDI+ `FontFamily.Name` для
-//        ПРИВАТНИХ шрифтів проходить через цей самий шлях і ОБРІЗАЄТЬСЯ:
-//        "Fira Sans Extra Condensed Mediu" (не Medium), "...SemiB" (не
-//        SemiBold), "...Extra" (не ExtraBold — і це ЗБІГАЄТЬСЯ з
-//        обрізаним "ExtraLight", РІЗНІ файли дають ОДНАКОВИЙ ключ). Ім'я
-//        файлу (напр. "FiraSansExtraCondensed-ExtraBold.ttf") — рядок
-//        ФАЙЛОВОЇ СИСТЕМИ, жодного ліміту в 31 символ немає.
+//        ПРИВАТНИХ шрифтів проходить через цей самий шлях і ОБРІЗАЄТЬСЯ.
+//        Реальний доказ з логу: "Fira Sans Extra Condensed Mediu" (не
+//        Medium), "...SemiB" (не SemiBold), "...Extra" (не ExtraBold —
+//        і це ЗБІГАЄТЬСЯ з обрізаним "ExtraLight", РІЗНІ файли дають
+//        ОДНАКОВИЙ ключ). Ім'я файлу (напр.
+//        "FiraSansExtraCondensed-ExtraBold.ttf") — рядок ФАЙЛОВОЇ
+//        СИСТЕМИ, жодного ліміту в 31 символ немає.
 //
 //     2. ЗЛИТТЯ СТИЛІВ. Коли кілька .ttf МАПЛЯТЬСЯ на ОДНУ family-назву
 //        (класичний GDI-квартет Regular/Bold/Italic/BoldItalic — так
@@ -33,36 +34,35 @@
 //        `new Font(family, size, FontStyle.Regular, unit)` — ПІДТВЕРДЖЕНО
 //        емпірично (розділ 11.13 FONT_FORMAT_SPEC.md) — не завжди чесно
 //        обирає саме Regular: виміряна природна пропорція родини
-//        "Fira Sans" (0.774) збігається НЕ з окремо виміряним Regular
-//        (0.702), а з Bold (0.778) — тобто GDI+ мовчки підмінює стиль.
+//        "Fira Sans" (0.774) збіглась НЕ з окремо виміряним Regular
+//        (0.702), а з Bold (0.778) — тобто GDI+ мовчки підмінив стиль.
 //
 //     ФІКС: ОДНА `PrivateFontCollection` НА КОЖЕН ФАЙЛ, а не одна спільна
-//     на всі шрифти. Ізольована колекція з ОДНИМ файлом всередині
-//     фізично не може змішати стилі — FontFamily, яку вона видає, має
-//     РІВНО ті стилі, що несе САМЕ ЦЕЙ файл (для звичайних
-//     static-інстансів — рівно один). Ключ пошуку — ВІДНОСНИЙ ШЛЯХ файлу
-//     (унікальний за конструкцією, файлова система, а не LOGFONT,
-//     обрізання неможливе).
+//     на всі 36. Ізольована колекція з ОДНИМ файлом всередині фізично не
+//     може змішати стилі — FontFamily, яку вона видає, має РІВНО ті
+//     стилі, що несе САМЕ ЦЕЙ файл (для звичайних static-інстансів —
+//     рівно один). Ключ пошуку — ВІДНОСНИЙ ШЛЯХ файлу (унікальний за
+//     конструкцією, файлова система, а не LOGFONT, обрізання неможливе).
 // EN: Loads fonts from .ttf files in a folder next to the .exe (the same
 //     approach as SWH.FontTool), NOT via the Windows system font registry.
 //
-//     WHY: `new Font(fontFamilyName, ...)` by NAME STRING only finds
-//     fonts that are SYSTEM-INSTALLED — and the system font `Bahnschrift
-//     SemiBold`'s license explicitly FORBIDS copying to other systems or
-//     redistribution. `PrivateFontCollection` loads .ttf files from a
-//     folder next to the .exe, bypassing the system font registry:
-//     reproducible builds + legal bundling of an open (OFL) font.
+//     WHY: until this class, `GdiGlyphRasterizer` built a `Font` by NAME
+//     STRING — GDI+ only looks that up among SYSTEM-INSTALLED fonts.
+//     `Bahnschrift SemiBold` was used until now — its license explicitly
+//     FORBIDS copying to other systems or redistribution. Switching to
+//     `PrivateFontCollection` fixes that: reproducible builds + legal
+//     bundling of an open (OFL) font.
 //
-// EN: THE LOOKUP KEY IS THE FILE'S RELATIVE PATH, not a font family name.
-//     REASON:
+// EN: The lookup key is a "RELATIVE FILE PATH", not a "family name".
+//     REASON (the root of a bug found in a real log):
 //
 //     1. TRUNCATION. Win32 `LOGFONT.lfFaceName` = `LF_FACESIZE` (32 bytes
 //        incl. null terminator → 31 characters). GDI+'s `FontFamily.Name`
 //        for PRIVATE fonts goes through that same path and gets
-//        TRUNCATED: "Fira Sans Extra Condensed Mediu" (not Medium),
-//        "...SemiB" (not SemiBold), "...Extra" (not ExtraBold — and it
-//        COLLIDES with truncated "ExtraLight", two DIFFERENT files
-//        producing the SAME key). A file name (e.g.
+//        TRUNCATED. Real proof from the log: "Fira Sans Extra Condensed
+//        Mediu" (not Medium), "...SemiB" (not SemiBold), "...Extra" (not
+//        ExtraBold — and it COLLIDES with truncated "ExtraLight", two
+//        DIFFERENT files producing the SAME key). A file name (e.g.
 //        "FiraSansExtraCondensed-ExtraBold.ttf") is a FILESYSTEM string —
 //        no 31-character limit at all.
 //
@@ -73,17 +73,17 @@
 //        `new Font(family, size, FontStyle.Regular, unit)` — EMPIRICALLY
 //        CONFIRMED (FONT_FORMAT_SPEC.md section 11.13) — doesn't always
 //        honestly pick Regular: the measured natural proportion of family
-//        "Fira Sans" (0.774) matches NOT the separately-measured Regular
-//        (0.702) but Bold (0.778) — i.e. GDI+ silently substitutes the
+//        "Fira Sans" (0.774) matched NOT the separately-measured Regular
+//        (0.702) but Bold (0.778) — i.e. GDI+ silently substituted the
 //        style.
 //
 //     FIX: ONE `PrivateFontCollection` PER FILE, not one shared collection
-//     for all fonts. An isolated collection holding a single file
-//     physically cannot mix styles — the FontFamily it reports has
-//     EXACTLY the style(s) that ONE file carries (exactly one, for
-//     ordinary static instances). The lookup key is the file's RELATIVE
-//     PATH (unique by construction, a filesystem string, not LOGFONT —
-//     truncation is impossible).
+//     for all 36. An isolated collection holding a single file physically
+//     cannot mix styles — the FontFamily it reports has EXACTLY the
+//     style(s) that ONE file carries (exactly one, for ordinary static
+//     instances). The lookup key is the file's RELATIVE PATH (unique by
+//     construction, a filesystem string, not LOGFONT — truncation is
+//     impossible).
 // =============================================================================
 
 using System.Drawing;

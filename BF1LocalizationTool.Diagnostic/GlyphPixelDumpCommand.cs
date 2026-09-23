@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GlyphPixelDumpCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Діагностична команда для ЄДИНОЇ мети: перевірити перед написанням
 //     FontGenerator-конвертера A4R4G4B4, чи справді донорські гліфи в

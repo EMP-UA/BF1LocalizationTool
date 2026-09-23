@@ -2,23 +2,26 @@
 // BF1LocalizationTool.Diagnostic — PageIndexByteCorrelationCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Decisive-перевірка гіпотези "offset=2 у FBOD = індекс текстурної
-//     сторінки". ReservedByteAnalysisCommand показав ЗБІГ кількості
-//     унікальних значень з кількістю сторінок у 11/11 шрифтів — але це
+// UA: ОСТАННЯ вирішальна перевірка гіпотези "offset=2 у FBOD = індекс
+//     текстурної сторінки" перед зміною Core-коду й специфікації.
+//     ReservedByteAnalysisCommand показав ЗБІГ кількості унікальних
+//     значень з кількістю сторінок у 11/11 шрифтів — але це поки що
 //     лише кореляція кількості. Ця команда перевіряє КОНКРЕТНИЙ зв'язок:
 //     для заданого коду друкує (а) значення байта offset=2 в FBOD-записі,
 //     і (б) на якій сторінці форма гліфа ВІЗУАЛЬНО повна (непрозорих
 //     пікселів найбільше й формує впізнавану літеру) — маємо побачити,
 //     що (а) точно вказує на (б).
-// EN: Decisive check of the hypothesis "offset=2 in FBOD = texture
-//     page index". ReservedByteAnalysisCommand showed a MATCH between the
-//     unique value count and page count in 11/11 fonts — but that's just
-//     a count correlation. This command checks the SPECIFIC link: for a
+// EN: FINAL decisive check of the hypothesis "offset=2 in FBOD = texture
+//     page index" before changing Core code and the spec.
+//     ReservedByteAnalysisCommand showed a MATCH between the unique value
+//     count and page count in 11/11 fonts — but that's still just a
+//     count correlation. This command checks the SPECIFIC link: for a
 //     given code, prints (a) the offset=2 byte value in the FBOD record,
 //     and (b) which page the glyph shape is VISUALLY full on (most
-//     non-zero pixels, forms a recognizable letter) — we should see that
-//     (a) precisely points to (b).
+//     non-zero pixels, forms a recognizable letter) — (a) should
+//     precisely point to (b).
 // =============================================================================
 
 using BF1LocalizationTool.Core.Fonts;
@@ -68,15 +71,19 @@ public static class PageIndexByteCorrelationCommand
             var v1 = BitConverter.ToSingle(raw, recOffset + 20);
 
             // UA: Знаходимо сторінку з НАЙБІЛЬШОЮ щільністю непрозорих
-            //     пікселів для цього UV — це ЛИШЕ для звірки з offset=2,
-            //     не самостійний доказ: density-евристика тут
-            //     використовується не як РІШЕННЯ, а як НЕЗАЛЕЖНИЙ спосіб
-            //     перевірки вже сформульованої гіпотези.
+            //     пікселів для цього UV — це ЛИШЕ для звірки з
+            //     offset=2, не самостійний доказ: "евристика густини"
+            //     сама по собі ненадійна (кілька сторінок можуть мати
+            //     близьку щільність), тому тут вона використовується не
+            //     як РІШЕННЯ, а як НЕЗАЛЕЖНИЙ спосіб перевірки вже
+            //     сформульованої гіпотези.
             // EN: Find the page with HIGHEST non-zero pixel density for
             //     this UV — this is ONLY for cross-checking against
-            //     offset=2, not a standalone proof: the density heuristic
-            //     is used here not as the DECISION but as an INDEPENDENT
-            //     way to test an already-formed hypothesis.
+            //     offset=2, not a standalone proof: the "density
+            //     heuristic" is unreliable on its own (several pages can
+            //     have similar density), so here it's used not as the
+            //     DECISION but as an INDEPENDENT way to test an
+            //     already-formed hypothesis.
             var bestPageIdx = -1;
             var bestDensity = -1.0;
 

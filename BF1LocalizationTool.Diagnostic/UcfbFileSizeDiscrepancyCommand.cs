@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — UcfbFileSizeDiscrepancyCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: UcfbWriteRoundTripCommand показав розбіжність розміру файлу
 //     (оригінал 4899596 байт, після запису тієї самої заміни розміру —

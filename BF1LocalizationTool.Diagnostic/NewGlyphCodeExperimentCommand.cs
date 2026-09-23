@@ -2,21 +2,21 @@
 // BF1LocalizationTool.Diagnostic — NewGlyphCodeExperimentCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
-// UA: EКСПЕРИМЕНТ — перевіряє, чи гра взагалі відмальовує гліфи на кодах,
-//     яких НЕ було в оригінальному файлі. Уся наявна донорська
-//     інфраструктура (CyrillicFontInjector, GlyphAtlasPatcher.
-//     BuildReplacements) свідомо ПАТЧИТЬ лише ІСНУЮЧІ коди —
-//     BuildReplacements навіть кидає виняток, якщо код не знайдено серед
-//     originalRecords.
+// UA: ЕКСПЕРИМЕНТАЛЬНА команда: перевіряє, чи гра взагалі відмальовує
+//     гліфи на кодах, яких НЕ було в оригінальному файлі. Уся наявна
+//     донорська інфраструктура (CyrillicFontInjector,
+//     GlyphAtlasPatcher.BuildReplacements) свідомо ПАТЧИТЬ лише ІСНУЮЧІ
+//     коди — BuildReplacements навіть кидає виняток, якщо код не знайдено
+//     серед originalRecords.
 //
-//     МЕТА: якщо гра дійсно відмальовує коди поза оригінальним набором —
-//     донорський підхід (з таблицею відповідності
-//     cyrillic-code-table.json) можна замінити прямим Unicode-кодуванням
-//     без жодного маппінгу байтів.
+//     МЕТА: якщо гра малює гліфи на нових кодах — донорський підхід (з
+//     таблицею відповідності cyrillic-code-table.json) можна замінити
+//     прямим Unicode-кодуванням без жодного маппінгу байтів.
 //
-//     ОХОПЛЕННЯ: УСІ 66 літер українського алфавіту (CyrillicAlphabet.
-//     AllLetters), кожна — під СВОЇМ РЕАЛЬНИМ Unicode-кодом (напр. 'А'=
+//     Тест охоплює УСІ 66 літер українського алфавіту (CyrillicAlphabet.
+//     AllLetters), кожна — під СВОЇМ РЕАЛЬНИМ Unicode-кодом (напр. 'А' =
 //     0x0410), і в УСІХ шрифтах гри (gamefont_large/medium/small/tiny/
 //     super_tiny), а не лише в одному розмірі — бо різні екрани гри
 //     малюють текст РІЗними розмірами шрифту, і якби кирилицю додати
@@ -38,18 +38,18 @@
 //     "донора", з якого копіювати реальне значення, беремо його з
 //     ПЕРШОГО існуючого запису тієї ж сторінки — це РЕАЛЬНИЙ байт із
 //     цього ж файлу, а не вигадане число.
-// EN: EXPERIMENT — tests whether the game renders glyphs at codes that
-//     were NOT in the original file at all. The entire existing donor
-//     infrastructure (CyrillicFontInjector, GlyphAtlasPatcher.
-//     BuildReplacements) deliberately PATCHES existing codes only —
-//     BuildReplacements even throws if a code isn't found among
-//     originalRecords.
+// EN: EXPERIMENTAL command: tests whether the game renders glyphs at
+//     codes that were NOT in the original file at all. The entire
+//     existing donor infrastructure (CyrillicFontInjector,
+//     GlyphAtlasPatcher.BuildReplacements) deliberately PATCHES existing
+//     codes only — BuildReplacements even throws if a code isn't found
+//     among originalRecords.
 //
-//     GOAL: if the game does render codes outside the original set, the
-//     donor approach (with its cyrillic-code-table.json mapping) can be
+//     GOAL: if the game does render glyphs at new codes, the donor
+//     approach (with its cyrillic-code-table.json mapping) could be
 //     replaced by direct Unicode encoding with no byte mapping.
 //
-//     SCOPE: ALL 66 letters of the Ukrainian alphabet
+//     The test covers ALL 66 letters of the Ukrainian alphabet
 //     (CyrillicAlphabet.AllLetters), each under its OWN REAL Unicode code
 //     (e.g. 'А' = 0x0410), and in EVERY game font (gamefont_large/medium/
 //     small/tiny/super_tiny), not just one size — because different game
@@ -85,17 +85,19 @@ namespace BF1LocalizationTool.Diagnostic;
 public static class NewGlyphCodeExperimentCommand
 {
     // UA: Синхронізовано з production-командою
-    //     (GenerateNoDonorCyrillicCoreCommand): Fira Sans SemiBold, через
-    //     PrivateFontRegistry (.ttf у Fonts\, не система). Значення — це
-    //     ВІДНОСНИЙ ШЛЯХ ФАЙЛУ, не назва родини (GDI+ обрізає/зливає
-    //     family-назви — див. GenerateNoDonorCyrillicCoreCommand.cs і
-    //     FONT_FORMAT_SPEC.md розділ 11.13).
+    //     (GenerateNoDonorCyrillicCoreCommand): Bahnschrift → Fira Sans
+    //     SemiBold, через PrivateFontRegistry (.ttf у Fonts\, не система).
+    //     Значення тепер ВІДНОСНИЙ ШЛЯХ ФАЙЛУ, не
+    //     назва родини (GDI+ обрізає/зливає family-назви — див.
+    //     GenerateNoDonorCyrillicCoreCommand.cs і FONT_FORMAT_SPEC.md
+    //     розділ 11.13).
     // EN: Synced with the production command
-    //     (GenerateNoDonorCyrillicCoreCommand): Fira Sans SemiBold, via
-    //     PrivateFontRegistry (.ttf in Fonts\, not system). The value is a
-    //     RELATIVE FILE PATH, not a family name (GDI+ truncates/merges
-    //     family names — see GenerateNoDonorCyrillicCoreCommand.cs and
-    //     FONT_FORMAT_SPEC.md section 11.13).
+    //     (GenerateNoDonorCyrillicCoreCommand): Bahnschrift → Fira Sans
+    //     SemiBold, via PrivateFontRegistry (.ttf in Fonts\, not system).
+    //     The value is now a RELATIVE FILE PATH, not
+    //     a family name (GDI+ truncates/merges family names — see
+    //     GenerateNoDonorCyrillicCoreCommand.cs and FONT_FORMAT_SPEC.md
+    //     section 11.13).
     private const string FontFamilyName = "FiraSans-SemiBold.ttf";
 
     private static readonly string[] TargetFontBaseNames =
@@ -301,49 +303,58 @@ public static class NewGlyphCodeExperimentCommand
                 replacements[page.BodyChunk.FileDataOffset] = page.PatchedBody;
 
             // -----------------------------------------------------------------
-            // UA: КРИТИЧНО. Оригінальні 226 записів СТРОГО відсортовані за
-            //     кодом 0x1E→0xFF, без жодної інверсії — гра шукає гліф
-            //     БІНАРНИМ пошуком, який працює лише на відсортованому
-            //     масиві. Нові записи МАЮТЬ дописуватись у ЦЬОМУ ж
-            //     порядку — СОРТУЄМО весь масив за кодом; оскільки всі
-            //     кириличні коди > 0xFF, вони стають відсортованим хвостом
-            //     після оригінальних, і пошук працює для всіх.
-            //     record.Index — суто наша C#-службова нумерація (гра її
-            //     не читає), тож переупорядкування безпечне.
-            // EN: CRITICAL. The original 226 records are STRICTLY sorted by
-            //     code 0x1E→0xFF with no inversion — the game looks glyphs
-            //     up by BINARY SEARCH, which only works on a sorted array.
-            //     New records MUST be appended in that same order — SORT
-            //     the whole array by code; since all Cyrillic codes are >
-            //     0xFF, they become a sorted tail after the originals, and
-            //     lookup works for all. record.Index is our own C#
-            //     bookkeeping (the game doesn't read it), so reordering is
-            //     safe.
+            // UA: КРИТИЧНО (знайдено після другого тесту в грі — "частина
+            //     літер, частина боксів"; ЕМПІРИЧНО підтверджено, що
+            //     оригінальні 226 записів СТРОГО відсортовані за кодом
+            //     0x1E→0xFF, без жодної інверсії — тож гра майже напевно
+            //     шукає гліф БІНАРНИМ пошуком, який працює лише на
+            //     відсортованому масиві). Перша версія дописувала нові
+            //     записи в кінець у порядку АЛФАВІТУ (А,Б,В,Г,Ґ,Д,Е,Є...),
+            //     а не за кодом — Ґ(0x0490) опинявся перед Д(0x0414),
+            //     Є(0x0404) — аж наприкінці: суцільні інверсії. Через це
+            //     бінарний пошук знаходив лише частину кириличних кодів
+            //     (звідси "частина літер, частина боксів"). СОРТУЄМО весь
+            //     масив за кодом — оскільки всі кириличні коди > 0xFF, вони
+            //     стають відсортованим хвостом після оригінальних, і пошук
+            //     працює для всіх. record.Index — суто C#-службова
+            //     нумерація (гра її не читає), тож переупорядкування безпечне.
+            // EN: CRITICAL (found after the second in-game test — "some
+            //     letters, some boxes"; EMPIRICALLY confirmed the original
+            //     226 records are STRICTLY sorted by code 0x1E→0xFF with no
+            //     inversion — so the game almost certainly looks glyphs up
+            //     by BINARY SEARCH, which only works on a sorted array). The
+            //     first version appended new records in ALPHABET order
+            //     (А,Б,В,Г,Ґ,Д,Е,Є...), not code order — Ґ(0x0490) landed
+            //     before Д(0x0414), Є(0x0404) at the very end: many
+            //     inversions. So binary search found only some Cyrillic
+            //     codes (hence "some letters, some boxes"). SORT the whole
+            //     array by code — since all Cyrillic codes are > 0xFF, they
+            //     become a sorted tail after the originals, and lookup works
+            //     for all. record.Index is plain C# bookkeeping (the game
+            //     doesn't read it), so reordering is safe.
             var updatedRecords = originalRecords.Concat(newRecords)
                 .OrderBy(r => r.Code)
                 .ToList();
             replacements[fbodChunk.FileDataOffset] = FontGlyphTable.Serialize(updatedRecords);
 
             // -----------------------------------------------------------------
-            // UA: КРИТИЧНО. Перші 2 байти HEAD — це КІЛЬКІСТЬ ГЛІФІВ у
-            //     шрифті (u16 LE). Якщо цей лічильник не оновити — гра
-            //     читає лише стільки перших гліфів, скільки в ньому
-            //     записано, і ФІЗИЧНО не бачить нових записів. Тут
-            //     лічильник оновлюється на нову загальну кількість інлайн
-            //     (не через FontResourceBuilder, бо цей тест самодостатній
-            //     і ізольований — див. заголовок файлу). У production-коді
-            //     `FontResourceBuilder.BuildHead` виводить glyphCount з
-            //     `font.Glyphs.Count` автоматично (FONT_FORMAT_SPEC.md
-            //     §11.2/§11.9).
-            // EN: CRITICAL. HEAD's first 2 bytes are the font's GLYPH COUNT
-            //     (u16 LE). If this count isn't updated, the game reads
-            //     only that many glyphs and PHYSICALLY never sees new
-            //     records. Here the count is updated to the new total
-            //     inline (not via FontResourceBuilder, since this test is
-            //     self-contained and isolated — see the file header). In
-            //     production code, `FontResourceBuilder.BuildHead` derives
-            //     glyphCount from `font.Glyphs.Count` automatically
-            //     (FONT_FORMAT_SPEC.md §11.2/§11.9).
+            // UA: КРИТИЧНО: перші 2 байти HEAD — це КІЛЬКІСТЬ ГЛІФІВ у
+            //     шрифті (u16 LE). Якщо цей лічильник не оновити — гра читає
+            //     лише стільки гліфів, скільки в ньому записано, і ФІЗИЧНО
+            //     не бачить нових записів понад це число. Лічильник
+            //     оновлюється на нову загальну кількість (тут, у ЦЬОМУ файлі
+            //     — інлайн-патч, не через FontResourceBuilder).
+            //     `FontResourceBuilder.BuildHead` сам виводить glyphCount з
+            //     `font.Glyphs.Count` (не хардкодить його) — див.
+            //     FONT_FORMAT_SPEC.md §7.1.
+            // EN: CRITICAL: HEAD's first 2 bytes are the font's GLYPH COUNT
+            //     (u16 LE). If this count isn't updated, the game reads only
+            //     as many glyphs as it records, and PHYSICALLY never sees
+            //     records added past that number. The count is updated to
+            //     the new total here (in THIS file — an inline patch, not
+            //     via FontResourceBuilder). `FontResourceBuilder.BuildHead`
+            //     itself derives glyphCount from `font.Glyphs.Count` (not
+            //     hardcoded) — see FONT_FORMAT_SPEC.md §7.1.
             var headChunk = UcfbReader.FindFirst(font.Chunk, "HEAD");
             if (headChunk is not null && headChunk.RawData.Length >= 2)
             {

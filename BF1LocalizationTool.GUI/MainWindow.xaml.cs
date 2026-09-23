@@ -120,21 +120,29 @@ public partial class MainWindow : Window
         //     ігрові підтеки (relativeGamePath: BF1, BF2, і BF1-Tat3-аддон),
         //     а не лише корінь.
         //
-        //     Чому всі підтеки одразу, а не лінькво/по одній: core.lvl в
-        //     BF1 і BF2 мають ІДЕНТИЧНІ імена, тож "плаский" корінь без
-        //     підтек — це завжди прихована пастка з перезаписом, щойно в
-        //     грі зʼявляється робота з ОБОМА іграми в одному сеансі (а
-        //     RefreshGrid/EntryRow/BuildCsvContent це якраз і підтримують).
-        //     Усі три теки поводяться ОДНАКОВО: підтеки готові заздалегідь,
-        //     породжуючи ту саму структуру, що й реальна інсталяція Steam.
+        //     Чому всі підтеки одразу, а не лінькво/по одній — те саме
+        //     міркування для всіх трьох тек (воно не специфічне для
+        //     "original", а є загальним правилом):
+        //     core.lvl в BF1 і BF2 мають ІДЕНТИЧНІ імена, тож "плаский"
+        //     корінь без підтек — це завжди прихована пастка з перезаписом,
+        //     щойно в грі зʼявляється робота з ОБОМА іграми в одному
+        //     сеансі (а RefreshGrid/EntryRow/BuildCsvContent це якраз і
+        //     підтримують). Лінькве створення підтеки лише в момент, коли
+        //     версія гри вже відома, не масштабується на "original"
+        //     (версія гри ще невідома — файл не відкрито) і не застосовне
+        //     до "review" взагалі (інакше робочий CSV писався б ПЛАСКО в
+        //     корінь review\ — та сама пастка). Тому всі три теки
+        //     поводяться ОДНАКОВО: підтеки готові заздалегідь, породжуючи ту
+        //     саму структуру, що й реальна інсталяція Steam.
         //
-        //     ТРЕТЯ підтека — аддон Tat3 (BF1): його core.lvl має ТЕ САМЕ
-        //     ім'я, що й базовий BF1 core.lvl, але зовсім інший вміст
-        //     (985 КБ, окрема таблиця Locl із 22 унікальними рядками) — той
-        //     самий колізійний ризик, що й для BF1/BF2, тепер УСЕРЕДИНІ
-        //     самого BF1. GetRelativeGamePath визначає Tat3 за "AddOn" у
-        //     шляху ВІДКРИТОГО файлу (_sourcePath) — так само, як
-        //     GameVersion визначається за "Battlefront II".
+        //     ТРЕТЯ підтека —
+        //     аддон Tat3 (BF1): його core.lvl має ТЕ САМЕ ім'я, що й базовий
+        //     BF1 core.lvl, але зовсім інший вміст (985 КБ, окрема таблиця
+        //     Locl із 22 унікальними рядками) — той самий колізійний ризик,
+        //     що змусив розділити BF1/BF2, тепер УСЕРЕДИНІ самого BF1.
+        //     GetRelativeGamePath визначає Tat3 за "AddOn" у шляху ВІДКРИТОГО
+        //     файлу (_sourcePath) — так само, як GameVersion визначається за
+        //     "Battlefront II".
         //
         //     Побічний, але важливий ефект (стосується "original"):
         //     LvlLocalizationService.LoadAsync визначає GameVersion за
@@ -149,22 +157,30 @@ public partial class MainWindow : Window
         //     (relativeGamePath: BF1, BF2, and the BF1-Tat3 add-on), not
         //     just the root.
         //
-        //     Why all subfolders up front rather than lazily/one-at-a-time:
-        //     BF1's and BF2's core.lvl share IDENTICAL filenames, so a
-        //     "flat" root with no subfolders is always a hidden overwrite
-        //     trap the moment BOTH games are worked with in one session
-        //     (which RefreshGrid/EntryRow/BuildCsvContent already support).
-        //     All three folders behave THE SAME way: subfolders are ready
-        //     up front, mirroring the exact structure of a real Steam
-        //     install.
+        //     Why all subfolders up front rather than lazily/one-at-a-time
+        //     — the same reasoning applies to all three folders (it isn't
+        //     specific to "original", it's a general rule): BF1's and
+        //     BF2's core.lvl share IDENTICAL
+        //     filenames, so a "flat" root with no subfolders is always a
+        //     hidden overwrite trap the moment BOTH games are worked with
+        //     in one session (which RefreshGrid/EntryRow/BuildCsvContent
+        //     already support). Creating a subfolder lazily only once the
+        //     game version becomes known doesn't scale to "original"
+        //     (game version still unknown — file not opened yet) and
+        //     doesn't apply to "review" at all (otherwise the working CSV
+        //     would be written FLAT into review\'s root — the same trap).
+        //     So all three folders behave THE SAME way: subfolders are
+        //     ready up front, mirroring the exact structure of a real
+        //     Steam install.
         //
-        //     THIRD subfolder — the Tat3 (BF1) add-on: its core.lvl shares
-        //     the SAME filename as the base BF1 core.lvl but has entirely
-        //     different content (985 KB, its own Locl table with 22 unique
-        //     strings) — the same collision risk as BF1 vs BF2, now INSIDE
-        //     BF1 itself. GetRelativeGamePath detects Tat3 from "AddOn" in
-        //     the OPENED file's path (_sourcePath) — the same way
-        //     GameVersion is detected from "Battlefront II".
+        //     THIRD subfolder — the
+        //     Tat3 (BF1) add-on: its core.lvl shares the SAME filename as
+        //     the base BF1 core.lvl but has entirely different content
+        //     (985 KB, its own Locl table with 22 unique strings) — the
+        //     same collision risk that forced splitting BF1/BF2, now
+        //     INSIDE BF1 itself. GetRelativeGamePath detects Tat3 from
+        //     "AddOn" in the OPENED file's path (_sourcePath) — the same
+        //     way GameVersion is detected from "Battlefront II".
         //
         //     A side effect, but an important one (applies to "original"):
         //     LvlLocalizationService.LoadAsync determines GameVersion from
@@ -180,19 +196,20 @@ public partial class MainWindow : Window
         // UA: Підказка про три теки біля .exe — за зразком SWH.LocEditor
         //     (той самий текст-принцип: "поклади файл сюди, результат
         //     з'явиться там"), з явним застереженням про підтеки
-        //     "original\" через ідентичні імена core.lvl у BF1 і BF2.
-        //     CheckForAutosave() нижче може ПЕРЕБИТИ цей текст (якщо
-        //     знайдено автозбереження й користувач погодився відновити) —
-        //     це навмисно: підказка про автозбереження важливіша й
-        //     актуальніша в цей момент.
+        //     "original\": саме тут ховається реальна проблема з
+        //     ідентичними іменами core.lvl. CheckForAutosave() нижче
+        //     може ПЕРЕБИТИ цей текст (якщо знайдено автозбереження й
+        //     користувач погодився відновити) — це навмисно: підказка про
+        //     автозбереження важливіша й актуальніша в цей момент.
         // EN: A hint about the three folders next to the .exe — mirroring
         //     SWH.LocEditor (same text principle: "drop the file here, the
         //     result will appear there"), with an explicit note about the
-        //     "original\" subfolders because of identical core.lvl
-        //     filenames in BF1 and BF2. CheckForAutosave() below may
-        //     OVERRIDE this text (if an autosave was found and the user
-        //     agreed to restore it) — that's intentional: the autosave
-        //     hint is more important and timely at that moment.
+        //     "original\" subfolders, since that's exactly where a real
+        //     problem with identical core.lvl filenames hides.
+        //     CheckForAutosave() below may OVERRIDE this text (if an
+        //     autosave was found and the user agreed to restore it) —
+        //     that's intentional: the autosave hint is more important and
+        //     timely at that moment.
         SetStatus("UA: Поклади оригінал core.lvl у «original\\{Назва гри}\\...\\» (ПІДТЕКА гри, не корінь — " +
                    "у BF1 і BF2 однакове ім'я файлу!). Звідти типово відкриється \"Оригінал\". " +
                    "Збережений мод з'явиться в «output\\», робочий CSV з вичиткою — у «review\\». / " +
@@ -234,7 +251,7 @@ public partial class MainWindow : Window
     //     усередині НЕМАЄ — Tat3 користується вже завантаженим атласом
     //     базової гри). Без окремої підтеки Tat3-файл колізує з базовим
     //     BF1 core.lvl у original\/output\/review\ — та сама пастка, що
-    //     й для BF1/BF2 (§ коментар у конструкторі), лише тепер УСЕРЕДИНІ
+    //     й для BF1/BF2 (див. коментар у конструкторі), лише тепер УСЕРЕДИНІ
     //     самого BF1. Реальний шлях узятий 1-в-1 зі steam-game-structure.txt:
     //     GameData\AddOn\Tat3\Data\_lvl_pc\core.lvl.
     // EN: The Tat3 add-on (BF1, "Jabba's Palace") ships its OWN core.lvl —
@@ -267,30 +284,30 @@ public partial class MainWindow : Window
     private static bool IsTat3AddOn(string? filePath) =>
         filePath is not null && filePath.Contains("AddOn", StringComparison.OrdinalIgnoreCase);
 
-    // UA: Захист від вибору .csv-файлу (перекладу) у діалозі "Відкрити
-    //     Оригінал/Робочий" — там очікується СПРАВЖНІЙ core.lvl (бінарний
-    //     ucfb-контейнер), а CSV — лише "міст" перекладу
-    //     (LocalizationCsvIo/Import CSV), не самостійний носій локалізації.
-    //     Без цієї перевірки LvlLocalizationService.LoadAsync падає з
-    //     малозрозумілим "Невірна магія файлу 0x48BFBBEF, очікується
-    //     'ucfb'" — 0x48BFBBEF це насправді байти UTF-8 BOM (EF BB BF) +
-    //     'H' з "Hash,Ordinal,..." — тобто буквально сам CSV-заголовок,
-    //     прочитаний як бінарні дані. Перевірка ЗА РОЗШИРЕННЯМ (не за
-    //     вмістом) — достатньо для типової помилки "не той файл у діалозі",
-    //     повний UcfbReader.ReadFile лишається єдиним джерелом істини для
-    //     дійсно зіпсованих .lvl.
-    // EN: Guards against picking a .csv (translation) file in the "Open
-    //     Original/Working" dialog — that dialog expects a REAL core.lvl
-    //     (binary ucfb container); CSV is only a translation "bridge"
-    //     (LocalizationCsvIo/Import CSV), not a standalone localization
-    //     carrier. Without this check, LvlLocalizationService.LoadAsync
-    //     fails with an opaque "Invalid file magic 0x48BFBBEF, expected
-    //     'ucfb'" — 0x48BFBBEF is actually the UTF-8 BOM bytes (EF BB BF) +
-    //     'H' from "Hash,Ordinal,..." — i.e. literally the CSV header read
-    //     as binary data. Checked BY EXTENSION (not content) — enough for
-    //     the typical "wrong file in the dialog" slip; the full
-    //     UcfbReader.ReadFile stays the single source of truth for
-    //     genuinely corrupt .lvl files.
+    // UA: Захист від конкретної реальної помилки користувача:
+    //     вибір .csv-файлу (перекладу) у діалозі "Відкрити Оригінал/Робочий"
+    //     — там очікується СПРАВЖНІЙ core.lvl (бінарний ucfb-контейнер), а
+    //     CSV — лише "міст" перекладу (LocalizationCsvIo/Import CSV), не
+    //     самостійний носій локалізації. Без цієї перевірки
+    //     LvlLocalizationService.LoadAsync падає з малозрозумілим
+    //     "Невірна магія файлу 0x48BFBBEF, очікується 'ucfb'" — 0x48BFBBEF
+    //     це насправді байти UTF-8 BOM (EF BB BF) + 'H' з "Hash,Ordinal,..."
+    //     — тобто буквально сам CSV-заголовок, прочитаний як бінарні дані.
+    //     Перевірка ЗА РОЗШИРЕННЯМ (не за вмістом) — достатньо для типової
+    //     помилки "не той файл у діалозі", повний UcfbReader.ReadFile
+    //     лишається єдиним джерелом істини для дійсно зіпсованих .lvl.
+    // EN: Guards against a specific real user mistake: picking
+    //     a .csv (translation) file in the "Open Original/Working" dialog —
+    //     that dialog expects a REAL core.lvl (binary ucfb container); CSV
+    //     is only a translation "bridge" (LocalizationCsvIo/Import CSV),
+    //     not a standalone localization carrier. Without this check,
+    //     LvlLocalizationService.LoadAsync fails with an opaque "Invalid
+    //     file magic 0x48BFBBEF, expected 'ucfb'" — 0x48BFBBEF is actually
+    //     the UTF-8 BOM bytes (EF BB BF) + 'H' from "Hash,Ordinal,..." —
+    //     i.e. literally the CSV header read as binary data. Checked BY
+    //     EXTENSION (not content) — enough for the typical "wrong file in
+    //     the dialog" slip; the full UcfbReader.ReadFile stays the single
+    //     source of truth for genuinely corrupt .lvl files.
     private bool WarnAndAbortIfCsvPicked(string filePath)
     {
         if (!filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
@@ -346,11 +363,11 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(Path.Combine(rootPath, Tat3RelativeGamePath));
     }
 
-    // UA: Формат мітки часу — "core {yyMMdd} {HHmm}.lvl" (напр.
-    //     "core 260729 2013.lvl") — гарантує, що повторне збереження
+    // UA: Формат мітки часу — "core 260729 2013"
+    //     (core {yyMMdd} {HHmm}.lvl) — гарантує, що повторне збереження
     //     НІКОЛИ не перезапише попередній файл.
-    // EN: Timestamp format — "core {yyMMdd} {HHmm}.lvl" (e.g.
-    //     "core 260729 2013.lvl") — guarantees a repeat save NEVER
+    // EN: Timestamp format — "core 260729 2013"
+    //     (core {yyMMdd} {HHmm}.lvl) — guarantees a repeat save NEVER
     //     overwrites the previous file.
     private static string BuildTimestampedCoreFileName() =>
         $"core {DateTime.Now:yyMMdd HHmm}.lvl";
@@ -548,45 +565,53 @@ public partial class MainWindow : Window
 
         try
         {
-            // UA: АРХІТЕКТУРНО: структурний майстер — ЗАВЖДИ ОРИГІНАЛ.
+            // UA: АРХІТЕКТУРНО: структурний майстер — ЗАВЖДИ ОРИГІНАЛ. Якщо
+            //     замість цього обраний тут файл ставав би _serviceTarget
+            //     (структурним носієм усього, що піде в гру — SaveAsync
+            //     серіалізує дерево робочого файлу цілком), чужий або
+            //     застарілий робочий файл тягнув би у збереження свої
+            //     шрифти, свою таблицю рядків і свій розмір — а правки з
+            //     таблиці мовчки губились би там, де його рядків не існує.
+            //     Саме такий збій стався реально: у теку аддону Tat3
+            //     зберігся файл базової гри (4,9 МБ, 6 шрифтів, без 22
+            //     рядків Джабби).
+            //
             //     Робочий сервіс будується з _sourcePath (той самий шлях,
-            //     що і в "Новий робочий з оригіналу"), а обраний тут файл
+            //     що і в "Новий робочий з оригіналу"), а обраний файл
             //     виступає ЛИШЕ ДОНОРОМ ТЕКСТУ: з нього переносяться
             //     переклади за (Hash, Ordinal) — рівно як це вже робить
             //     "Імпорт CSV", тільки джерело .lvl замість .csv.
             //
-            //     ПРИЧИНА: якби обраний файл ставав _serviceTarget напряму
-            //     (SaveAsync серіалізує дерево робочого файлу цілком), чужий
-            //     або застарілий робочий файл тягнув би у збереження свої
-            //     шрифти, свою таблицю рядків і свій розмір — а правки з
-            //     таблиці мовчки губились би там, де його рядків не існує.
-            //
-            //     Наслідок цієї архітектури: неможливо зберегти "чужий"
-            //     документ під виглядом свого. Все, що не є текстом
-            //     (шрифти, структура, розмір), береться з оригіналу за
-            //     побудовою, а не за домовленістю — тож AdoptFontsFrom
-            //     нижче лишається страхувальником, а не єдиним бар'єром.
+            //     Наслідок: неможливо зберегти "чужий" документ під
+            //     виглядом свого. Все, що не є текстом (шрифти, структура,
+            //     розмір), береться з оригіналу за побудовою, а не за
+            //     домовленістю — тож і AdoptFontsFrom нижче стає
+            //     страхувальником, а не єдиним бар'єром.
             // EN: ARCHITECTURE: the structural master is ALWAYS THE
-            //     ORIGINAL. The working service is built from _sourcePath
-            //     (the same path "New working from original" uses), and the
-            //     file picked here acts ONLY AS A TEXT DONOR: translations
-            //     are carried over by (Hash, Ordinal) — exactly as "Import
-            //     CSV" already does, just sourced from a .lvl instead of a
-            //     .csv.
+            //     ORIGINAL. If the file picked here instead became
+            //     _serviceTarget (the STRUCTURAL carrier of everything
+            //     shipped to the game — SaveAsync serializes the working
+            //     file's whole tree), a foreign or stale working file
+            //     would drag its own fonts, its own string table and its
+            //     own size into the save — while grid edits were silently
+            //     lost wherever its strings didn't exist. That exact
+            //     failure happened for real: the base game's file got
+            //     saved into the Tat3 add-on folder (4.9 MB, 6 fonts, no
+            //     Jabba strings).
             //
-            //     REASON: if the picked file became _serviceTarget directly
-            //     (SaveAsync serializes the working file's whole tree), a
-            //     foreign or stale working file would drag its own fonts,
-            //     its own string table and its own size into the save —
-            //     while grid edits would be silently lost wherever its
-            //     strings don't exist.
+            //     The working service is built from _sourcePath (the same
+            //     path "New working from original" uses), and the picked
+            //     file acts ONLY AS A TEXT DONOR: translations are
+            //     carried over by (Hash, Ordinal) — exactly as "Import
+            //     CSV" already does, just sourced from a .lvl instead of
+            //     a .csv.
             //
-            //     Consequence of this architecture: it is not possible to
-            //     save a "foreign" document under your own file's name.
-            //     Everything that isn't text (fonts, structure, size) comes
-            //     from the original BY CONSTRUCTION rather than by
-            //     convention — which makes AdoptFontsFrom below a safety
-            //     net rather than the only barrier.
+            //     Consequence: it is not possible to save a "foreign"
+            //     document under your own file's name. Everything that
+            //     isn't text (fonts, structure, size) comes from the
+            //     original BY CONSTRUCTION rather than by convention —
+            //     which makes AdoptFontsFrom below a safety net rather
+            //     than the only barrier.
             if (_sourcePath is null)
                 throw new InvalidOperationException(
                     "UA: Спочатку відкрийте оригінал / EN: Open the original first");
@@ -826,8 +851,8 @@ public partial class MainWindow : Window
         //     відкрився саме в ній — це і є "генерування тек", а не просто
         //     підказка в текстовому полі.
         // EN: Auto-folder + timestamp + game-specific subfolder — computed
-        //     ONLY here because GameVersion is only known after the
-        //     original/working file was opened
+        //     ONLY here because GameVersion is
+        //     only known after the original/working file was opened
         //     (_serviceSource.GameVersion, determined in
         //     LvlLocalizationService.LoadAsync from "Battlefront II" in the
         //     source path). The folder is created UP FRONT (before the
@@ -851,14 +876,20 @@ public partial class MainWindow : Window
         GridEntries.CommitEdit(DataGridEditingUnit.Row, true);
 
         // UA: Якщо бодай один введений вручну переклад не має куди
-        //     записатись — це ВТРАТА РОБОТИ, і мовчати про неї не можна.
-        //     Зі "структурним майстром = оригінал" цей стан майже
-        //     недосяжний — тим більше про нього треба явно повідомляти,
+        //     записатись — це ВТРАТА РОБОТИ, і мовчати про неї не можна
+        //     (саме таке мовчання здатне непомітно викинути десятки вручну
+        //     введених рядків — наприклад, усі 22 рядки аддону Tat3 — без
+        //     жодного повідомлення).
+        //     Після переходу на "структурний майстер = оригінал" це стало
+        //     майже недосяжним станом — тим більше про нього треба кричати,
         //     якщо він усе ж настав.
         // EN: If even one hand-typed translation has nowhere to be written,
-        //     that is LOST WORK and must not be silent. With "structural
-        //     master = the original" this state is nearly unreachable — all
-        //     the more reason to surface it explicitly if it still happens.
+        //     that is LOST WORK and must not be silent (this exact silence
+        //     can silently discard dozens of hand-typed rows unnoticed — for
+        //     example, all 22 Tat3 add-on strings — with no message at all).
+        //     After moving to "structural master =
+        //     the original" this state became nearly unreachable — all the
+        //     more reason to shout if it still happens.
         var droppedEdits = ApplyRowEditsToService();
         if (droppedEdits > 0)
         {
@@ -875,8 +906,10 @@ public partial class MainWindow : Window
 
         // UA: Попередження про кирилицю — ОДНАКОВО для BF1 і BF2 (обидві
         //     гри зберігають текст через один і той самий бінарний
-        //     Locl/UTF-16LE механізм, тож ризик "обрізання в Latin1"
-        //     однаковий для обох). Умова — ЛИШЕ
+        //     Locl/UTF-16LE механізм — емпірично підтверджено, тож ризик
+        //     "обрізання в Latin1" однаковий; давнє припущення "лише BF1"
+        //     ґрунтувалось на хибній тезі, що BF1 нібито зберігає текст
+        //     як Latin1). Умова — ЛИШЕ
         //     HasCyrillicCodeTable: якщо файл-супутник
         //     cyrillic-code-table.json не знайдено при відкритті, шрифти
         //     цього core.lvl НЕ пройшли через GenerateLocalizedCoreCommand
@@ -887,8 +920,10 @@ public partial class MainWindow : Window
         //     (LvlLocalizationService.BuildGameEncodedClone), тож
         //     попередження було б хибним.
         // EN: Cyrillic warning — SAME for BF1 and BF2 (both games store
-        //     text via the same binary Locl/UTF-16LE mechanism, so the
-        //     "Latin1 truncation" risk is identical for both). Condition —
+        //     text via the same binary Locl/UTF-16LE mechanism —
+        //     empirically confirmed, so the "Latin1 truncation" risk is
+        //     identical; the old "BF1-only" assumption rested on the
+        //     false claim that BF1 stores text as Latin1). Condition —
         //     ONLY HasCyrillicCodeTable: if no
         //     cyrillic-code-table.json sidecar was found on open, this
         //     core.lvl's fonts did NOT go through
@@ -901,80 +936,91 @@ public partial class MainWindow : Window
         //     warning would be false.
         // UA: Попередження показуємо ЛИШЕ якщо шрифт справді не має чим
         //     намалювати кирилицю. Два валідні способи, що вона намалюється:
-        //       - HasCyrillicCodeTable — донорський підхід
+        //       - HasCyrillicCodeTable — ЗАСТАРІЛИЙ донорський підхід
         //         (кирилиця як перепризначені байт-коди + файл-таблиця);
-        //       - FontHasCyrillicGlyphs() — підхід БЕЗ донорів: гліфи
+        //       - FontHasCyrillicGlyphs() — НОВИЙ підхід БЕЗ донорів: гліфи
         //         під СВОЇМИ Unicode-кодами прямо в core.lvl (без таблиці).
-        //     Попереджаємо лише коли НЕМАЄ ЖОДНОГО з двох.
+        //     Попередження спрацьовує лише коли НЕМАЄ ЖОДНОГО з двох
+        //     способів — перевірка ЛИШЕ HasCyrillicCodeTable була б
+        //     неповною: коректний no-donor білд (лише
+        //     FontHasCyrillicGlyphs) дав би ХИБНЕ попередження.
         // EN: Show the warning ONLY if the font genuinely has no way to draw
         //     Cyrillic. Two valid ways it will render:
-        //       - HasCyrillicCodeTable — the donor approach (Cyrillic
+        //       - HasCyrillicCodeTable — the LEGACY donor approach (Cyrillic
         //         as remapped byte-codes + a sidecar table);
-        //       - FontHasCyrillicGlyphs() — the no-donor approach: glyphs
+        //       - FontHasCyrillicGlyphs() — the NEW no-donor approach: glyphs
         //         at their REAL Unicode codes right in core.lvl (no table).
-        //     Warn only when NEITHER is present.
-        // UA: Гліфи перевіряємо в _serviceSource (ОРИГІНАЛ), бо саме ЙОГО
-        //     шрифти їдуть у збережений файл (AdoptFontsFrom нижче).
-        //     Перевірка робочого файлу тут була б прямою брехнею: він може
-        //     бути старим, без гліфів, — і навпаки, попередження спрацювало
-        //     б на файлі, у якому гліфи насправді будуть.
-        // EN: Glyphs are checked on _serviceSource (the ORIGINAL), because
-        //     ITS fonts are what ships into the saved file (AdoptFontsFrom
-        //     below). Checking the working file here would be an outright
-        //     lie: it could be an old one with no glyphs — and conversely
-        //     the warning would fire on a file that will in fact have them.
+        //     The warning fires only when NEITHER way is present —
+        //     checking HasCyrillicCodeTable ALONE would be incomplete: a
+        //     correct no-donor build (FontHasCyrillicGlyphs only) would
+        //     raise a FALSE warning.
+        // UA: Гліфи перевіряються в _serviceSource
+        //     (ОРИГІНАЛ), бо саме ЙОГО шрифти тепер їдуть у збережений
+        //     файл (AdoptFontsFrom нижче). Перевіряти тут робочий файл
+        //     стало б прямою брехнею: він міг бути старим, без гліфів, —
+        //     і навпаки, попередження спрацювало б на файлі, у якому
+        //     гліфи насправді будуть.
+        // EN: Glyphs are checked on _serviceSource
+        //     (the ORIGINAL), because ITS fonts are what now ship into the
+        //     saved file (AdoptFontsFrom below). Checking the working file
+        //     here would be an outright lie: it could be an old one with
+        //     no glyphs — and conversely the warning would fire on a file
+        //     that will in fact have them.
         // UA: ЗАХИСТ ВІД ЗМІШУВАННЯ ДВОХ РІЗНИХ ДОКУМЕНТІВ.
         //
-        //     РИЗИК: якщо "Оригінал" і "Робочий файл" належать РІЗНИМ
-        //     документам (напр. "Оригінал" — core.lvl аддону
-        //     GameData\AddOn\Tat3\..., а "Робочий файл" — core.lvl БАЗОВОЇ
-        //     гри), SaveAsync серіалізує дерево РОБОЧОГО файлу цілком, тож
-        //     у теку призначення потрапить документ з іншою кількістю
-        //     записів, без унікальних рядків одного з файлів (напр. 22
-        //     рядки Tat3: KEEPERS CHAMBERS, GAMORREANS, CP1-CP7...) і — у
-        //     найгіршому разі — з шрифтами, яких у файлі-адресаті бути не
-        //     повинно (vanilla Tat3 core.lvl: 0 FBOD / 0 FTEX; базова гра
-        //     несе повний комплект). Наслідок у грі: текст мапи аддону
-        //     лишається англійським (його рядків у файлі просто немає), а
-        //     всі текстові поля на ній стають порожніми (другий комплект
-        //     gamefont_* поверх уже завантаженого базового).
+        //     РИЗИК: якщо "Оригінал" відкрито з core.lvl АДДОНУ
+        //     (GameData\AddOn\Tat3\...), а "Робочий файл" — з core.lvl
+        //     БАЗОВОЇ гри, SaveAsync серіалізує дерево РОБОЧОГО файлу
+        //     цілком, тож у теку аддону збереглася б насправді БАЗОВА
+        //     гра: 2457 записів замість 2466, ЖОДНОГО з 22 унікальних
+        //     рядків Tat3 (KEEPERS CHAMBERS, GAMORREANS, CP1-CP7...) і —
+        //     найгірше — повний комплект із 6 шрифтів, яких у файлі
+        //     аддону не повинно бути ВЗАГАЛІ (vanilla Tat3 core.lvl:
+        //     0 FBOD / 0 FTEX, 1 МБ проти 4,9 МБ у робочому файлі).
+        //     Наслідки в грі: мапа Джабби лишається англійською (її
+        //     рядків у файлі просто немає) і всі текстові поля на ній
+        //     стають порожні (другий комплект gamefont_* поверх уже
+        //     завантаженого базового).
         //
-        //     AdoptFontsFrom тут НЕ рятує: він переносить шрифти за збігом
-        //     імен, а якщо в джерелі шрифтів немає — переносити нічого, і
-        //     шрифти робочого файлу лишаються недоторканими.
+        //     AdoptFontsFrom тут НЕ рятує: він переносить шрифти за
+        //     збігом імен, а в джерела-аддона шрифтів 0 → переносити
+        //     нічого, і шрифти робочого (базового) файлу лишаються
+        //     недоторканими.
         //
-        //     Перевіряємо ДВА незалежні сигнали:
-        //       1) множини хешів рядків не збігаються — це РІЗНІ документи
-        //          (хеш прив'язаний до ключа, не до перекладу, тож переклад
-        //          на порівняння не впливає);
-        //       2) оригінал не несе шрифтів, а робочий несе — тобто ми
-        //          збираємось записати шрифти у файл аддону.
+        //     Перевіряються ДВА незалежні сигнали:
+        //       1) множини хешів рядків не збігаються — це РІЗНІ
+        //          документи (хеш прив'язаний до ключа, не до перекладу,
+        //          тож переклад на порівняння не впливає);
+        //       2) оригінал не несе шрифтів, а робочий несе — тобто
+        //          зараз буде записано шрифти у файл аддону.
         // EN: GUARD AGAINST MIXING TWO DIFFERENT DOCUMENTS.
         //
-        //     RISK: if "Original" and "Working file" belong to DIFFERENT
-        //     documents (e.g. "Original" is the add-on's core.lvl at
-        //     GameData\AddOn\Tat3\..., while "Working file" is the BASE
-        //     game's core.lvl), SaveAsync serializes the WORKING file's
-        //     whole tree, so the destination folder ends up with a document
-        //     carrying a different entry count, missing one file's unique
-        //     strings (e.g. Tat3's 22 strings: KEEPERS CHAMBERS, GAMORREANS,
-        //     CP1-CP7...), and — worst case — fonts that must not be in the
-        //     destination file at all (vanilla Tat3 core.lvl: 0 FBOD / 0
-        //     FTEX; the base game carries a full set). In-game result: the
-        //     add-on's map text stays English (its strings simply aren't in
+        //     RISK: if "Original" is opened from the ADD-ON's core.lvl
+        //     (GameData\AddOn\Tat3\...) while "Working file" is opened
+        //     from the BASE game's core.lvl, SaveAsync serializes the
+        //     WORKING file's whole tree, so what would get saved into
+        //     the add-on's folder is actually the BASE game: 2457
+        //     entries instead of 2466, NONE of Tat3's 22 unique strings
+        //     (KEEPERS CHAMBERS, GAMORREANS, CP1-CP7...) and — worst of
+        //     all — a full set of 6 fonts, which an add-on file must NOT
+        //     contain AT ALL (vanilla Tat3 core.lvl: 0 FBOD / 0 FTEX,
+        //     1 MB against a working file's 4.9 MB). In-game result:
+        //     Jabba's map stays English (its strings simply aren't in
         //     the file) and every text field on it goes blank (a second
         //     gamefont_* set on top of the already-loaded base one).
         //
-        //     AdoptFontsFrom does NOT save us here: it transplants fonts by
-        //     name match, and if the source has no fonts, there's nothing
-        //     to transplant, so the working file's fonts stay untouched.
+        //     AdoptFontsFrom does not prevent this: it transplants fonts
+        //     by name match, and an add-on source has 0 fonts → nothing
+        //     to transplant, so the working (base) file's fonts stay
+        //     put.
         //
-        //     We check TWO independent signals:
+        //     TWO independent signals are checked:
         //       1) the string-hash sets differ — these are DIFFERENT
         //          documents (the hash is tied to the key, not the
         //          translation, so translating doesn't affect the compare);
         //       2) the original carries no fonts while the working file
-        //          does — i.e. we're about to write fonts into an add-on.
+        //          does — i.e. fonts are about to be written into an
+        //          add-on.
         var mismatchReport = BuildSourceTargetMismatchReport(target);
         if (mismatchReport is not null)
         {
@@ -1018,26 +1064,29 @@ public partial class MainWindow : Window
         {
             // UA: ШРИФТИ — ЗАВЖДИ З ОРИГІНАЛУ, текст — з робочого файлу.
             //     ПРИЧИНА: SaveAsync серіалізує дерево РОБОЧОГО файлу
-            //     цілком, а "Відкрити робочий" за замовчуванням веде в
-            //     output\ — теку раніше збережених файлів. Якби шрифти
-            //     бралися з робочого файлу, природний шлях кліків міг би
-            //     мовчки підсунути СТАРІ шрифти й відкинути будь-яку
-            //     перегенерацію шрифтів при збереженні.
+            //     цілком, тож без цього шрифти в гру їхали б саме з
+            //     нього. А "Відкрити робочий" за замовчуванням веде в
+            //     output\ — теку раніше збережених файлів, — тому
+            //     природний шлях кліків мовчки підсовує СТАРІ шрифти, і
+            //     кожна перегенерація шрифтів просто відкидалась би при
+            //     збереженні.
             //
-            //     Робочий файл — носій ЛИШЕ перекладу; шрифти беруться з
-            //     _serviceSource щоразу. Ідемпотентно: якщо шрифти вже ті
-            //     самі, пересадка нічого не змінює.
+            //     Робочий файл — носій ЛИШЕ перекладу, як і має бути;
+            //     шрифти беруться з _serviceSource щоразу. Ідемпотентно:
+            //     якщо шрифти вже ті самі, пересадка нічого не змінює.
             // EN: FONTS — ALWAYS FROM THE ORIGINAL, text from the working
             //     file. REASON: SaveAsync serializes the WORKING file's
-            //     whole tree, and "Open working" defaults to output\ — the
-            //     folder of previously saved files. If fonts were taken
-            //     from the working file, the natural click-path could
-            //     silently supply OLD fonts and discard any font
-            //     regeneration on save.
+            //     whole tree, so without this the fonts shipped to the
+            //     game would come from there. And "Open working" defaults
+            //     to output\ — the folder of previously saved files — so
+            //     the natural click-path silently supplies OLD fonts, and
+            //     every font regeneration would simply be discarded on
+            //     save.
             //
-            //     The working file carries ONLY the translation; fonts are
-            //     taken from _serviceSource every time. Idempotent: if the
-            //     fonts already match, the transplant changes nothing.
+            //     The working file carries ONLY the translation, as it
+            //     should; fonts are taken from _serviceSource every time.
+            //     Idempotent: if the fonts already match, the transplant
+            //     changes nothing.
             var adoptedFonts = target.AdoptFontsFrom(_serviceSource);
 
             await target.SaveAsync(dlg.FileName, _targetLang);
@@ -1537,22 +1586,27 @@ public partial class MainWindow : Window
 
     // UA: Пишемо в Translation ЛИШЕ якщо редагувалась саме колонка
     //     "Переклад" (ColTranslation, x:Name у XAML) — явна перевірка
-    //     колонки, а не лише типу елемента: "Вичитка" редагується через
-    //     ComboBox (див. XAML), а не TextBox, тож на практиці колізії
-    //     немає — але перевірка колонки лишається як явний,
-    //     самодокументований захист, а не випадковий побічний ефект типу
-    //     елемента. ReviewStatus так чи інакше приходить через звичайний
-    //     двосторонній Binding (UpdateSourceTrigger=PropertyChanged) без
-    //     участі цього обробника.
+    //     колонки, а не лише типу елемента: якби колонка "Вичитка" теж
+    //     редагувалась через TextBox, без цієї перевірки обробник міг би
+    //     переплутати їх (обидва дали б e.EditingElement is TextBox).
+    //     Наразі "Вичитка" редагується через ComboBox (див. XAML), тож на
+    //     практиці колізії немає — але перевірка колонки лишається як
+    //     явний, самодокументований захист, а не випадковий побічний
+    //     ефект типу елемента. ReviewStatus так чи інакше приходить через
+    //     звичайний двосторонній Binding (UpdateSourceTrigger=PropertyChanged)
+    //     без участі цього обробника.
     // EN: Write to Translation ONLY if the "Translation" column itself was
     //     being edited (ColTranslation, x:Name in XAML) — an explicit
-    //     column check, not just an element-type check: "Review" is edited
-    //     via a ComboBox (see XAML), not a TextBox, so there's no collision
-    //     in practice — but the column check stays as an explicit,
-    //     self-documenting guard rather than an accidental side effect of
-    //     the element type. ReviewStatus arrives via a plain two-way
-    //     Binding (UpdateSourceTrigger=PropertyChanged) regardless, without
-    //     this handler's involvement.
+    //     column check, not just an element-type check: if the "Review"
+    //     column were also edited via a TextBox, without this check the
+    //     handler could confuse the two (both would give
+    //     e.EditingElement is TextBox). "Review" is currently edited via
+    //     a ComboBox (see XAML), so there's no collision in practice —
+    //     but the column check stays as an explicit, self-documenting
+    //     guard rather than an accidental side effect of the element type.
+    //     ReviewStatus arrives via a plain two-way Binding
+    //     (UpdateSourceTrigger=PropertyChanged) regardless, without this
+    //     handler's involvement.
     private void GridEntries_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
     {
         if (e.Row.Item is EntryRow row && e.EditingElement is TextBox tb && ReferenceEquals(e.Column, ColTranslation))
@@ -1842,26 +1896,30 @@ public partial class MainWindow : Window
     // UA: Переносить правки з таблиці в РОБОЧИЙ сервіс. Повертає кількість
     //     рядків, для яких у робочому файлі НЕ ЗНАЙШЛОСЬ куди записати.
     //
-    //     ЧОМУ ЦЕ ПОВЕРТАЄ ЧИСЛО, А НЕ void: таблиця будується з ОРИГІНАЛУ
-    //     (RefreshGrid: sourceFile.Entries), а запис іде в РОБОЧИЙ файл.
-    //     Якщо це різні документи (напр. оригінал — аддон Tat3 на 2466
-    //     рядків, робочий — базова гра на 2457), то для унікальних рядків
-    //     Tat3 GetByHash поверне null, і мовчазний `if (entry is not null)`
-    //     викине щойно введений вручну переклад без жодного повідомлення.
+    //     ПРИЧИНА, чому це повертає ЧИСЛО, а НЕ void: таблиця будується з
+    //     ОРИГІНАЛУ (RefreshGrid: sourceFile.Entries), а запис іде в
+    //     РОБОЧИЙ файл. Якщо це різні документи (наприклад оригінал —
+    //     аддон Tat3 на 2466 рядків, робочий — базова гра на 2457), то
+    //     для 22 унікальних рядків Tat3 GetByHash повертає null, і рядок
+    //     `if (entry is not null)` МОВЧКИ відкидає щойно введений вручну
+    //     переклад — користувач бачить свій текст у таблиці, зберігає —
+    //     і у файл не потрапляє НІЧОГО, без жодного повідомлення.
     //     Мовчазний `continue` тут — та сама вада, що і в ImportCsvAsync,
     //     лише дорожча: там втрачається імпорт, тут — ручна робота.
     // EN: Pushes grid edits into the WORKING service. Returns how many rows
     //     had NOWHERE to be written in the working file.
     //
-    //     WHY THIS RETURNS A COUNT INSTEAD OF void: the grid is built from
-    //     the ORIGINAL (RefreshGrid: sourceFile.Entries) while writes go
-    //     into the WORKING file. If those are different documents (e.g.
-    //     original — the Tat3 add-on with 2466 strings, working — the base
-    //     game with 2457), GetByHash returns null for Tat3's unique
-    //     strings, and a silent `if (entry is not null)` would discard a
-    //     hand-typed translation with no message at all. The silent skip
-    //     here is the same flaw as in ImportCsvAsync, only costlier: there
-    //     an import is lost, here it's manual work.
+    //     REASON this returns a COUNT INSTEAD OF void: the grid is built
+    //     from the ORIGINAL (RefreshGrid: sourceFile.Entries) while
+    //     writes go into the WORKING file. If those are different
+    //     documents (e.g. original — the Tat3 add-on with 2466 strings,
+    //     working — the base game with 2457), then for Tat3's 22 unique
+    //     strings GetByHash returns null and the `if (entry is not null)`
+    //     line SILENTLY discards the translation just typed by hand — the
+    //     user sees their text in the grid, hits save, and nothing
+    //     reaches the file, with no message at all. The silent skip here
+    //     is the same flaw as in ImportCsvAsync, only costlier: there an
+    //     import is lost, here it's manual work.
     private int ApplyRowEditsToService()
     {
         var targetFile = _serviceTarget?.GetLanguageFile(_targetLang);
@@ -1917,13 +1975,15 @@ public partial class MainWindow : Window
     // UA: Ordinal — друга колонка, ОБОВ'ЯЗКОВА (не косметика): без неї
     //     Import не міг би відрізнити два рядки з однаковим хешем (див.
     //     коментар над RefreshGrid). Формат узгоджений з
-    //     LvlLocalizationService.ExportCsvAsync/ImportCsvAsync через
-    //     СПІЛЬНИЙ LocalizationCsvIo.BuildCsvText (5 колонок, + ReviewStatus).
+    //     LvlLocalizationService.ExportCsvAsync/ImportCsvAsync — через
+    //     СПІЛЬНИЙ LocalizationCsvIo.BuildCsvText (5 колонок, +
+    //     ReviewStatus), а не власне ручне екранування.
     // EN: Ordinal — the second column, REQUIRED (not cosmetic): without
     //     it, Import couldn't tell apart two rows sharing the same hash
     //     (see comment above RefreshGrid). Format matches
-    //     LvlLocalizationService.ExportCsvAsync/ImportCsvAsync via the
-    //     SHARED LocalizationCsvIo.BuildCsvText (5 columns, + ReviewStatus).
+    //     LvlLocalizationService.ExportCsvAsync/ImportCsvAsync — via
+    //     the SHARED LocalizationCsvIo.BuildCsvText (5 columns, +
+    //     ReviewStatus), rather than hand-rolled escaping of its own.
     private string? BuildCsvContent()
     {
         if (_allRows.Count == 0) return null;
@@ -2183,22 +2243,27 @@ public class EntryRow : INotifyPropertyChanged
 
     // UA: "Перекладено" стосується ЛИШЕ змісту перекладу і НЕ залежить від
     //     технічності — три статуси (Технічний / Перекладено / Без перекладу)
-    //     мають бути ВЗАЄМОВИКЛЮЧНИМИ. Технічність розводиться ОКРЕМО — у
-    //     лічильниках (Count(... && !IsTechnical)) і у фільтрах (RbTranslated
-    //     ховає технічні), а IsTranslated лишається чистою ознакою "є
-    //     справжній переклад": непорожній І (короткий нижче порогу, АБО
-    //     містить кирилицю). Ехо-англійський переклад нетехнічного рядка
-    //     кирилиці не має → НЕ "перекладено" (падає в "Без перекладу", як і
-    //     задумано).
+    //     мають бути ВЗАЄМОВИКЛЮЧНИМИ. Домішування "IsTechnical ||" сюди
+    //     зробило б технічні рядки з будь-яким текстом одночасно і
+    //     "технічними", і "перекладеними" — тому технічність розводиться
+    //     ОКРЕМО: у лічильниках (Count(... && !IsTechnical)) і у фільтрах
+    //     (RbTranslated ховає технічні), а IsTranslated лишається чистою
+    //     ознакою "є справжній переклад": непорожній І (короткий нижче
+    //     порогу, АБО містить кирилицю). Ехо-англійський переклад
+    //     нетехнічного рядка кирилиці не має → НЕ "перекладено" (падає в
+    //     "Без перекладу", як і задумано).
     // EN: "Translated" is ONLY about the translation content and does NOT
     //     depend on technical-ness — the three statuses (Technical /
-    //     Translated / Untranslated) must be MUTUALLY EXCLUSIVE. Technical
-    //     is split out SEPARATELY — in counts (Count(... && !IsTechnical))
-    //     and filters (RbTranslated hides technical), while IsTranslated
-    //     stays a clean "has a real translation" signal: non-empty AND
-    //     (short below the threshold, OR contains Cyrillic). An echo
-    //     English translation of a non-technical row has no Cyrillic → NOT
-    //     "translated" (falls into "Untranslated", as intended).
+    //     Translated / Untranslated) must be MUTUALLY EXCLUSIVE. Mixing an
+    //     "IsTechnical ||" term in here would make technical rows with any
+    //     text simultaneously "technical" AND "translated" — so
+    //     technical-ness is split out SEPARATELY: in counts
+    //     (Count(... && !IsTechnical)) and filters (RbTranslated hides
+    //     technical), while IsTranslated stays a clean "has a real
+    //     translation" signal: non-empty AND (short below the threshold,
+    //     OR contains Cyrillic). An echo English translation of a
+    //     non-technical row has no Cyrillic → NOT "translated" (falls into
+    //     "Untranslated", as intended).
     public bool IsTranslated =>
         !string.IsNullOrWhiteSpace(Translation) &&
         (Translation!.Length < ValidationService.MinLengthForCyrillicCheck ||
@@ -2211,16 +2276,16 @@ public class EntryRow : INotifyPropertyChanged
     //     "виглядає підозріло довгим"), а не мовна коректність — не
     //     належить Core/ValidationService.
     //
-    //     Калібровано на реальних кейсах з інтерфейсу гри:
-    //       1) "tech" (4) → "технології" (10): такий приріст довжини
-    //          реально ламає інтерфейс — поріг МАЄ спрацювати.
+    //     Калібровано на ДВОХ реальних кейсах з гри:
+    //       1) "tech" (4) → "технології" (10): реально ламало інтерфейс
+    //          у попередньому проєкті (EaW) — поріг МАЄ спрацювати.
     //          4×1.3+4=9.2 → 10>9.2 ✓ спрацьовує.
-    //       2) "SINGLEPLAYER" (12) → "ОДНОКОРИСТУВАЦЬКА ГРА" (21): реально
-    //          обрізає текст у вкладці BF2 "МЕРЕЖЕВА ГРА/..." — поріг МАЄ
-    //          спрацювати.
+    //       2) "SINGLEPLAYER" (12) → АІ "ОДНОКОРИСТУВАЦЬКА ГРА" (21):
+    //          РЕАЛЬНО обрізало текст у вкладці BF2 "МЕРЕЖЕВА ГРА/..." —
+    //          поріг МАЄ спрацювати.
     //          12×1.3+4=19.6 → 21>19.6 ✓ спрацьовує.
-    //          Коротший варіант "САМОСТІЙНА ГРА" (14) — безпечний, НЕ мав
-    //          би спрацьовувати.
+    //          Ручний варіант "САМОСТІЙНА ГРА" (14, у межах допустимого) —
+    //          НЕ мав би спрацьовувати.
     //          12×1.3+4=19.6 → 14<19.6 ✓ не спрацьовує.
     // EN: "Too long" threshold — ratio + margin (the same formula already
     //     proven in TranslationValidator, here with DIFFERENT, tighter
@@ -2229,16 +2294,16 @@ public class EntryRow : INotifyPropertyChanged
     //     the string "look suspiciously long"), not language correctness —
     //     doesn't belong in Core/ValidationService.
     //
-    //     Calibrated against real cases from the game's interface:
-    //       1) "tech" (4) → "технології" (10): a length increase like this
-    //          genuinely breaks the UI — the threshold SHOULD trigger.
+    //     Calibrated against TWO real in-game cases:
+    //       1) "tech" (4) → "технології" (10): actually broke the UI in
+    //          the earlier project (EaW) — the threshold SHOULD trigger.
     //          4×1.3+4=9.2 → 10>9.2 ✓ triggers.
-    //       2) "SINGLEPLAYER" (12) → "ОДНОКОРИСТУВАЦЬКА ГРА" (21): this
-    //          genuinely clips text in BF2's "МЕРЕЖЕВА ГРА/..." tab — the
+    //       2) "SINGLEPLAYER" (12) → AI "ОДНОКОРИСТУВАЦЬКА ГРА" (21):
+    //          REALLY got clipped in BF2's "МЕРЕЖЕВА ГРА/..." tab — the
     //          threshold SHOULD trigger.
     //          12×1.3+4=19.6 → 21>19.6 ✓ triggers.
-    //          The shorter "САМОСТІЙНА ГРА" (14) alternative is safe and
-    //          should NOT trigger.
+    //          The manual "САМОСТІЙНА ГРА" (14) alternative, within the
+    //          safe range — should NOT trigger.
     //          12×1.3+4=19.6 → 14<19.6 ✓ doesn't trigger.
     public static double LengthRatioThreshold = 1.3;
     public static int    LengthMarginThreshold = 4;

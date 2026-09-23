@@ -2,31 +2,49 @@
 // BF1LocalizationTool.Diagnostic — ContainerSlackSpaceCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Перевіряє, для КОЖНОГО контейнера (HasChildren=true) в дереві, чи
-//     chunk.DataSize ТОЧНО дорівнює сумі (8+дані+padding) для кожної
-//     дитини — за тим самим алгоритмом, що виконує UcfbWriter.
+// UA: UcfbStructuralTreeDiffCommand показав, що дерева ІДЕНТИЧНІ на
+//     кожному вузлі (Id, кількість дітей, RawData листків) — але файл
+//     після round-trip коротший на 1024/1308 байт. Це можливо ЛИШЕ якщо
+//     розбіжність ховається в тому, як РАХУЄТЬСЯ РОЗМІР КОНТЕЙНЕРІВ:
+//     якийсь контейнер у ОРИГІНАЛІ має DataSize, який заявляє БІЛЬШИЙ
+//     розмір, ніж фактично потрібно для точного вміщення його дітей +
+//     padding між ними (тобто має "слек" — зарезервований невикористаний
+//     простір ПІСЛЯ останньої дитини, але В МЕЖАХ заявленого DataSize).
+//     Такий слек НІКОЛИ не потрапляє в модель UcfbChunk як окремий
+//     дочірній чанк (TryParseChildren просто зупиняється, коли
+//     "залишилось < 8 байт" — слек МЕНШИЙ за 8 байт непомітний за
+//     конструкцією, але слек БІЛЬШИЙ за 8 байт МАВ БИ або спричинити
+//     hitInvalidChild, або (якщо збігається з валідним, хоч і чужим,
+//     заголовком) призвести до фантомного дочірнього чанку — обидва
+//     випадки мали б проявитись раніше. Якщо жодного з них не сталося,
+//     а слек все ж є — TryParseChildren МОЖЕ мати ще один, досі не
+//     задокументований крайовий випадок).
 //
-//     Контейнер може декларувати DataSize, БІЛЬШИЙ за фактично потрібний
-//     для точного вміщення дітей + padding між ними — тобто мати "слек":
-//     зарезервований невикористаний простір ПІСЛЯ останньої дитини, але
-//     В МЕЖАХ заявленого DataSize. Такий слек НІКОЛИ не потрапляє в
-//     модель UcfbChunk як окремий дочірній чанк (TryParseChildren
-//     зупиняється, щойно залишилось < 8 байт), і UcfbWriter НЕ відтворює
-//     цей слек при записі — тому файл після round-trip коротший рівно на
-//     суму слеку по всіх контейнерах дерева.
-// EN: Checks, for EVERY container (HasChildren=true) in the tree, whether
+//     Перевіряє для КОЖНОГО контейнера (HasChildren=true) в дереві: чи
+//     chunk.DataSize ТОЧНО дорівнює сумі (8+дані+padding) для кожної
+//     дитини — точно за тим самим алгоритмом, що виконує UcfbWriter.
+// EN: UcfbStructuralTreeDiffCommand showed the trees are IDENTICAL at
+//     every node (Id, child count, leaf RawData) — yet the file after a
+//     round-trip is shorter by 1024/1308 bytes. This is possible ONLY if
+//     the discrepancy hides in how CONTAINER SIZE IS COMPUTED: some
+//     container in the ORIGINAL has a DataSize declaring a LARGER size
+//     than actually needed to exactly fit its children + inter-child
+//     padding (i.e. it has "slack" — reserved unused space AFTER the
+//     last child, but WITHIN the declared DataSize). Such slack never
+//     enters the UcfbChunk model as a separate child chunk
+//     (TryParseChildren simply stops when "fewer than 8 bytes remain" —
+//     slack SMALLER than 8 bytes is invisible by construction, but slack
+//     LARGER than 8 bytes should have either triggered hitInvalidChild,
+//     or (if it coincidentally matches a valid-looking, foreign header)
+//     produced a phantom child chunk — both cases should have surfaced
+//     earlier. If neither happened, yet slack still exists —
+//     TryParseChildren may have another, still-undocumented edge case).
+//
+//     Checks, for EVERY container (HasChildren=true) in the tree: whether
 //     chunk.DataSize EXACTLY equals the sum of (8+data+padding) for each
 //     child — using the exact same algorithm UcfbWriter performs.
-//
-//     A container may declare a DataSize LARGER than actually needed to
-//     exactly fit its children plus inter-child padding — i.e. it has
-//     "slack": reserved unused space AFTER the last child, but WITHIN the
-//     declared DataSize. Such slack never enters the UcfbChunk model as a
-//     separate child chunk (TryParseChildren stops as soon as fewer than
-//     8 bytes remain), and UcfbWriter does NOT reproduce this slack when
-//     writing — so a file is shorter after a round-trip by exactly the
-//     sum of slack across all containers in the tree.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;

@@ -2,55 +2,55 @@
 // BF1LocalizationTool.Diagnostic — GlyphOverlapRiskCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Класифікує КОЖЕН перетин UV-прямокутників (знайдений
 //     GlyphRectOverlapCommand) за реальним ризиком для ін'єкції
 //     кирилиці, а не просто рахує "скільки перетинів":
 //
 //     - USED×USED  — обидва коди реально використовує якась мова. Це
-//       існуюча поведінка ОРИГІНАЛЬНОЇ гри — ми туди не пишемо, не наш
-//       ризик.
+//       існуюча поведінка ОРИГІНАЛЬНОЇ гри — туди нічого не пишеться, не
+//       цей ризик.
 //     - DONOR×USED — один код НЕ використовується жодною мовою (кандидат
 //       у донори), інший ВИКОРИСТОВУЄТЬСЯ. КРИТИЧНИЙ РИЗИК: перезапис
 //       донорського слоту може пошкодити реально видимий гравцю гліф.
 //       Такий донор НЕ можна брати для ін'єкції.
 //     - DONOR×DONOR — обидва коди не використовуються жодною мовою.
 //       Безпечно для гравця (жоден не рендериться в оригіналі), АЛЕ:
-//       якщо ми оберемо ОБИДВА ці донори для ін'єкції різних кириличних
+//       якщо обрати ОБИДВА ці донори для ін'єкції різних кириличних
 //       літер, другий запис частково затре перший. Тому при виборі
 //       фінального набору донорів ці пари мають бути взаємовиключними.
 //
 //     "Використовується" визначається ТАК САМО, як існуюча логіка
 //     підбору SafeDonorCodes: код 0-255 — використаний, якщо реально
 //     зустрічається в тексті БУДЬ-ЯКОЇ мови (LvlLocalizationService).
-//     Код < 128 НЕ вважається зайнятим без перевірки: побайтова перевірка
-//     підтверджує, що частина ASCII (у т.ч. деякі латинські літери в
-//     BF1, де весь UI-текст — капс) реально ніколи не використовується
-//     — тому окремого правила для < 128 немає, лише реальні дані.
+//     Окремого правила "код < 128 = завжди зайнятий" немає — лише реальні
+//     дані: побайтова перевірка показує, що частина ASCII (у т.ч. деякі
+//     латинські літери в BF1, де весь UI-текст — капс) реально ніколи
+//     не використовується.
 // EN: Classifies EVERY UV-rectangle overlap (found by
 //     GlyphRectOverlapCommand) by actual risk for Cyrillic injection,
 //     rather than just counting "how many overlaps":
 //
 //     - USED×USED  — both codes are actually used by some language.
-//       This is EXISTING behavior of the ORIGINAL game — we don't write
-//       there, not our risk.
+//       This is EXISTING behavior of the ORIGINAL game — nothing gets
+//       written there, so it carries no risk here.
 //     - DONOR×USED — one code is NOT used by any language (donor
 //       candidate), the other IS used. CRITICAL RISK: overwriting the
 //       donor slot could damage a glyph actually visible to the player.
 //       Such a donor CANNOT be used for injection.
 //     - DONOR×DONOR — both codes are unused by any language. Safe for
-//       the player (neither renders in the original), BUT: if we choose
-//       BOTH of these donors to inject different Cyrillic letters, the
+//       the player (neither renders in the original), BUT: choosing BOTH
+//       of these donors to inject different Cyrillic letters means the
 //       second write will partially erase the first. So when selecting
 //       the final donor set, such pairs must be mutually exclusive.
 //
 //     "Used" is determined THE SAME WAY as the existing SafeDonorCodes
 //     selection logic: code 0-255 — used if it genuinely appears in ANY
-//     language's text (LvlLocalizationService). Code < 128 is NOT assumed
-//     always-used without verification: a byte-level check confirms part
-//     of ASCII (including some Latin letters in BF1, where all UI text is
-//     uppercase) is genuinely never used — so there's no separate rule
-//     for < 128, only real data.
+//     language's text (LvlLocalizationService). There's no separate
+//     "code < 128 = always used" rule — only real data: a byte-level
+//     check shows part of ASCII (including some Latin letters in BF1,
+//     where all UI text is uppercase) is genuinely never used.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;
@@ -73,21 +73,17 @@ public static class GlyphOverlapRiskCommand
         var service = new LvlLocalizationService();
         await service.LoadAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII-символи (0x20-0x7E) завжди вважаються
-        //     "зайнятими", незалежно від результату Locl-сканування:
-        //     деякі рядки гри (напр. "Exit to Windows", де мала 'w'
-        //     показується напряму) використовують друковні ASCII-коди
-        //     поза таблицею Locl, тож саме лише Locl-сканування не
-        //     доводить, що такий код вільний. Лише недруковні керівні
-        //     коди (0x00-0x1F, 0x7F) лишаються кандидатами на основі
-        //     даних реального сканування.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is always considered "used",
-        //     regardless of the Locl scan result: some game strings
-        //     (e.g. "Exit to Windows", where the lowercase 'w' is shown
-        //     directly) use printable ASCII codes outside the Locl
-        //     table, so the Locl scan alone doesn't prove such a code is
-        //     free. Only non-printable control codes (0x00-0x1F, 0x7F)
-        //     remain candidates based on real scan data.
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        //     кандидатами через реальні дані.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = new HashSet<int>();
         foreach (var lang in service.AvailableLanguages)
@@ -190,7 +186,7 @@ public static class GlyphOverlapRiskCommand
         }
 
         report.Log($"=== [{label}] Класифікація ризику перетинів UV-прямокутників ===");
-        report.Log($"    USED × USED (існуюча поведінка гри, не наш ризик):     {usedUsedCount}");
+        report.Log($"    USED × USED (існуюча поведінка гри, сторонній ризик):     {usedUsedCount}");
         report.Log($"    DONOR × USED (КРИТИЧНО — донор НЕ можна ін'єктувати):  {donorUsedCount}");
         report.Log($"    DONOR × DONOR (взаємовиключні пари при виборі набору): {donorDonorCount}");
         report.Log();

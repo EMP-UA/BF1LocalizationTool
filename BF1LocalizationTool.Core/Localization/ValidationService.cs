@@ -12,20 +12,23 @@
 //     отриманого від Gemini, ПЕРЕД записом назад у CSV — без дублювання
 //     коду між GUI і Translator.
 //
-//     Порівняння рахує КІЛЬКІСТЬ кожного типу маркера, а не лише його
-//     наявність — якщо в оригіналі два "%s", а переклад містить лише один,
-//     це ловиться; втрата навіть одного повторного входження не проходить
-//     непоміченою.
+//     Перевірка МНОЖИННА, не лише типова: Except() сам по собі перевіряє
+//     лише "чи є такий ТИП маркера взагалі", не КІЛЬКІСТЬ — якщо в
+//     оригіналі два "%s", а переклад містить лише один, тип-перевірка
+//     пропустила б це як валідне. Тому кількість кожного маркера
+//     рахується і порівнюється явно — втрата навіть одного повторного
+//     входження ловиться.
 //
 //     Перевірка на літери ыэёъ (яких немає в українському алфавіті —
-//     ознака що переклад зіскочив у російську) живе в цьому СПІЛЬНОМУ
-//     Core-сервісі, яким GUI вже й так користується для перевірки кожного
-//     рядка (RowViewModel.Validate) — русизми автоматично потрапляють у
-//     фільтр "⚠ Проблемні" в GUI без жодної додаткової GUI-логіки. Спільні
-//     ContainsCyrillic/MinLengthForCyrillicCheck дають те саме
+//     ознака, що переклад зіскочив у російську) живе саме в цьому
+//     СПІЛЬНОМУ Core-сервісі, яким GUI вже й так користується для
+//     перевірки кожного рядка (RowViewModel.Validate), а Translator.
+//     Pipeline (консольний проєкт) — так само: русизми автоматично
+//     потрапляють у фільтр "⚠ Проблемні" в GUI без дублювання логіки.
+//     Також спільні ContainsCyrillic/MinLengthForCyrillicCheck — те саме
 //     Unicode-визначення "чи є кирилиця", яким користуються і Translator
 //     (Warning-перевірка), і GUI (класифікація "не перекладено") — без
-//     дублювання regex у кількох місцях.
+//     дублювання regex у трьох місцях.
 // EN: Checks that technical markers from original are preserved in translation.
 //     Markers: %s %d %i %f %c %u \n \t [variables] (X) etc.
 //
@@ -35,20 +38,23 @@
 //     Gemini BEFORE writing them back to CSV — avoids duplicating code
 //     between GUI and Translator.
 //
-//     The comparison counts each marker TYPE's occurrences and compares
-//     them explicitly — if the original has two "%s" but the translation
-//     has only one, that's caught; losing even one repeated occurrence
-//     does not pass silently.
+//     The check is MULTIPLICITY-AWARE, not just type-based: a plain
+//     Except() only checks "does this marker TYPE exist at all", not the
+//     COUNT — if the original had two "%s" but the translation had only
+//     one, a type-only check would pass that as valid. Each marker's
+//     occurrences are therefore counted and compared explicitly — losing
+//     even one repeated occurrence is caught.
 //
 //     The check for ыэёъ letters (not in the Ukrainian alphabet — a sign
 //     the translation slipped into Russian) lives in this SHARED Core
 //     service, which the GUI already uses to validate every row
-//     (RowViewModel.Validate) — Russian slips automatically land in the
-//     GUI's "⚠ Issues" filter with no extra GUI-side logic needed. The
-//     shared ContainsCyrillic/MinLengthForCyrillicCheck provide the same
-//     Unicode-based "does this contain Cyrillic" definition used by both
-//     the Translator (Warning check) and the GUI ("untranslated"
-//     classification) — no regex duplicated across multiple places.
+//     (RowViewModel.Validate) and which Translator.Pipeline (the console
+//     project) also uses — so Russian slips automatically land in the
+//     GUI's "⚠ Issues" filter with no duplicated logic. Also shared:
+//     ContainsCyrillic/MinLengthForCyrillicCheck — the same Unicode-based
+//     "does this contain Cyrillic" definition used by both the Translator
+//     (Warning check) and the GUI ("untranslated" classification) — no
+//     regex duplicated across three places.
 // =============================================================================
 
 using System.Text.RegularExpressions;

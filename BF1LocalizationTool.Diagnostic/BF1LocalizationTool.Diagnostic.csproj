@@ -14,31 +14,29 @@
 	</ItemGroup>
 
 	<!--
-	UA: PrivateFontRegistry читає шрифти з AppContext.BaseDirectory\Fonts\ —
-	    це тека РЕЗУЛЬТАТУ збірки (bin\Debug\net10.0-windows\Fonts\), а НЕ
-	    тека проєкту (BF1LocalizationTool.Diagnostic\Fonts\), де фізично
-	    лежать .ttf. Fonts\ лежить біля .csproj, але сам .ttf-вміст НЕ в
-	    git (.gitignore) — кожен розробник/користувач завантажує потрібні
-	    файли самостійно з Google Fonts (README, розділ "Кирилиця в
-	    .txt-каналі"; §7.6 FONT_FORMAT_SPEC.md) і кладе в цю теку.
-	    CopyToOutputDirectory — стандартний MSBuild-міст: копіює .ttf у
-	    bin\ ПІСЛЯ кожної збірки, автоматично, рекурсивно. Diagnostic —
-	    інструмент аналізу/генерації, що розповсюджується лише як вихідний
-	    код (запуск через `dotnet run`/`dotnet build`), у готовий реліз-
-	    архів не входить — там лише скомпільований GUI-редактор.
-	EN: PrivateFontRegistry reads fonts from AppContext.BaseDirectory\Fonts\
-	    — the BUILD OUTPUT folder (bin\Debug\net10.0-windows\Fonts\), NOT
-	    the project folder (BF1LocalizationTool.Diagnostic\Fonts\) where the
-	    .ttf files physically live. Fonts\ lives next to the .csproj, but
-	    its .ttf contents are NOT in git (.gitignore) — each developer/user
-	    downloads the needed files themselves from Google Fonts (README,
-	    "Cyrillic in the .txt channel" section; FONT_FORMAT_SPEC.md §7.6)
-	    and places them in this folder. CopyToOutputDirectory is the
-	    standard MSBuild bridge: copies the .ttf files into bin\ after
-	    every build, automatically, recursively. Diagnostic is an analysis/
-	    generation tool distributed as source only (run via `dotnet run`/
-	    `dotnet build`) — it is not part of the compiled release archive,
-	    which contains only the GUI editor.
+	UA: БЕЗ ЦЬОГО PrivateFontRegistry кидав би
+	    DirectoryNotFoundException під час генерації: він читає з
+	    AppContext.BaseDirectory\Fonts\ — це тека РЕЗУЛЬТАТУ збірки
+	    (bin\Debug\net10.0-windows\Fonts\), а НЕ тека проєкту
+	    (BF1LocalizationTool.Diagnostic\Fonts\), де фізично лежать .ttf.
+	    Fonts\ навмисно лежить біля .csproj (у git, разом з кодом), а не
+	    "біля .exe" напряму — "біля .exe" це bin\, він у .gitignore і
+	    перестворюється щоразу при збірці. CopyToOutputDirectory —
+	    стандартний MSBuild-міст між ними: копіює .ttf у bin\ ПІСЛЯ
+	    кожної збірки, автоматично, рекурсивно (підтеки на кшталт
+	    Fira_Sans\ дозволені — PrivateFontRegistry сканує рекурсивно).
+	EN: WITHOUT this, PrivateFontRegistry would throw
+	    DirectoryNotFoundException during generation: it reads from
+	    AppContext.BaseDirectory\Fonts\ — the BUILD OUTPUT folder
+	    (bin\Debug\net10.0-windows\Fonts\), NOT the project folder
+	    (BF1LocalizationTool.Diagnostic\Fonts\) where the .ttf files
+	    physically live. Fonts\ deliberately lives next to the .csproj (in
+	    git, with the code), not "next to the .exe" directly — "next to
+	    the .exe" is bin\, which is gitignored and rebuilt from scratch
+	    every build. CopyToOutputDirectory is the standard MSBuild bridge
+	    between the two: copies the .ttf files into bin\ AFTER every build,
+	    automatically, recursively (subfolders like Fira_Sans\ are fine —
+	    PrivateFontRegistry scans recursively).
 	-->
 	<ItemGroup>
 		<None Include="Fonts\**\*.ttf" CopyToOutputDirectory="PreserveNewest" />

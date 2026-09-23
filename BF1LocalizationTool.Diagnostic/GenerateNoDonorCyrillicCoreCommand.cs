@@ -2,14 +2,16 @@
 // BF1LocalizationTool.Diagnostic — GenerateNoDonorCyrillicCoreCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ГЕНЕРАТОР (production, входить у фінальний патч) / GENERATOR (production, part of the final patch)
 // =============================================================================
 // UA: ПРОДАКШН-ГЕНЕРАЦІЯ кириличного core.lvl БЕЗ донорів — доведений
-//     робочий підхід: гра рендерить прямі Unicode-коди поза оригінальним
-//     набором чисто, без донорських нерівностей. Замінює донорський
-//     GenerateLocalizedCore.
+//     робочий підхід (перевірено в грі: гра рендерить прямі
+//     Unicode-коди поза оригінальним набором чисто, без донорських
+//     нерівностей). Замінює донорський GenerateLocalizedCore.
 //
-//     Три ключові факти, кожен ПІДТВЕРДЖЕНИЙ реальними даними файлу (див.
-//     NewGlyphCodeExperimentCommand), і всі три тут враховані:
+//     Три ключові відкриття, кожне ПІДТВЕРДЖЕНО реальними даними файлу під
+//     час покрокового тесту (див. NewGlyphCodeExperimentCommand), і всі три
+//     тут враховані:
 //       1. HEAD[0:2] (u16 LE) — це КІЛЬКІСТЬ ГЛІФІВ шрифту. Її треба
 //          оновити на нову загальну кількість, інакше гра читає лише перші
 //          N записів і не бачить нових.
@@ -27,23 +29,25 @@
 //     і так робить), і гра малює його напряму — жодного маппінгу байтів не
 //     потрібно. Це прибирає цілий шар складності донорського конвеєра.
 //
-//     ПОТОЧНИЙ СТАН: ширина ВЕЛИКИХ і малих калібрується окремо
-//     (GlyphMetricModel), висота ВЕЛИКИХ — лінійним capital-scale
-//     (ComputeLetterMetric), висота МАЛИХ — моделлю ядро (x-height,
-//     спільне для всіх) + виступ (крапка/дашок/хвіст, обмежений
-//     CoreMarginCapPx). Колір (alphaGain) — єдине, що справді НЕ чіпає
-//     розмір/форму.
+//     Ширина ВЕЛИКИХ і малих калібрується окремо (GlyphMetricModel),
+//     висота ВЕЛИКИХ — лінійним capital-scale (ComputeLetterMetric),
+//     висота МАЛИХ — моделлю
+//     ядро (x-height, спільне для всіх) + виступ (крапка/дашок/хвіст,
+//     обмежений CoreMarginCapPx). Колір (alphaGain) — єдине, що справді
+//     НЕ чіпає розмір/форму.
 //
 //     ІЗОЛЬОВАНО від донорського конвеєра (GlyphAtlasPatcher/
 //     CyrillicFontInjector не чіпаються) — самодостатня логіка тут.
 //     Оригінальний файл НІКОЛИ не перезаписується.
 // EN: PRODUCTION GENERATION of a Cyrillic core.lvl WITHOUT donors — the
-//     proven working approach: the game renders direct Unicode codes
-//     outside the original set cleanly, with none of the donor
-//     unevenness. Replaces the donor-based GenerateLocalizedCore.
+//     proven working approach (verified in-game: the game
+//     renders direct Unicode codes outside the original set cleanly, with
+//     none of the donor unevenness). Replaces the donor-based
+//     GenerateLocalizedCore.
 //
-//     Three key facts, each CONFIRMED by real file data (see
-//     NewGlyphCodeExperimentCommand), all handled here:
+//     Three key discoveries, each CONFIRMED by real file data during the
+//     step-by-step test (see NewGlyphCodeExperimentCommand), all handled
+//     here:
 //       1. HEAD[0:2] (u16 LE) is the font's GLYPH COUNT. It must be updated
 //          to the new total, else the game reads only the first N records
 //          and never sees the new ones.
@@ -61,12 +65,11 @@
 //     it already does), and the game renders it directly — no byte mapping
 //     needed. This removes a whole layer of donor-pipeline complexity.
 //
-//     CURRENT STATE: width for BOTH cases is calibrated separately
-//     (GlyphMetricModel); height for UPPERCASE uses a linear
-//     capital-scale (ComputeLetterMetric); height for LOWERCASE uses a
-//     core (shared x-height) + extension (dot/breve/tail, capped by
-//     CoreMarginCapPx) model. Color (alphaGain) is the ONLY thing that
-//     truly never touches size/shape.
+//     Width for BOTH cases is calibrated separately (GlyphMetricModel); height
+//     for UPPERCASE uses a linear capital-scale (ComputeLetterMetric);
+//     height for LOWERCASE uses a core (shared x-height) + extension
+//     (dot/breve/tail, capped by CoreMarginCapPx) model. Color (alphaGain)
+//     is the ONLY thing that truly never touches size/shape.
 //
 //     ISOLATED from the donor pipeline (GlyphAtlasPatcher/
 //     CyrillicFontInjector untouched) — self-contained logic here. The
@@ -78,66 +81,98 @@ using BF1LocalizationTool.Core.Fonts;
 using BF1LocalizationTool.Core.IO;
 using BF1LocalizationTool.FontGenerator.Matching;
 using BF1LocalizationTool.FontGenerator.PixelConversion;
-// UA: Додано — PadRasterized конструює RasterizedGlyph (обгортання
-//     чорнила прозорим полем без масштабування).
-// EN: Added — PadRasterized constructs a RasterizedGlyph (wrapping ink in
-//     a transparent margin without scaling).
+// UA: PadRasterized конструює RasterizedGlyph (обгортання чорнила
+//     прозорим полем без масштабування).
+// EN: PadRasterized constructs a RasterizedGlyph (wrapping ink in a
+//     transparent margin without scaling).
 using BF1LocalizationTool.FontGenerator.Rasterization;
 
 namespace BF1LocalizationTool.Diagnostic;
 
 public static class GenerateNoDonorCyrillicCoreCommand
 {
-    // UA: Кожна (гра, розмір шрифту) має ОКРЕМИЙ шрифт-кандидат, підібраний
-    //     за РЕАЛЬНИМИ даними (FontCandidateComparisonCommand,
-    //     FONT_FORMAT_SPEC.md розділ 11.18) — один шрифт на обидві гри й
-    //     усі 5 розмірів не дає найкращого підбору, бо пропорція капітелей
-    //     різна між іграми й розмірами:
+    // UA: Bahnschrift (системний шрифт Windows,
+    //     ліцензія забороняє розповсюдження) замінено на Fira Sans
+    //     SemiBold (SIL OFL, вільно розповсюджується, дизайн Carrois Type
+    //     Design + кирилиця Botio Nikoltchev — чистий європейський
+    //     провенанс, той самий шрифт уже використано в проєкті SWH).
+    //     Завантажується з .ttf у теці Fonts\ біля .exe через
+    //     PrivateFontRegistry, НЕ з системного реєстру шрифтів —
+    //     відтворювано незалежно від того, що встановлено на машині.
+    //
+    //     Значення тепер ВІДНОСНИЙ ШЛЯХ ФАЙЛУ
+    //     (`"FiraSans-SemiBold.ttf"`), а НЕ назва родини (`"Fira Sans
+    //     SemiBold"`). ПРИЧИНА: GDI+ обрізає family-назви до 31 символа
+    //     (LOGFONT-ліміт) і зливає кілька файлів в одну family, якщо їхні
+    //     назви родини збігаються — обидва підтверджено реальним
+    //     логом-регресією (FONT_FORMAT_SPEC.md, розділ 11.13). Ім'я файлу
+    //     — рядок файлової системи, жодного з цих обмежень немає.
+    //     PrivateFontRegistry.Get шукає САМЕ за ним. Насиченість
+    //     (SemiBold) не змінюється — це виправлення механізму пошуку, не
+    //     зміна вибору шрифту.
+    // EN: Bahnschrift (a Windows system font,
+    //     license forbids redistribution) replaced with Fira Sans
+    //     SemiBold (SIL OFL, freely redistributable, designed by Carrois
+    //     Type Design + Cyrillic by Botio Nikoltchev — clean European
+    //     provenance, the same font already used in the SWH project).
+    //     Loaded from a .ttf in the Fonts\ folder next to the .exe via
+    //     PrivateFontRegistry, NOT from the system font registry —
+    //     reproducible regardless of what's installed on a given machine.
+    //
+    //     The value is now a RELATIVE FILE PATH
+    //     (`"FiraSans-SemiBold.ttf"`), not a family name (`"Fira Sans
+    //     SemiBold"`). REASON: GDI+ truncates family names to 31
+    //     characters (a LOGFONT limit) and merges several files into one
+    //     family when their family names collide — both confirmed by a
+    //     real regression in a log (FONT_FORMAT_SPEC.md, section 11.13).
+    //     A file name is a filesystem string, subject to neither limit.
+    //     PrivateFontRegistry.Get looks up by exactly that. The weight
+    //     (SemiBold) does not change — this is a lookup-mechanism fix,
+    //     not a font choice change.
+    // UA: Константа ЗАМІНЕНА на резолвер за (гра,
+    //     розмір шрифту). ПРИЧИНА: реальний прогін `FontCandidateComparisonCommand`
+    //     на розширеному пулі кандидатів (57 кандидатів, Fira Sans + Sofia Sans + Exo2 + Unbounded,
+    //     FONT_FORMAT_SPEC.md розділ 11.18) показав, що ОДИН шрифт на
+    //     обидві гри й усі 5 розмірів — не найкращий підбір за реальними
+    //     даними:
     //       - BF1 (ціль капітелей ≈0.50, дуже вузька) — ОДНОСТАЙНО всі
     //         5 розмірів: SofiaSansExtraCondensed-Bold (стиснення лише
-    //         2.5-8%).
+    //         2.5-8%, було 18-22% на Fira Sans).
     //       - BF2 (ціль ≈1.00 large/medium/small, ≈0.857 tiny/super_tiny)
     //         — large/medium/small тримають Unbounded (Bold/Black/
-    //         ExtraBold — вага підібрана під спад нативної щільності гри
-    //         0.551→0.529 з розміром), а tiny/super_tiny — Exo2-ExtraBold:
-    //         природна пропорція Unbounded там дає лише aspect=0.722
-    //         (26-28% стиснення) — реальна невідповідність, не шум.
-    //
-    //     Шрифти завантажуються з .ttf у теці Fonts\ біля .exe через
-    //     PrivateFontRegistry за ВІДНОСНИМ ШЛЯХОМ ФАЙЛУ, а не назвою
-    //     родини: GDI+ обрізає family-назви до 31 символа (LOGFONT-ліміт)
-    //     і зливає кілька файлів в одну family, якщо їхні назви родини
-    //     збігаються (FONT_FORMAT_SPEC.md розділ 11.13) — файловий шлях
-    //     жодного з цих обмежень не має.
-    // EN: Each (game, font size) has a SEPARATE candidate font, chosen
-    //     from REAL data (FontCandidateComparisonCommand,
-    //     FONT_FORMAT_SPEC.md section 11.18) — one font for both games and
-    //     all 5 sizes doesn't give the best fit, since the capital
-    //     proportion differs between games and sizes:
+    //         ExtraBold — легкий підбір ваги під спад нативної щільності
+    //         гри 0.551→0.529 з розміром), а tiny/super_tiny ПЕРЕМИКАЮТЬСЯ
+    //         на Exo2-ExtraBold: Unbounded там дає лише aspect=0.722
+    //         (26-28% стиснення) — це вже не шум, реальна невідповідність
+    //         природної пропорції Unbounded дрібнішій цілі.
+    //     Рішення: прошити ТОЧНІ переможці по розміру (не
+    //     компроміс на одну вагу).
+    // EN: The constant REPLACED by a (game, font
+    //     size) resolver. REASON: a real `FontCandidateComparisonCommand`
+    //     run over the expanded candidate pool (57 candidates,
+    //     Fira Sans + Sofia Sans + Exo2 + Unbounded, FONT_FORMAT_SPEC.md
+    //     section 11.18) showed ONE font for both games and all 5 sizes
+    //     is not the best fit by real data:
     //       - BF1 (capital target ≈0.50, very narrow) — UNANIMOUS across
     //         all 5 sizes: SofiaSansExtraCondensed-Bold (squeeze only
-    //         2.5-8%).
+    //         2.5-8%, was 18-22% with Fira Sans).
     //       - BF2 (target ≈1.00 large/medium/small, ≈0.857 tiny/
-    //         super_tiny) — large/medium/small use Unbounded (Bold/Black/
-    //         ExtraBold — weight tracking the game's own native density
-    //         decline 0.551→0.529 with size), while tiny/super_tiny use
-    //         Exo2-ExtraBold: Unbounded's natural proportion there only
-    //         reaches aspect=0.722 (26-28% squeeze) — a real mismatch, not
-    //         noise.
+    //         super_tiny) — large/medium/small stick with Unbounded
+    //         (Bold/Black/ExtraBold — a light weight adjustment tracking
+    //         the game's own native density decline 0.551→0.529 with
+    //         size), while tiny/super_tiny SWITCH to Exo2-ExtraBold:
+    //         Unbounded only reaches aspect=0.722 there (26-28% squeeze)
+    //         — not noise, a real mismatch between Unbounded's natural
+    //         proportion and the smaller target.
+    //     Decision: wire the EXACT per-size winners (not a
+    //     single-weight compromise).
     //
-    //     Fonts are loaded from a .ttf in the Fonts\ folder next to the
-    //     .exe via PrivateFontRegistry, by RELATIVE FILE PATH rather than
-    //     family name: GDI+ truncates family names to 31 characters (a
-    //     LOGFONT limit) and merges several files into one family when
-    //     their family names collide (FONT_FORMAT_SPEC.md section 11.13)
-    //     — a file path is subject to neither limit.
-    //
-    //     UA: internal (не private): LowercaseCoreMarginPreviewCommand
+    //     UA: ЗМІНЕНО — internal (було private): LowercaseCoreMarginPreviewCommand
     //     (read-only діагностика "ядро+виступ", БЕЗ генерації) навмисно
     //     перевикористовує САМЕ цей вибір шрифту, а не копіює switch —
     //     інакше довелось би тримати два джерела істини й вручну
     //     синхронізувати їх при кожній зміні кандидата.
-    // EN: internal (not private): LowercaseCoreMarginPreviewCommand
+    //     EN: CHANGED — internal (was private): LowercaseCoreMarginPreviewCommand
     //     (read-only "core+extension" diagnostics, NO generation)
     //     deliberately reuses THIS EXACT font choice instead of copying the
     //     switch — otherwise there'd be two sources of truth to keep in
@@ -157,22 +192,28 @@ public static class GenerateNoDonorCyrillicCoreCommand
             $"(and, if needed, a new .ttf in Fonts\\)."),
     };
 
-    // UA: Множник альфи. ЗА ЗАМОВЧУВАННЯМ ВИМКНЕНО (1.0) — донорський і
-    //     no-donor підходи МАЛЮЮТЬ однаковим шрифтом і рендером
-    //     (RenderToFit), тож жодного підсилення непрозорості не потрібно:
-    //     виміряно на 'В' — 63% непрозорості проти рідних 69% (близько), а
-    //     підсилення gain=1.5 дає 72% — перебір, що потовщує краї штриха.
-    //     1.0 = точно те саме малювання, що й у донорського варіанта.
-    //     Лишаємо параметр для тонкого підстроювання, якщо колись
-    //     знадобиться, але за замовчуванням — БЕЗ підсилення.
-    // EN: Alpha multiplier. DISABLED by default (1.0) — the donor and
-    //     no-donor approaches DRAW with the same font and the same
-    //     renderer (RenderToFit), so no opacity boost is needed: measured
-    //     on 'В' — 63% opacity vs. native 69% (close), while a gain=1.5
-    //     boost reaches 72% — too much, thickening stroke edges. 1.0 =
-    //     exactly the same drawing as the donor variant. The parameter
-    //     stays for fine-tuning if ever needed, but the default is NO
-    //     boost.
+    // UA: Множник альфи. ЗНАЧЕННЯ 1.0 (без підсилення) — донорський і
+    //     no-donor підходи МАЛЮЮТЬ тим самим шрифтом (Bahnschrift
+    //     SemiBold) і тим самим рендером (RenderToFit), тож підсилення
+    //     альфи не потрібне: no-donor конвеєр з ним виглядав "ширшим в
+    //     обводці" за донорський лише через саме підсилення, яке
+    //     донорський конвеєр не застосовує. Виміряно на 'В': донор — 63%
+    //     непрозорості (близько до рідних 69%), no-donor з gain=1.5 — 72%
+    //     (перебір, потовщені краї штриха); при gain=1.0 середня
+    //     непрозорість відповідає донорському варіанту. Параметр лишено
+    //     для тонкого підстроювання, якщо колись знадобиться, але за
+    //     замовчуванням — без підсилення.
+    // EN: Alpha multiplier. VALUE 1.0 (no boost) — the donor and
+    //     no-donor approaches DRAW with the same font (Bahnschrift
+    //     SemiBold) and the same renderer (RenderToFit), so an alpha
+    //     boost is not needed: with one applied, the no-donor pipeline
+    //     looked "wider in the stroke" than the donor version only
+    //     because of that boost, which the donor pipeline does not
+    //     apply. Measured on 'В': donor opacity 63% (close to native
+    //     69%), no-donor at gain=1.5 = 72% (too much, thickened stroke
+    //     edges); at gain=1.0 the mean opacity matches the donor variant.
+    //     The parameter stays for fine-tuning if ever needed, but the
+    //     default is no boost.
     private const double AlphaGain = 1.0;
 
     // UA: starwars_small свідомо НЕ включений — це набір HUD/UI-іконок, не
@@ -184,28 +225,33 @@ public static class GenerateNoDonorCyrillicCoreCommand
     private static readonly string[] TargetFontBaseNames =
         ["gamefont_large", "gamefont_medium", "gamefont_small", "gamefont_tiny", "gamefont_super_tiny"];
 
-    // UA: Повертає ШЛЯХ до записаного файлу — це дозволяє виклику
-    //     (Program.cs) відразу ланцюжком прогнати BF2-результат через
-    //     GenerateEnlargedFontCoreCommand (BF2, на відміну від BF1, НЕ
-    //     підтримує 1080p нативно і потребує цього додаткового кроку) —
-    //     ОДНА дія меню замість ручного дволанкового процесу.
-    // EN: Returns the PATH of the written file — this lets the caller
-    //     (Program.cs) immediately chain the BF2 result through
-    //     GenerateEnlargedFontCoreCommand (BF2, unlike BF1, does NOT
-    //     support 1080p natively and needs this extra step) — ONE menu
-    //     action instead of a manual two-step process.
+    // UA: Повертає ШЛЯХ до записаного файлу (не void Task). ПРИЧИНА:
+    //     збільшення шрифту BF2 (BF2 НЕ підтримує 1080p нативно, на
+    //     відміну від BF1) було окремим, неприєднаним кроком, що
+    //     вимагало ручного імпорту через GUI після кожного запуску.
+    //     Повернене значення дозволяє виклику (Program.cs) відразу
+    //     ланцюжком прогнати BF2-результат через
+    //     GenerateEnlargedFontCoreCommand — ОДНА дія меню замість
+    //     ручного дволанкового процесу.
+    // EN: Returns the PATH of the written file (not void Task). REASON:
+    //     BF2 font enlargement (BF2 does NOT support 1080p natively,
+    //     unlike BF1) was a separate, unchained step that required a
+    //     manual GUI re-import after every run. The return value lets
+    //     the caller (Program.cs) immediately chain the BF2 result
+    //     through GenerateEnlargedFontCoreCommand — ONE menu action
+    //     instead of a manual two-step process.
     // UA: Обгортає вже відрендерене чорнило прозорим полем завширшки pad
     //     з КОЖНОГО боку, НЕ масштабуючи й не обрізаючи його. Прозорі
     //     пікселі пишуться як BGRA(255,255,255, A=0) — білий RGB при
     //     нульовій альфі. Це та сама конвенція, що й у ванільних шрифтах
-    //     гри (FONT_FORMAT_SPEC.md §3.1: RGB=0xFFF скрізь, де A>0, а при
+    //     гри (FONT_FORMAT_SPEC.md §3: RGB=0xFFF скрізь, де A>0, а при
     //     A=0 значення довільне) — і саме білий RGB гарантує, що
     //     білінійна фільтрація на межі гліфа не дасть темної облямівки.
     // EN: Wraps already-rendered ink in a transparent margin `pad` wide on
     //     EVERY side, without scaling or cropping it. Transparent pixels
     //     are written as BGRA(255,255,255, A=0) — white RGB at zero alpha.
     //     That's the same convention as the game's vanilla fonts
-    //     (FONT_FORMAT_SPEC.md §3.1: RGB=0xFFF wherever A>0, arbitrary at
+    //     (FONT_FORMAT_SPEC.md §3: RGB=0xFFF wherever A>0, arbitrary at
     //     A=0) — and white RGB is precisely what stops bilinear filtering
     //     at a glyph edge from producing a dark fringe.
     private static RasterizedGlyph PadRasterized(RasterizedGlyph src, int pad, int slotWidth, int slotHeight)
@@ -279,17 +325,19 @@ public static class GenerateNoDonorCyrillicCoreCommand
                 .Select(r => (int)r.Bearing)
                 .ToList();
 
-            // UA: Медіанна InkWidth рідних A-Z цього шрифту. Калібрує
-            //     ОКРЕМИЙ ширинний масштаб у GlyphMetricModel (замість
-            //     успадкування ширшого природного співвідношення
-            //     шрифту-кандидата) — без цього текст у грі обрізається
-            //     (напр. gamefont_large). Див. коментар у
+            // UA: Медіанна InkWidth рідних A-Z цього
+            //     шрифту. Калібрує ОКРЕМИЙ ширинний масштаб у
+            //     GlyphMetricModel (замість успадкування ширшого
+            //     природного співвідношення Bahnschrift) — корінь
+            //     реального обрізання тексту в грі (gamefont_large,
+            //     "ОДНОКОРИСТУВАЦ"). Див. коментар у
             //     GlyphMetricModel.DeriveReference.
-            // EN: Median InkWidth of this font's own native A-Z.
-            //     Calibrates a SEPARATE width scale in GlyphMetricModel
-            //     (instead of inheriting the candidate font's own, wider
-            //     natural ratio) — without this, in-game text gets
-            //     clipped (e.g. gamefont_large). See the comment in
+            // EN: Median InkWidth of this font's own
+            //     native A-Z. Calibrates a SEPARATE width scale in
+            //     GlyphMetricModel (instead of inheriting Bahnschrift's
+            //     own, wider natural ratio) — the root cause of real
+            //     in-game text clipping (gamefont_large, "ОДНОКОРИСТУВАЦ").
+            //     See the comment in
             //     GlyphMetricModel.DeriveReference.
             var englishCapInkWidths = originalRecords
                 .Where(r => r.Code is >= (ushort)'A' and <= (ushort)'Z')
@@ -334,29 +382,31 @@ public static class GenerateNoDonorCyrillicCoreCommand
 
             var lowercaseSet = new HashSet<char>(CyrillicAlphabet.LowercaseLetters);
 
-            // UA: ОДИН спільний aboveScale/belowScale для ВСЬОГО алфавіту
-            //     малих літер ЦЬОГО шрифту, порахований ЗАЗДАЛЕГІДЬ (перед
-            //     per-letter циклом нижче) — а не жорсткий per-letter клемп
-            //     до CoreMarginCapPx, який зрізав би "і" (природно 1-2px
-            //     під крапку) і "б" (природно 3-6px під петлю) до РІВНО
-            //     того самого значення, роблячи обидві однаковою висотою.
-            //     Функція сама скановує весь регістр (той самий
-            //     ComputeCoreMarginLayout, що й LowercaseCoreMarginPreviewCommand,
-            //     — жодного дублювання математики) і рахує коефіцієнт, що
-            //     стискає НАЙБІЛЬШИЙ природний виступ рівно до
-            //     CoreMarginCapPx; решта масштабується ТІЄЮ Ж пропорцією.
-            //     boxSizeForChar тут — та сама ширина, що й реальний
-            //     рендер нижче рахує через ComputeLetterMetric (жодного
-            //     дублювання).
-            // EN: ONE shared aboveScale/belowScale for the WHOLE lowercase
-            //     alphabet of THIS font, computed UP FRONT (before the
-            //     per-letter loop below) — rather than a hard per-letter
-            //     clamp to CoreMarginCapPx, which would cut "і" (naturally
-            //     1-2px for the dot) and "б" (naturally 3-6px for the
-            //     loop) down to EXACTLY the same value, making both come
-            //     out the same height. The function itself scans the
-            //     whole case (the SAME ComputeCoreMarginLayout that
-            //     LowercaseCoreMarginPreviewCommand uses — no math
+            // UA: ОДИН спільний aboveScale/belowScale
+            //     для ВСЬОГО алфавіту малих літер ЦЬОГО шрифту, порахований
+            //     ЗАЗДАЛЕГІДЬ (перед per-letter циклом нижче). ПРИЧИНА
+            //     (реальні дані BF2 gamefont_medium): жорсткий per-letter
+            //     клемп до
+            //     CoreMarginCapPx різав "і" (природно 1-2px під крапку) і
+            //     "б" (природно 3-6px під петлю) до РІВНО того самого
+            //     значення — обидві виходили однаковою висотою. Функція
+            //     сама скановує весь регістр (той самий ComputeCoreMarginLayout,
+            //     що й LowercaseCoreMarginPreviewCommand, — жодного
+            //     дублювання математики) і рахує коефіцієнт, що стискає
+            //     НАЙБІЛЬШИЙ природний виступ рівно до CoreMarginCapPx;
+            //     решта масштабується ТІЄЮ Ж пропорцією. boxSizeForChar тут
+            //     — та сама ширина, що й реальний рендер нижче рахує через
+            //     ComputeLetterMetric (жодного дублювання).
+            // EN: ONE shared aboveScale/belowScale for
+            //     the WHOLE lowercase alphabet of THIS font, computed
+            //     UP FRONT (before the per-letter loop below). REASON
+            //     (real data from BF2 gamefont_medium): the hard per-letter
+            //     clamp to
+            //     CoreMarginCapPx cut "і" (naturally 1-2px for the dot) and
+            //     "б" (naturally 3-6px for the loop) down to EXACTLY the
+            //     same value — both came out the same height. The function
+            //     itself scans the whole case (the SAME ComputeCoreMarginLayout
+            //     that LowercaseCoreMarginPreviewCommand uses — no math
             //     duplication) and computes the factor that shrinks the
             //     LARGEST natural extension down to exactly
             //     CoreMarginCapPx; everything else scales by the SAME
@@ -395,26 +445,31 @@ public static class GenerateNoDonorCyrillicCoreCommand
                        $"(largest natural top extension {extensionScale.MaxNaturalAboveH}px→{metricReference.CoreMarginCapPx}px), " +
                        $"belowScale={extensionScale.BelowScale:F2} (largest natural bottom extension {extensionScale.MaxNaturalBelowH}px→{metricReference.CoreMarginCapPx}px).");
 
-            // UA: Спочатку РЕНДЕРИМО всі нові літери (без розміщення), а
-            //     МІСЦЕ визначає FontRepacker.RepackWithAdditions — той
-            //     самий пакувальник (GlyphAtlasPacker), що вже перевірено
-            //     працює в GenerateEnlargedFontCoreCommand, і сторінок
-            //     додає СТІЛЬКИ, скільки треба. Це важливо, бо шрифти-
-            //     кандидати з мінімальним спотворенням аспекту (розділи
-            //     11.16-11.20) фізично ШИРШІ за сильно стиснуті
-            //     альтернативи — наївний top-left скан по ІСНУЮЧИХ
-            //     сторінках без росту не гарантував би місця для всіх
-            //     літер. Жодна літера не пропускається через брак місця.
-            // EN: New letters are RENDERED first (without placing them),
-            //     and FontRepacker.RepackWithAdditions decides placement —
-            //     the same packer (GlyphAtlasPacker) already proven in
+            // UA: Нові літери РЕНДЕРяться (без розміщення), а МІСЦЕ
+            //     визначає FontRepacker.RepackWithAdditions — той самий
+            //     пакувальник (GlyphAtlasPacker), що вже перевірено працює
+            //     в GenerateEnlargedFontCoreCommand, і додає СТІЛЬКИ
+            //     сторінок, скільки треба. Це принципово: наївний
+            //     top-left скан по ІСНУЮЧИХ сторінках без росту (без
+            //     додавання нових сторінок) дає масові пропуски "немає
+            //     місця" — реальний прогін показав саме це (BF2
+            //     gamefont_large 23/66, gamefont_small 41/66), бо нові
+            //     кандидати шрифтів (розділи 11.16-11.20) підібрані з
+            //     МЕНШИМ спотворенням аспекту, а отже фізично ШИРШІ
+            //     бокси, ніж сильно стиснутий Fira Sans. Жодна літера не
+            //     пропускається через брак місця.
+            // EN: New letters are RENDERED (without placing them), and
+            //     FontRepacker.RepackWithAdditions decides placement — the
+            //     same packer (GlyphAtlasPacker) already proven in
             //     GenerateEnlargedFontCoreCommand, adding AS MANY pages as
-            //     needed. This matters because font candidates chosen for
-            //     minimal aspect distortion (sections 11.16-11.20) are
-            //     physically WIDER than heavily-squeezed alternatives — a
-            //     naive top-left scan over EXISTING pages with no growth
-            //     would not guarantee room for every letter. No letter is
-            //     skipped for lack of space.
+            //     needed. This matters: a naive top-left scan over
+            //     EXISTING pages without growth (without adding new
+            //     pages) causes mass "no space" skips — a real run showed
+            //     exactly that (BF2 gamefont_large 23/66, gamefont_small
+            //     41/66), because the newer font candidates (sections
+            //     11.16-11.20) were chosen with LESS aspect distortion,
+            //     hence physically WIDER boxes than the heavily-squeezed
+            //     Fira Sans. No letter is skipped for lack of space.
             var srcResource = FontResourceReader.Read(font.Chunk);
 
             // UA: ReservedByte4 — призначення досі невідоме (FONT_FORMAT_SPEC.md
@@ -429,7 +484,7 @@ public static class GenerateNoDonorCyrillicCoreCommand
             //     §4.1), and it is NOT constant: it genuinely varies 0-6 even
             //     within one page (verified byte-for-byte on BF1
             //     reference-files). The old donor approach copied it from a
-            //     specific donor slot; there's no donor here, so we use the
+            //     specific donor slot; with no donor here, this uses the
             //     MOST COMMON value AMONG THIS FONT'S real glyphs (not an
             //     arbitrary first-in-array) — the best available estimate,
             //     given the byte's meaning is unknown.
@@ -455,20 +510,20 @@ public static class GenerateNoDonorCyrillicCoreCommand
                 try
                 {
                     // UA: Ширину рахуємо ЗАВЖДИ через ComputeLetterMetric
-                    //     (widthScale/CapWidthFloor — стосуються лише
-                    //     ширини, не висотної моделі нижче). Для МАЛИХ
-                    //     літер висотну частину (Bearing/CellHeight/BoxHeight)
+                    //     (widthScale/CapWidthFloor — не змінені цим
+                    //     фіксом, стосуються лише ширини). Для МАЛИХ літер
+                    //     висотну частину (Bearing/CellHeight/BoxHeight)
                     //     ПОВНІСТЮ перераховуємо моделлю ядро+виступи —
-                    //     на відміну від лінійного capital-scale, який
-                    //     штучно розтягував би "і" (див. коментар у
+                    //     замінює лінійний capital-scale, який штучно
+                    //     розтягував "і" (див. коментар у
                     //     ComputeLowercaseCoreMetric).
                     // EN: Width is ALWAYS computed via ComputeLetterMetric
-                    //     (widthScale/CapWidthFloor — width-only, unrelated
-                    //     to the height model below). For LOWERCASE letters
-                    //     the height part (Bearing/CellHeight/BoxHeight) is
+                    //     (widthScale/CapWidthFloor — untouched by this
+                    //     fix, width-only). For LOWERCASE letters the
+                    //     height part (Bearing/CellHeight/BoxHeight) is
                     //     FULLY recomputed by the core+extension model —
-                    //     unlike a linear capital-scale, which would
-                    //     artificially stretch "і" (see the comment in
+                    //     replaces the linear capital-scale that
+                    //     artificially stretched "і" (see the comment in
                     //     ComputeLowercaseCoreMetric).
                     var widthMetric = GlyphMetricModel.ComputeLetterMetric(ch, fontFamilyName, metricReference);
                     metric = isLowercase
@@ -479,26 +534,28 @@ public static class GenerateNoDonorCyrillicCoreCommand
                 }
                 catch (Exception) { skipped.Add(ch); continue; }
 
-                // UA: Той самий рендер, що й раніше в TryPlaceLetter —
-                //     лише БЕЗ прив'язки до конкретної сторінки/координат
-                //     (їх тепер визначає RepackWithAdditions).
-                // EN: The same render as TryPlaceLetter used to do — just
-                //     WITHOUT binding to a specific page/coordinates (now
-                //     decided by RepackWithAdditions).
+                // UA: Рендер БЕЗ прив'язки до конкретної сторінки чи
+                //     координат — місце визначає RepackWithAdditions.
+                // EN: Rendering WITHOUT binding to a specific page or
+                //     coordinates — placement is decided by
+                //     RepackWithAdditions.
                 // UA: ЧОРНИЛО рендериться у СВІЙ повний розмір
                 //     (metric.BoxWidth×BoxHeight) — жодного стиснення.
                 //     Прозоре поле додається НАВКОЛО, збільшенням слоту
                 //     на 2×SlotPaddingPx по кожній осі (див. коментар біля
                 //     SlotPaddingPx). Саме це прибирає "рамку слоту" в
-                //     BF1, НЕ звужуючи літери — поле додається ЗОВНІ
-                //     чорнила, а не вирізається з нього.
+                //     BF1, НЕ звужуючи літери: стиснення ЧОРНИЛА в межі
+                //     boxWidth×boxHeight звужує самі літери, а рендер у
+                //     ПОВНИЙ розмір із прозорим полем НАВКОЛО — ні.
                 // EN: The INK is rendered at its FULL size
                 //     (metric.BoxWidth×BoxHeight) — no shrinking at all.
                 //     The transparent margin is added AROUND it by growing
                 //     the slot by 2×SlotPaddingPx on each axis (see the
                 //     SlotPaddingPx comment). This is what removes BF1's
-                //     "slot frame" WITHOUT narrowing letters — the margin
-                //     is added OUTSIDE the ink, not carved out of it.
+                //     "slot frame" WITHOUT narrowing letters: shrinking
+                //     the INK to fit within boxWidth×boxHeight narrows
+                //     the letters themselves, while rendering at FULL
+                //     size with a transparent margin AROUND it does not.
                 var pad = GlyphBoxFitRenderer.SlotPaddingPx;
                 var slotWidth = metric.BoxWidth + 2 * pad;
                 var slotHeight = metric.BoxHeight + 2 * pad;
@@ -534,7 +591,7 @@ public static class GenerateNoDonorCyrillicCoreCommand
                     //     на тих самих екранних рядках, що й без поля (поле
                     //     прозоре). Без цієї пари гра стиснула б більший
                     //     слот у стару екранну висоту — і літера змаліла б,
-                    //     тобто ми повторили б попередню помилку іншим
+                    //     тобто це повторило б попередню помилку іншим
                     //     шляхом.
                     // EN: Bearing−pad / CellHeight+pad — the on-screen box
                     //     grows by exactly as much as the slot did, so the
@@ -591,14 +648,14 @@ public static class GenerateNoDonorCyrillicCoreCommand
         Directory.CreateDirectory(outputDir);
         var outputPath = Path.Combine(outputDir, "core.lvl");
 
-        // UA: Без replacements-словника: шрифтові чанки мутуються НАПРЯМУ
-        //     (font.Chunk.Children.Clear/AddRange вище), той самий підхід,
-        //     що й GenerateEnlargedFontCoreCommand. WriteFile серіалізує
-        //     ВЖЕ ЗМІНЕНЕ дерево.
-        // EN: No replacements dictionary: font chunks are mutated DIRECTLY
-        //     (font.Chunk.Children.Clear/AddRange above), the same
-        //     approach GenerateEnlargedFontCoreCommand uses. WriteFile
-        //     serializes the ALREADY-MODIFIED tree.
+        // UA: Без replacements-словника: шрифтові чанки
+        //     тепер мутовані НАПРЯМУ (font.Chunk.Children.Clear/AddRange
+        //     вище), той самий підхід, що й GenerateEnlargedFontCoreCommand.
+        //     WriteFile серіалізує ВЖЕ ЗМІНЕНЕ дерево.
+        // EN: No replacements dictionary: font chunks
+        //     are now mutated DIRECTLY (font.Chunk.Children.Clear/AddRange
+        //     above), the same approach GenerateEnlargedFontCoreCommand
+        //     uses. WriteFile serializes the ALREADY-MODIFIED tree.
         File.WriteAllBytes(outputPath, UcfbWriter.WriteFile(root));
 
         report.Log();

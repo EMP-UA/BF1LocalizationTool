@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GlyphOrientationCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перевіряє напрямок осі V (top-down чи bottom-up) для ОБОХ core.lvl
 //     одним запуском. Перелік доступних шрифтів/сторінок друкується ОКРЕМО
@@ -92,7 +93,7 @@ public static class GlyphOrientationCheckCommand
 
         report.Log($"=== [{label}] {fontBaseName}/{texturePageName}, code=0x{code:X2} ('{(char)code}') ===");
         report.Log($"    x=[{minX}..{maxX}) y=[{minY}..{maxY}), texture {texPixels.Width}x{texPixels.Height}");
-        report.Log("    row0 = НАЙМЕНШИЙ V (min(V0,V1)) — так наш код читає й писатиме всюди.");
+        report.Log("    row0 = НАЙМЕНШИЙ V (min(V0,V1)) — так код читає й писатиме всюди.");
 
         for (var y = minY; y < maxY; y++)
         {

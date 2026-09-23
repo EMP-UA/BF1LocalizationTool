@@ -1,0 +1,13 @@
+; UA: Явний список експортів — гарантує, що ім'я "Direct3DCreate9" в
+;     таблиці експорту DLL буде РІВНО таким, без жодних суфіксів/декорацій,
+;     які інакше міг би додати компілятор для функції з викличним
+;     угодженням stdcall (WINAPI). Саме це ім'я шукає BattlefrontII.exe
+;     (єдиний імпорт з d3d9.dll — перевірено по import-таблиці .exe).
+; EN: An explicit export list — guarantees the DLL's export table contains
+;     the name "Direct3DCreate9" EXACTLY as-is, without any suffix/decoration
+;     the compiler might otherwise add for a stdcall (WINAPI) function. This
+;     is the exact name BattlefrontII.exe looks up (its only import from
+;     d3d9.dll — verified against the .exe's import table).
+LIBRARY d3d9
+EXPORTS
+    Direct3DCreate9

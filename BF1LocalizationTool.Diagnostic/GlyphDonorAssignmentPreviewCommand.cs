@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GlyphDonorAssignmentPreviewCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Прев'ю РЕАЛЬНОГО результату GlyphDonorMatcher (FontGenerator
 //     проєкт) — на справжніх розмірах донорів кожного шрифту, перш ніж
@@ -14,7 +15,7 @@
 //     PerFontSafeDonorCommand/SoftDonorGeometryCheckCommand (перетин у
 //     межах PageIndex, виключення нульової площі, м'які донори коли
 //     базових не вистачає) — щоб призначення спиралось на ту саму
-//     множину, яку ми вже перевірили як дійсно придатну для перезапису.
+//     множину, яку вже перевірено як дійсно придатну для перезапису.
 // EN: Preview of the REAL GlyphDonorMatcher (FontGenerator project)
 //     result — on each font's actual donor sizes, before trusting this
 //     assignment algorithm inside GlyphAtlasPatcher. Writes nothing to a
@@ -26,7 +27,7 @@
 //     PerFontSafeDonorCommand/SoftDonorGeometryCheckCommand (overlap
 //     within PageIndex only, zero-area exclusion, soft donors when basic
 //     ones fall short) — so the assignment relies on the exact same set
-//     we've already verified as genuinely safe to overwrite.
+//     already verified as genuinely safe to overwrite.
 // =============================================================================
 
 using System.Runtime.Versioning;
@@ -46,21 +47,17 @@ public static class GlyphDonorAssignmentPreviewCommand
     {
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII-символи (0x20-0x7E) завжди вважаються
-        //     "зайнятими", незалежно від результату Locl-сканування:
-        //     деякі рядки гри (напр. "Exit to Windows", де мала 'w'
-        //     показується напряму) використовують друковні ASCII-коди
-        //     поза таблицею Locl, тож саме лише Locl-сканування не
-        //     доводить, що такий код вільний. Лише недруковні керівні
-        //     коди (0x00-0x1F, 0x7F) лишаються кандидатами на основі
-        //     даних реального сканування.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is always considered "used",
-        //     regardless of the Locl scan result: some game strings
-        //     (e.g. "Exit to Windows", where the lowercase 'w' is shown
-        //     directly) use printable ASCII codes outside the Locl
-        //     table, so the Locl scan alone doesn't prove such a code is
-        //     free. Only non-printable control codes (0x00-0x1F, 0x7F)
-        //     remain candidates based on real scan data.
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        //     кандидатами через реальні дані.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);

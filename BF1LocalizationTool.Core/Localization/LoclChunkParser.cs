@@ -42,32 +42,34 @@ public static class LoclChunkParser
 {
     // =========================================================================
     // UA: РОБОТА З УЖЕ РОЗПАРСЕНИМ UcfbChunk-ДЕРЕВОМ (без повторного читання байтів)
-    //     Використовується коли core.lvl уже прочитаний через UcfbReader і ми
-    //     знаходимо "Locl" чанки прямо в дереві — без розпакування на диск
+    //     Використовується, коли core.lvl уже прочитаний через UcfbReader і
+    //     "Locl" чанки знайдено прямо в дереві — без розпакування на диск
     //     і без сторонніх інструментів (swbf-unmunge більше не потрібен).
     // EN: WORKING WITH AN ALREADY-PARSED UcfbChunk TREE (no raw byte re-read)
-    //     Used when core.lvl was already read via UcfbReader and we find
-    //     "Locl" chunks directly in the tree — no disk extraction and
+    //     Used when core.lvl was already read via UcfbReader and "Locl"
+    //     chunks are found directly in the tree — no disk extraction and
     //     no third-party tools needed (swbf-unmunge is no longer required).
     // =========================================================================
 
     // -------------------------------------------------------------------------
     // UA: Парсить мовний файл напряму з вже розпарсеного "Locl" чанку.
-    //     Повертає файл локалізації та посилання на BODY-чанк (для запису
-    //     назад). fallbackLanguage використовується якщо NAME-чанк відсутній
-    //     або порожній. Повертає null якщо чанк не має BODY — це означає, що
-    //     FourCC "Locl" випадково збігся з якимось іншим бінарним чанком
-    //     (хибне спрацювання детекції FourCC, яка лише перевіряє друковані
-    //     ASCII-байти). Такі чанки безпечно пропускаються, не зупиняючи
-    //     завантаження файлу.
-    // EN: Parses a language file directly from an already-parsed "Locl"
-    //     chunk. Returns the localization file and a reference to the BODY
-    //     chunk (for write-back). fallbackLanguage is used if the NAME chunk
-    //     is missing or empty. Returns null if the chunk has no BODY —
-    //     meaning the FourCC "Locl" coincidentally matched some other binary
-    //     chunk (a false positive of FourCC detection, which only checks for
-    //     printable ASCII bytes). Such chunks are safely skipped without
-    //     stopping the file load.
+    //     Повертає файл локалізації та посилання на BODY-чанк (для запису назад).
+    //     fallbackLanguage використовується якщо NAME-чанк відсутній або порожній.
+    // EN: Parses a language file directly from an already-parsed "Locl" chunk.
+    //     Returns the localization file and a reference to the BODY chunk
+    //     (for write-back). fallbackLanguage is used if NAME chunk is missing/empty.
+    // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // UA: Парсить мовний файл напряму з вже розпарсеного "Locl" чанку.
+    //     Повертає null якщо чанк не має BODY — це означає що FourCC "Locl"
+    //     випадково збігся з якимось іншим бінарним чанком (хибне спрацювання
+    //     детекції FourCC, яка лише перевіряє друковані ASCII-байти).
+    //     Такі чанки безпечно пропускаються, не зупиняючи завантаження файлу.
+    // EN: Parses a language file directly from an already-parsed "Locl" chunk.
+    //     Returns null if the chunk has no BODY — meaning the FourCC "Locl"
+    //     coincidentally matched some other binary chunk (false positive of
+    //     FourCC detection, which only checks for printable ASCII bytes).
+    //     Such chunks are safely skipped without stopping the file load.
     // -------------------------------------------------------------------------
     public static (LocalizationFile File, UcfbChunk BodyChunk)? ParseFromUcfbChunk(
         UcfbChunk loclChunk, string fallbackLanguage)
@@ -267,12 +269,13 @@ public static class LoclChunkParser
     public static bool IsLikelyRealLocalization(
         List<LocalizationEntry> entries, HashSet<uint> knownHashes, double threshold = 0.5)
     {
-        // UA: Якщо немає відомого набору хешів для звірки — не можемо
-        //     перевірити, тому довіряємо (краще пропустити сумнівне,
-        //     ніж відфільтрувати справжнє)
-        // EN: If there's no known hash set to cross-check against — we
-        //     can't verify, so we trust it (better to let through something
-        //     questionable than filter out something real)
+        // UA: Якщо немає відомого набору хешів для звірки — перевірити
+        //     неможливо, тому дані приймаються без фільтрації (краще
+        //     пропустити сумнівне, ніж відфільтрувати справжнє)
+        // EN: If there's no known hash set to cross-check against,
+        //     verification isn't possible, so the data is trusted (better to
+        //     let through something questionable than filter out something
+        //     real)
         if (knownHashes.Count == 0) return true;
 
         var matchCount = entries.Count(e => knownHashes.Contains(e.Hash));

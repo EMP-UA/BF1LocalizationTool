@@ -3,14 +3,17 @@
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
 // =============================================================================
-// UA: Спільний клас, а не логіка, продубльована в кожному викликачі:
-//     SoftDonorGeometryCheckCommand.cs потребує ТОЧНО той самий список
-//     м'яких кандидатів, що показує пункт меню "Мовний аналіз" —
-//     обчислення визначене тут ОДИН раз.
-// EN: A shared class rather than logic duplicated in every caller:
+// UA: Винесено з Program.cs (було 3 локальні функції + 3 records, доступні
+//     ЛИШЕ всередині Program.cs). SoftDonorGeometryCheckCommand.cs
+//     потребує ТОЧНО той самий список м'яких кандидатів, що бачить
+//     користувач у "Мовний аналіз" — тому обчислення винесено в один
+//     спільний клас, а не продубльовано вдруге.
+// EN: Extracted from Program.cs (used to be 3 local functions + 3
+//     records, accessible ONLY inside Program.cs).
 //     SoftDonorGeometryCheckCommand.cs needs EXACTLY the same soft
-//     candidate list the "Language analysis" menu item shows — the
-//     computation is defined here ONCE.
+//     candidate list the user sees in "Language analysis" — so the
+//     computation is extracted into one shared class instead of being
+//     duplicated a second time.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Fonts;
@@ -44,10 +47,12 @@ public static class SoftDonorAnalysis
 {
     // UA: Скільки кодів потрібно для повного кириличного алфавіту без
     //     жодного переиспользування гліфів (33 українські літери × 2
-    //     регістри). ЄДИНЕ джерело цього числа в усьому проєкті.
+    //     регістри). ЄДИНЕ джерело цього числа — не дублюється більше
+    //     ніде в проєкті.
     // EN: How many codes are needed for a full Cyrillic alphabet with
     //     zero glyph reuse (33 Ukrainian letters × 2 cases). The SINGLE
-    //     source of this number across the whole project.
+    //     source of this number — not duplicated anywhere else in the
+    //     project.
     public const int NeededGlyphCodes = 66;
 
     public static async Task<FileSummary> BuildSummaryAsync(string filePath)
@@ -79,22 +84,21 @@ public static class SoftDonorAnalysis
             languages.Add(new LangUsage(lang, file.Entries.Count, counts));
         }
 
-        // UA: Весь діапазон 0-255 рахується РЕАЛЬНИМИ даними, без винятків
-        //     — 0-127 (ASCII) НЕ вважається "завжди зайнятим" апріорі.
-        //     Побайтова перевірка (обидві гри) показує: 46/128 кодів ASCII
-        //     у BF1 і 30/128 у BF2 РЕАЛЬНО ніколи не зустрічаються в
-        //     жодній з 6 мов (у т.ч. самі латинські літери b,f,h,j,k,q,
-        //     r,v,w,x,y,z у BF1, бо весь текст UI — капс) — тобто безпечні
-        //     донорні коди є і серед "звичайного" ASCII, не лише в
-        //     розширеному діапазоні 128-255.
+        // UA: Увесь діапазон 0-255 рахується РЕАЛЬНИМИ даними, без
+        //     винятків для ASCII — окреме припущення "0-127 завжди
+        //     зайнятий" не звірене б було з реальними даними. Побайтова
+        //     перевірка (обидві гри) показує: 46/128 кодів ASCII у BF1 і
+        //     30/128 у BF2 РЕАЛЬНО ніколи не зустрічаються в жодній з
+        //     6 мов (у т.ч. самі латинські літери b,f,h,j,k,q,r,v,w,x,y,z
+        //     у BF1, бо весь текст UI — капс).
         // EN: The full 0-255 range is counted from REAL data, no
-        //     exceptions — 0-127 (ASCII) is NOT assumed "always used" a
-        //     priori. A byte-level check (both games) shows: 46/128 ASCII
-        //     codes in BF1 and 30/128 in BF2 are genuinely NEVER used by
-        //     any of the 6 languages (including the Latin letters
-        //     b,f,h,j,k,q,r,v,w,x,y,z themselves in BF1, since all UI text
-        //     there is uppercase) — meaning safe donor codes exist within
-        //     "ordinary" ASCII too, not just the extended 128-255 range.
+        //     exceptions for ASCII — a separate "0-127 always used"
+        //     assumption would go unchecked against real data. A
+        //     byte-level check (both games) shows: 46/128 ASCII codes in
+        //     BF1 and 30/128 in BF2 are genuinely NEVER used by any of
+        //     the 6 languages (including the Latin letters
+        //     b,f,h,j,k,q,r,v,w,x,y,z themselves in BF1, since all UI
+        //     text there is uppercase).
         var safe = Enumerable.Range(0, 256).Except(usedByAny).ToHashSet();
         return new FileSummary(filePath, fonts, languages, safe);
     }

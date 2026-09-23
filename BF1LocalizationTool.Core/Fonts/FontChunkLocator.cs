@@ -14,10 +14,9 @@
 //     (кількість сторінок різна між BF1/BF2 і між розмірами шрифту).
 //     Це ЛОКАТОР — він лише знаходить, ДЕ лежать ресурси в дереві, і
 //     повертає самі UcfbChunk (з доступом до RawData) для подальшого
-//     аналізу формату. Розбір внутрішнього бінарного формату шрифту
-//     (таблиця гліфів, ширини символів, мапінг байт↔гліф) винесено в
-//     окремі типи — FontResourceReader, FontGlyphTable, FontGlyphRecord,
-//     FontTexturePixelReader.
+//     розбору формату. Розбір внутрішнього бінарного формату шрифту
+//     (таблиця гліфів, ширини символів, мапінг байт↔гліф) — у
+//     FontGlyphTable/FontGlyphRecord поруч із цим файлом.
 // EN: Finds font resources in the core.lvl ucfb chunk tree.
 //     Base font names found via reverse engineering with
 //     BF1LocalizationTool.Diagnostic (NAME chunk histogram of a real BF1
@@ -29,10 +28,9 @@
 //     between BF1/BF2 and between font sizes).
 //     This is a LOCATOR — it only finds WHERE resources live in the tree,
 //     and returns the UcfbChunk objects themselves (with RawData access)
-//     for further format analysis. Parsing the font's internal binary
-//     format (glyph table, character widths, byte↔glyph mapping) lives in
-//     separate types — FontResourceReader, FontGlyphTable,
-//     FontGlyphRecord, FontTexturePixelReader.
+//     for further format parsing. The font's internal binary format
+//     (glyph table, character widths, byte↔glyph mapping) is parsed in
+//     FontGlyphTable/FontGlyphRecord next to this file.
 // =============================================================================
 
 using System.Text;

@@ -2,17 +2,19 @@
 // BF1LocalizationTool.Diagnostic — ExportAllFontStylesContactSheetCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Допоміжний, не-перевірочний інструмент (продовження
 //     ExportTexturePagePngCommand). Один запуск на файл — ОДИН PNG з
 //     ПЕРШОЮ текстурною сторінкою КОЖНОГО шрифтового ресурсу файлу,
 //     підписаною ім'ям шрифту, складені одна під одною.
 //
-//     Призначення: підбір Windows-шрифта-замінника перевіряється окремо
-//     для КОЖНОГО з мінімум 6 шрифтових ресурсів гри, а не лише для
-//     одного зразка (gamefont_medium) — назва "starwars_small", напр.,
-//     натякає, що це може бути стилістично ІНШИЙ шрифт (як у SteamWorld
-//     Heist, де різні шрифти гри вимагали різних Windows-відповідників).
+//     Причина: висновок "один Windows-шрифт підходить усім" зроблений на
+//     основі ОДНОГО зразка (gamefont_medium) — передчасна генералізація
+//     (порушення правила "вичерпна перевірка, не один приклад"). У грі
+//     мінімум 6 шрифтових ресурсів, і назва "starwars_small" натякає, що
+//     це може бути стилістично ІНШИЙ шрифт (як у SteamWorld Heist, де
+//     різні шрифти гри вимагали різних Windows-відповідників).
 //
 //     Береться лише ПЕРША сторінка кожного шрифту (TexturePages[0]) —
 //     для порівняння СТИЛЮ решта сторінок того самого шрифту зазвичай
@@ -22,10 +24,11 @@
 //     FIRST texture page of EVERY font resource in the file, labeled
 //     with the font name, stacked one under another.
 //
-//     Purpose: a Windows replacement font is verified separately for
-//     EACH of the game's at least 6 font resources, not just one sample
-//     (gamefont_medium) — the name "starwars_small", for instance, hints
-//     it might be a stylistically DIFFERENT font (as in SteamWorld
+//     Reason: the conclusion "one Windows font fits all" was drawn from
+//     ONE sample (gamefont_medium) — a premature generalization
+//     (violates the "exhaustive check, not one example" rule). The game
+//     has at least 6 font resources, and the name "starwars_small"
+//     hints it might be a stylistically DIFFERENT font (as in SteamWorld
 //     Heist, where different in-game fonts needed different Windows
 //     equivalents).
 //

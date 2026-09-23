@@ -107,12 +107,14 @@ public static class LocalizationCsvIo
     // -------------------------------------------------------------------------
     // UA: Будує текст CSV (UTF-8, без запису у файл) — спільна логіка для
     //     WriteAsync (файловий запис) і GUI-у (MainWindow.BuildCsvContent,
-    //     той самий формат для автозбереження й "Експорт CSV") — щоб
-    //     екранування лапок не дублювалось між ними.
+    //     той самий формат для автозбереження й "Експорт CSV" без
+    //     дублювання екранування лапок) — спільна логіка для WriteAsync і
+    //     GUI, без дублювання коду.
     // EN: Builds CSV text (UTF-8, no file write) — shared logic for
     //     WriteAsync (file write) and the GUI (MainWindow.BuildCsvContent,
-    //     same format for autosave and "Export CSV") — so quote-escaping
-    //     isn't duplicated between them.
+    //     same format for autosave and "Export CSV" without duplicating
+    //     quote-escaping) — logic shared between WriteAsync and the GUI,
+    //     with no duplicated code.
     // -------------------------------------------------------------------------
     public static string BuildCsvText(IEnumerable<LocalizationCsvRow> rows)
     {
@@ -140,34 +142,36 @@ public static class LocalizationCsvIo
     // -------------------------------------------------------------------------
     // UA: Читає рядки з CSV-файлу. Підтримує найновіший (5-колонковий, +
     //     ReviewStatus), новий (4-колонковий) і старий (3-колонковий, без
-    //     Ordinal) формат. Записи що не парсяться — пропускаються мовчки.
+    //     Ordinal) формат. Записи що не парсяться — пропускаються мовчки
+    //     (як і в попередній реалізації в LvlLocalizationService).
     //
-    //     КРИТИЧНО: файл читається ВЕСЬ одним текстовим блоком і парситься
-    //     власним посимвольним автоматом (ParseCsvRecords), де \r/\n
-    //     рахуються роздільником ЗАПИСУ ЛИШЕ ПОЗА лапками — точно як у
-    //     RFC4180. Це необхідно, бо в реальних CSV-файлах локалізації
-    //     (ЕМПІРИЧНО ПІДТВЕРДЖЕНО: 421 рядок, 89 BF1 + 332 BF2, напр.
-    //     "Bonuses\r\n(1/3) {OptionR}...") зустрічається БУКВАЛЬНИЙ \r\n
-    //     УСЕРЕДИНІ самого тексту — частина значення, взята в лапки, а не
-    //     роздільник рядків. Читання по рядках (напр. через
-    //     File.ReadAllLinesAsync) розрізало б ОДИН логічний CSV-запис на
-    //     ДВА "рядки" для кожного такого випадку, зсуваючи колонки
-    //     Original/Translation як для цього, так і для сусідніх записів.
+    //     ВАЖЛИВО: файл читається ВЕСЬ одним текстовим блоком і парситься
+    //     власним посимвольним автоматом (ParseCsvRecords), а НЕ через
+    //     File.ReadAllLinesAsync — \r/\n рахуються роздільником ЗАПИСУ лише
+    //     ПОЗА лапками, точно як у RFC4180. Причина: 421 рядок локалізації
+    //     (89 BF1 + 332 BF2, напр. "Bonuses\r\n(1/3) {OptionR}...") містить
+    //     БУКВАЛЬНИЙ \r\n усередині самого тексту (не як роздільник рядків,
+    //     а як частина значення, взята в лапки). Наївне порядкове читання
+    //     розрізає ОДИН логічний CSV-запис на ДВА "рядки" для кожного
+    //     такого випадку, зсуваючи колонки Original/Translation як для
+    //     цього, так і потенційно для сусідніх записів. Усередині лапок
+    //     \r\n — звичайний символ значення, як і задумано.
     // EN: Reads rows from a CSV file. Supports the newest (5-column, +
     //     ReviewStatus), new (4-column), and old (3-column, no Ordinal)
-    //     formats. Records that fail to parse are silently skipped.
+    //     formats. Records that fail to parse are silently skipped
+    //     (matching the previous LvlLocalizationService implementation).
     //
-    //     CRITICAL: the file is read as ONE text blob and parsed with a
-    //     character-by-character state machine (ParseCsvRecords), where
-    //     \r/\n only count as a RECORD separator OUTSIDE quotes — exactly
-    //     per RFC4180. This is necessary because real localization CSV
-    //     files (EMPIRICALLY CONFIRMED: 421 rows, 89 BF1 + 332 BF2, e.g.
-    //     "Bonuses\r\n(1/3) {OptionR}...") contain a LITERAL \r\n INSIDE
-    //     the text itself — part of the quoted value, not a line
-    //     separator. Reading line-by-line (e.g. via
-    //     File.ReadAllLinesAsync) would split ONE logical CSV record into
-    //     TWO "lines" for every such case, shifting the Original/
-    //     Translation columns for that record and any neighboring ones.
+    //     IMPORTANT: the file is read as one ENTIRE text blob and parsed
+    //     with a character-by-character state machine (ParseCsvRecords),
+    //     NOT via File.ReadAllLinesAsync — \r/\n only count as a RECORD
+    //     separator OUTSIDE quotes, exactly per RFC4180. Reason: 421
+    //     localization strings (89 BF1 + 332 BF2, e.g. "Bonuses\r\n(1/3)
+    //     {OptionR}...") contain a LITERAL \r\n inside the text itself (not
+    //     a line separator, but part of the quoted value). Naive line-based
+    //     reading splits ONE logical CSV record into TWO "lines" for every
+    //     such case, shifting the Original/Translation columns for that
+    //     record and potentially neighboring ones. Inside quotes, \r\n is
+    //     just a regular value character, as intended.
     // -------------------------------------------------------------------------
     public static async Task<List<LocalizationCsvRow>> ReadAsync(string csvPath)
     {
@@ -219,15 +223,17 @@ public static class LocalizationCsvIo
     //     масив полів). Лапко-свідомий посимвольний автомат: "" всередині
     //     лапок = один символ ", кома поза лапками = роздільник поля,
     //     \r/\n/\r\n ПОЗА лапками = роздільник запису. Усередині лапок
-    //     \r та \n — звичайні символи значення (див. коментар до ReadAsync
-    //     про те, чому це критично для реальних файлів локалізації).
+    //     \r та \n — звичайні символи значення (саме це відрізняє цей
+    //     парсер від старого SplitCsvLine, що працював по одному рядку і
+    //     тому ламався на значеннях з embedded \r\n — див. коментар вище).
     // EN: Parses the ENTIRE CSV file text into a list of records (each
     //     record — an array of fields). Quote-aware character-by-character
     //     state machine: "" inside quotes = one " character, comma outside
     //     quotes = field separator, \r/\n/\r\n OUTSIDE quotes = record
     //     separator. Inside quotes, \r and \n are regular value characters
-    //     (see the ReadAsync comment for why this matters for real
-    //     localization files).
+    //     (this is exactly what distinguishes this parser from the old
+    //     line-at-a-time SplitCsvLine, which broke on values with embedded
+    //     \r\n — see comment above).
     // -------------------------------------------------------------------------
     private static List<string[]> ParseCsvRecords(string text)
     {

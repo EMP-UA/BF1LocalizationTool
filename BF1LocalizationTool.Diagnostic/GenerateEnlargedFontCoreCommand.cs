@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GenerateEnlargedFontCoreCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ГЕНЕРАТОР (production, входить у фінальний патч) / GENERATOR (production, part of the final patch)
 // =============================================================================
 // UA: Крок ЗБІЛЬШЕННЯ шрифту (upscale-first). Бере наявний core.lvl і
 //     перепаковує КОЖЕН шрифт у свіжий атлас із коефіцієнтом scale>1:

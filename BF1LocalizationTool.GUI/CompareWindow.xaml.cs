@@ -162,7 +162,8 @@ public partial class CompareWindow : Window
     //     "SQUAD\r\nCOMMANDS" — короткий/переносний варіант того самого
     //     UI-елемента; 53 таких пари лише в BF1 english). Порівняння
     //     ЛИШЕ по хешу (Distinct на хешах, GetByHash без ordinal) мовчки
-    //     схлопнуло б обидва варіанти в один рядок.
+    //     схлопує обидва варіанти в один рядок — це дає 2404 замість
+    //     реальних 2457 записів BF1 english.
     // EN: COMPARISON — by (HASH, ORDINAL position among entries sharing
     //     that same hash), not hash alone. EMPIRICALLY CONFIRMED (byte-
     //     level parsing of core.lvl, both games): the same 32-bit hash is
@@ -170,8 +171,9 @@ public partial class CompareWindow : Window
     //     0xf2e2b10d = both "SQUAD COMMANDS" and "SQUAD\r\nCOMMANDS" —
     //     short/wrapped variant of the same UI element; 53 such pairs in
     //     BF1 english alone). Comparing by hash ALONE (Distinct on
-    //     hashes, GetByHash without ordinal) would silently collapse both
-    //     variants into one row.
+    //     hashes, GetByHash without ordinal) silently collapses both
+    //     variants into one row — that's exactly why it comes out to
+    //     2404 instead of BF1 english's real 2457 entries.
     // =========================================================================
 
     private void RunComparison()

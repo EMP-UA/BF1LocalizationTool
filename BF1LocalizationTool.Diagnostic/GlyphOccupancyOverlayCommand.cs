@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GlyphOccupancyOverlayCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Застереження з DonorSlotGrowthPotentialCommand: "вільний простір"
 //     там означає лише "не покритий ЖОДНИМ FBOD-записом ЦЬОГО шрифту" —
@@ -54,16 +55,16 @@ public static class GlyphOccupancyOverlayCommand
     private const int LabelHeight = 22;
     private const int Padding = 12;
 
-    // UA: outputDir — опційна конкретна тека для ЦЬОГО запуску, щоб
-    //     десятки PNG не накопичувались у спільній плоскій
-    //     diagnostic-output. null (за замовчуванням) використовує плоску
-    //     diagnostic-output — сумісно з наявним викликом №3 меню
-    //     (перевірка ОРИГІНАЛЬНОГО файлу), для якого підпапка непотрібна.
-    // EN: outputDir — an optional specific folder for THIS run, so dozens
-    //     of PNGs don't pile up in the shared flat diagnostic-output.
-    //     null (default) uses the flat diagnostic-output — compatible
-    //     with the existing menu item 3 call (checking the ORIGINAL
-    //     file), which doesn't need a subfolder.
+    // UA: outputDir — опційна конкретна тека для ЦЬОГО запуску (щоб не
+    //     звалювати десятки PNG у спільну плоску diagnostic-output). null
+    //     (за замовчуванням) зберігає плоску diagnostic-output-структуру
+    //     — щоб НЕ зламати вже наявний виклик №3 меню
+    //     (перевірка ОРИГІНАЛЬНОГО файлу), для якого підтека непотрібна.
+    // EN: outputDir — optional specific folder for THIS run (so dozens of
+    //     PNGs don't pile up in the shared flat diagnostic-output).
+    //     null (default) keeps the flat diagnostic-output structure — so
+    //     the EXISTING menu item 3 call (checking the ORIGINAL file),
+    //     which doesn't need a subfolder, isn't broken.
     public static void Run(DiagnosticReport report, UcfbChunk root, string label, string? outputDir = null)
     {
         var fonts = FontChunkLocator.FindAll(root);

@@ -14,7 +14,7 @@
 //                 призначення НЕ реверс-інжинирено, не потрібне для
 //                 задачі widescreen-фікса
 //         BODY  — сирий скомпільований Lua 5.0 dump (див.
-//                 Lua50BytecodeReader) — те, що нас цікавить
+//                 Lua50BytecodeReader) — те, що тут потрібне
 //     Це ЛОКАТОР — лише знаходить ресурси й повертає UcfbChunk BODY для
 //     подальшого парсингу через Lua50BytecodeReader.Parse.
 // EN: Finds "scr_" chunks (compiled UI/HUD Lua scripts) in the ucfb chunk
@@ -28,7 +28,7 @@
 //                 purpose NOT reverse engineered, not needed for the
 //                 widescreen-fix task
 //         BODY  — raw compiled Lua 5.0 dump (see Lua50BytecodeReader) —
-//                 what we actually care about
+//                 the part that actually matters
 //     This is a LOCATOR — it only finds resources and returns the BODY
 //     UcfbChunk for further parsing via Lua50BytecodeReader.Parse.
 // =============================================================================

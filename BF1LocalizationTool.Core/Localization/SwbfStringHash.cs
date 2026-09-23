@@ -12,24 +12,24 @@
 //         ifs.onlineopt.voicemask
 //         common.no
 //     а в таблиці `Locl` за цим хешем лежить ВІДОБРАЖУВАНИЙ рядок
-//     ("CAPTURE AND HOLD CPS" тощо). Саме тому хешування самого тексту
+//     ("CAPTURE AND HOLD CPS" тощо). Саме тому спроба хешувати сам текст
 //     ("TATOOINE: DUNE SEA") ніколи не дає збігу.
 //
-//     ПІДТВЕРДЖЕНО емпірично на реальному core.lvl BF1 (2446 відомих
-//     хешів): ключі, вичеплені з Lua-байткоду самої гри, дають ТОЧНИЙ
-//     збіг за цією формулою:
+//     ЯК ПІДТВЕРДЖЕНО (емпірично на реальному core.lvl BF1, 2446
+//     відомих хешів): ключі, вичеплені з Lua-байткоду самої гри,
+//     дають ТОЧНИЙ збіг за цією формулою:
 //         fnv1a("level.tat3.objectives.1") = 0x1CDDFE52 → "CAPTURE AND HOLD CPS"
 //         fnv1a("ifs.onlineopt.voicemask")  → присутній у таблиці
 //         fnv1a("ifs.soundopt.speechvol")   → присутній у таблиці
 //         fnv1a("common.no")                → присутній у таблиці
-//     FNV-1 (не -1a), djb2, sdbm і CRC32 збігів не дають у жодному з
-//     варіантів (raw/lower/upper).
+//     Перевірено також, що НЕ підходять: FNV-1 (не -1a), djb2, sdbm, CRC32
+//     — у жодному з варіантів (raw/lower/upper) збігів немає.
 //
-//     Ця функція дозволяє ГЕНЕРУВАТИ нові хеші — тобто додавати нові
-//     рядки локалізації під власними ключами (не лише правити текст під
-//     наявними хешами). Практичний приклад — назва карти аддону Tat3, яка
-//     живе поза `Locl` (див. `PatchAddOnMapNameCommand` і
-//     FONT_FORMAT_SPEC §13).
+//     НАВІЩО ЦЕ ПОТРІБНО: доти інструмент умів лише ЧИТАТИ наявні хеші й
+//     правити текст під ними. Тепер він уміє їх ГЕНЕРУВАТИ — тобто можна
+//     ДОДАВАТИ нові рядки локалізації під власними ключами. Перший
+//     практичний випадок — назва карти аддону Tat3, яка живе поза `Locl`
+//     (див. `PatchAddOnMapNameCommand` і FONT_FORMAT_SPEC.md §8.3).
 //
 // EN: The hash function Star Wars Battlefront (2004/2005) uses to address
 //     localization strings. It is FNV-1a, 32-bit, over the ASCII bytes of
@@ -41,16 +41,17 @@
 //     exactly why hashing the text itself ("TATOOINE: DUNE SEA") never
 //     matches.
 //
-//     CONFIRMED empirically against the real BF1 core.lvl (2446 known
-//     hashes): keys extracted from the game's own Lua bytecode match
-//     EXACTLY under this formula (see the UA list above). FNV-1 (not -1a),
-//     djb2, sdbm and CRC32 do NOT match in any raw/lower/upper variant.
+//     HOW IT WAS CONFIRMED (empirically against the real BF1
+//     core.lvl with 2446 known hashes): keys extracted from the game's own
+//     Lua bytecode match EXACTLY under this formula (see the UA list
+//     above). Also verified that FNV-1 (not -1a), djb2, sdbm and CRC32 do
+//     NOT match in any raw/lower/upper variant.
 //
-//     This function allows GENERATING new hashes — i.e. adding new
-//     localization strings under our own keys (not just editing text
-//     behind existing hashes). Practical example — the Tat3 add-on's map
-//     name, which lives outside `Locl` (see `PatchAddOnMapNameCommand` and
-//     FONT_FORMAT_SPEC §13).
+//     WHY THIS MATTERS: until now the tool could only READ existing hashes
+//     and edit the text behind them. It can now GENERATE them — meaning
+//     new localization strings can be ADDED under freshly generated keys. First
+//     practical use — the Tat3 add-on's map name, which lives outside
+//     `Locl` (see `PatchAddOnMapNameCommand` and FONT_FORMAT_SPEC.md §8.3).
 // =============================================================================
 
 using System.Text;

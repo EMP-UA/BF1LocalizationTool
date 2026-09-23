@@ -6,13 +6,13 @@
 // UA: Параметри растеризації одного гліфа.
 //     Розмір canvas ЗАДАЄТЬСЯ ЗОВНІ (з існуючого донорського FBOD-запису:
 //     ink_width × cell_h) — растеризатор НЕ вирішує розмір шрифту сам,
-//     бо ми переписуємо існуючий слот атласу без зміни його геометрії
+//     бо тут переписується існуючий слот атласу без зміни його геометрії
 //     (стратегія з FONT_FORMAT_SPEC.md, розділ 5: "перезаписати існуючий
 //     гліф-слот").
 // EN: Parameters for rasterizing a single glyph.
 //     Canvas size is supplied EXTERNALLY (from the existing donor FBOD
 //     entry: ink_width × cell_h) — the rasterizer does NOT decide font
-//     size itself, since we're overwriting an existing atlas slot without
+//     size itself, since this overwrites an existing atlas slot without
 //     changing its geometry (strategy from FONT_FORMAT_SPEC.md, section 5:
 //     "overwrite existing glyph slot").
 // =============================================================================
@@ -58,23 +58,14 @@ public sealed record GlyphRasterizeOptions
     public required int CanvasWidth { get; init; }
     public required int CanvasHeight { get; init; }
 
-    // UA: Зміщення базової лінії від верху canvas у пікселях — параметр
-    //     ПРОБНОГО растеризатора, не гри. Для вимірювання форми літер це
-    //     завжди фіксоване значення пробного canvas (ProbeBaselineY=300,
-    //     однакове для КОЖНОГО виміру цього алфавіту — CyrillicGlyphShapeProbe/
-    //     GlyphBoxFitRenderer/GlyphMetricModel). Фактичне позиціювання
-    //     гліфа НА ЕКРАНІ гри визначають поля FBOD Bearing/CellHeight
-    //     (GlyphMetricModel), а не ця константа — растеризатор сам нічого
-    //     не знає про базову лінію гри.
-    // EN: Baseline offset from the top of the canvas, in pixels — a
-    //     parameter of the PROBE rasterizer, not the game. For measuring
-    //     letter shapes this is always the fixed probe-canvas value
-    //     (ProbeBaselineY=300, the same for EVERY measurement across this
-    //     alphabet — CyrillicGlyphShapeProbe/GlyphBoxFitRenderer/
-    //     GlyphMetricModel). The letter's actual on-screen position in the
-    //     game is governed by the FBOD Bearing/CellHeight fields
-    //     (GlyphMetricModel), not by this constant — the rasterizer itself
-    //     knows nothing about the game's baseline.
+    // UA: Зміщення базової лінії від верху canvas у пікселях. Точна
+    //     формула для BF1 (аналог "EngineBaseline factor = 0.80" зі
+    //     SteamWorld Heist) ще НЕ виведена — це відповідальність коду,
+    //     що викликає растеризатор (наступний крок), не самого растеризатора.
+    // EN: Baseline offset from top of canvas in pixels. The exact formula
+    //     for BF1 (analogous to "EngineBaseline factor = 0.80" from
+    //     SteamWorld Heist) is NOT yet derived — that's the caller's
+    //     responsibility (next step), not the rasterizer's.
     public required int BaselineY { get; init; }
 
     public FontStyle Style { get; init; } = FontStyle.Regular;

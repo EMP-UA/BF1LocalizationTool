@@ -2,15 +2,16 @@
 // BF1LocalizationTool.Diagnostic — DonorSlotGrowthPotentialCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перевіряє, чи можна розширити UV-прямокутник ОДНОГО донора у
 //     ДІЙСНО ВІЛЬНИЙ простір текстури (не займаючи жодного сусіднього
-//     гліфа), не змінюючи розмір самої текстурної сторінки. Це можливо
-//     завдяки UcfbWriter.cs — заміна чанку МОЖЕ бути іншого розміру за
-//     оригінал (payloadData = replacement, довжина оновлюється сама).
-//     Розширення самої сторінки (128→256 і т.д.) НЕ розглядається — це
-//     змінило б офсет (row*texW+col)*2 для АБСОЛЮТНО ВСІХ гліфів
-//     сторінки, це вже не точкова правка.
+//     гліфа), не змінюючи розмір самої текстурної сторінки? Підтверджено
+//     UcfbWriter.cs — заміна чанку МОЖЕ бути іншого розміру за оригінал
+//     (payloadData = replacement, довжина оновлюється сама). Розширення
+//     самої сторінки (128→256 і т.д.) НЕ розглядається — це змінило б
+//     офсет (row*texW+col)*2 для АБСОЛЮТНО ВСІХ гліфів сторінки, це вже
+//     не точкова правка.
 //
 //     Будує карту зайнятості пікселів (bool[,]) з УСІХ реальних
 //     прямокутників сторінки (не лише донорів — жодного гліфа, що
@@ -19,15 +20,14 @@
 //     праворуч, зверху, знизу — до першого зайнятого пікселя АБО межі
 //     текстури. Це геометричний факт, обчислений напряму з реальних
 //     прямокутників усіх гліфів — не оцінка, не здогад.
-// EN: Checks whether a single donor's UV rectangle can be enlarged into
-//     GENUINELY FREE texture space (without touching any neighbor glyph),
-//     without changing the texture page's own size. This is possible
-//     thanks to UcfbWriter.cs — a chunk replacement CAN be a different
-//     size than the original (payloadData = replacement, length updates
-//     itself). Enlarging the page itself (128→256 etc.) is NOT
-//     considered — that would change the (row*texW+col)*2 offset for
-//     ABSOLUTELY EVERY glyph on the page, which is no longer a targeted
-//     edit.
+// EN: Checks whether a single donor's UV rectangle can be enlarged
+//     into GENUINELY FREE texture space (without touching any neighbor
+//     glyph), without changing the texture page's own size? Confirmed by
+//     UcfbWriter.cs — a chunk replacement CAN be a different size than
+//     the original (payloadData = replacement, length updates itself).
+//     Enlarging the page itself (128→256 etc.) is NOT considered — that
+//     would change the (row*texW+col)*2 offset for ABSOLUTELY EVERY
+//     glyph on the page, which is no longer a targeted edit.
 //
 //     Builds a pixel occupancy map (bool[,]) from ALL real rectangles on
 //     the page (not just donors — no glyph that's actually in use may be
@@ -52,21 +52,17 @@ public static class DonorSlotGrowthPotentialCommand
     {
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII-символи (0x20-0x7E) завжди вважаються
-        //     "зайнятими", незалежно від результату Locl-сканування:
-        //     деякі рядки гри (напр. "Exit to Windows", де мала 'w'
-        //     показується напряму) використовують друковні ASCII-коди
-        //     поза таблицею Locl, тож саме лише Locl-сканування не
-        //     доводить, що такий код вільний. Лише недруковні керівні
-        //     коди (0x00-0x1F, 0x7F) лишаються кандидатами на основі
-        //     даних реального сканування.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is always considered "used",
-        //     regardless of the Locl scan result: some game strings
-        //     (e.g. "Exit to Windows", where the lowercase 'w' is shown
-        //     directly) use printable ASCII codes outside the Locl
-        //     table, so the Locl scan alone doesn't prove such a code is
-        //     free. Only non-printable control codes (0x00-0x1F, 0x7F)
-        //     remain candidates based on real scan data.
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        //     кандидатами через реальні дані.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);

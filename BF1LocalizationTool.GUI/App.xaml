@@ -161,17 +161,22 @@
             <!-- UA: НЕМАЄ RowBackground/AlternatingRowBackground тут — вони
                  КОНКУРУЮТЬ із будь-яким власним DataGrid.RowStyle
                  (MainWindow.xaml, x:Key="RowStyle"): фактично видимою
-                 лишається лише рамка рядка, а заливка за статусом ховається.
-                 Ті DataGrid, яким власний RowStyle не потрібен
-                 (CompareWindow), задають ці два пензлі ЛОКАЛЬНО на своєму
-                 елементі — див. CompareWindow.xaml.
+                 лишається лише рамка рядка, заливка за статусом ховається
+                 (реальний баг — точнісінько той самий, що вже
+                 задокументовано й виправлено в SWH.LocEditor,
+                 MainWindow.xaml). Ті DataGrid,
+                 яким власний RowStyle не потрібен (CompareWindow), задають
+                 ці два пензлі ЛОКАЛЬНО на своєму елементі — див.
+                 CompareWindow.xaml.
                  EN: NO RowBackground/AlternatingRowBackground here — they
                  COMPETE with any DataGrid.RowStyle of its own
                  (MainWindow.xaml, x:Key="RowStyle"): in practice only the
-                 row's border stays visible, and the per-status fill gets
-                 hidden. DataGrids that don't need their own RowStyle
-                 (CompareWindow) set these two brushes LOCALLY on their own
-                 element instead — see CompareWindow.xaml. -->
+                 row's border stays visible, the per-status fill gets hidden
+                 (a real bug — the exact same one already documented and
+                 fixed in SWH.LocEditor, MainWindow.xaml). DataGrids that
+                 don't need their own RowStyle (CompareWindow) set these two
+                 brushes LOCALLY on their own element instead — see
+                 CompareWindow.xaml. -->
             <Setter Property="FontSize"        Value="13"/>
             <Setter Property="SelectionMode"   Value="Single"/>
             <Setter Property="HeadersVisibility" Value="Column"/>

@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — SafeDonorGeometryDistributionCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перед тим як проектувати алгоритм ПІДБОРУ донора під форму цільової
 //     кириличної літери (замість силуваного вписування/обрізання) —
@@ -58,18 +59,17 @@ public static class SafeDonorGeometryDistributionCommand
     {
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII (0x20-0x7E) ЗАВЖДИ вважаються "зайнятими"
-        //     незалежно від Locl-сканування, оскільки гра використовує їх
-        //     і поза таблицею `Locl` (напр. дослівні англійські рядки, що
-        //     не проходять через хеш-пошук — див. `PatchAddOnMapNameCommand`).
-        //     Лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
         //     кандидатами через реальні дані.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is ALWAYS treated as "used"
-        //     regardless of the Locl scan, because the game also uses them
-        //     outside the `Locl` table (e.g. literal English strings that
-        //     bypass the hash lookup — see `PatchAddOnMapNameCommand`).
-        //     Only non-printable control codes (0x00-0x1F, 0x7F) remain
-        //     real-data candidates.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);

@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontGlyphMetricsCorrelationCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Продовження GlyphVerticalGeometryProbeCommand — там середні за
 //     категоріями (baseline/descender/ascender) намітили, що

@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GenerateLocalizedCoreCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
 // UA: НЕ ПЕРЕВІРКА — ця команда РЕАЛЬНО ПИШЕ файл (окрема категорія
 //     меню, явно позначена, щоб не сплутати з рештою 30+ read-only
@@ -10,15 +11,18 @@
 //     зайнятості), і викликає CyrillicFontInjector
 //     (BF1LocalizationTool.FontGenerator) для кожного переданого шрифту.
 //
-//     "Яка літера → який байт-код" вирішується ОДИН РАЗ на всю гру, зі
-//     СПІЛЬНОЮ таблицею кодів (PerFontSafeDonorCommand підтверджує:
+//     СПІЛЬНА таблиця кодів (підтверджено PerFontSafeDonorCommand —
 //     перетин безпечних кодів усіх шрифтів дає 74 для BF1 і 91 для BF2,
-//     потрібно 66). Це критично, бо текст (байти) спільний для всієї
-//     гри незалежно від того, яким шрифтом його намалюють: якби кожен
-//     виклик CyrillicFontInjector визначав "літера→код" окремо на
-//     власному донорському пулі шрифту (пули різних розмірів шрифту
-//     різні), той самий байт міг би стати різними літерами в різних
-//     розмірах шрифту.
+//     потрібно 66): "яка літера → який байт-код" вирішується ОДИН РАЗ
+//     для всієї гри, а не окремо для кожного шрифту — кожен виклик
+//     CyrillicFontInjector отримує вже готове призначення, а не сам
+//     викликає GlyphDonorMatcher.Assign на власному донорському пулі.
+//     Це важливо, бо донорський пул різних розмірів шрифту різний: якби
+//     призначення рахувалось окремо для кожного шрифту, той самий байт
+//     міг би стати різними літерами в різних розмірах шрифту. Текст
+//     (байти) спільний для всієї гри незалежно від того, яким шрифтом
+//     його намалюють, тож єдине спільне призначення — архітектурна
+//     вимога, а не дрібниця.
 //
 //     Тепер команда працює у ДВА ПРОХОДИ:
 //       1. Аналізує КОЖЕН шрифт окремо (геометрія, перетини, нульова
@@ -47,14 +51,18 @@
 //     geometry, occupancy maps), and calls CyrillicFontInjector
 //     (BF1LocalizationTool.FontGenerator) for each supplied font.
 //
-//     "Which letter → which byte-code" is decided ONCE for the whole
-//     game, with a SHARED code table (PerFontSafeDonorCommand confirms
-//     the intersection of all fonts' safe codes is 74 for BF1 and 91 for
-//     BF2, 66 needed). This matters because the text (bytes) is shared
-//     across the whole game regardless of which font renders it: if each
-//     CyrillicFontInjector call decided "letter→code" separately on its
-//     own font-specific donor pool (pools differ per font size), the
+//     SHARED code table (confirmed by PerFontSafeDonorCommand — the
+//     intersection of all fonts' safe codes is 74 for BF1 and 91 for
+//     BF2, 66 needed): "which letter → which byte-code" is decided ONCE
+//     for the whole game, not separately per font — each
+//     CyrillicFontInjector call receives an already-computed assignment
+//     rather than running its own GlyphDonorMatcher.Assign on its own
+//     donor pool. This matters because the donor pool differs per font
+//     size: if the assignment were computed separately per font, the
 //     same byte could become different letters in different font sizes.
+//     Since the text (bytes) is shared across the whole game regardless
+//     of which font renders it, one shared assignment is an
+//     architectural requirement, not a minor detail.
 //
 //     The command now works in TWO PASSES:
 //       1. Analyze EACH font separately (geometry, overlaps, zero area,
@@ -106,30 +114,22 @@ public static class GenerateLocalizedCoreCommand
         // UA: ДВА окремих фінальних пули замість одного — БЕЗ м'яких
         //     донорів (нульовий ризик для інших мов) і З ними (ризик
         //     для мов, які реально використовують цей код). Рішення "чи
-        //     потрібні м'які донори" приймається ПІСЛЯ повної фільтрації
-        //     й перетину всіх шрифтів, а не за грубою оцінкою кількості
-        //     кандидатів ДО фільтрації перетинів/геометрії/висоти: груба
-        //     оцінка ненадійна — вона рахує кандидатів ДО фільтрації, тож
-        //     може показати достатньо (напр. вище 66) там, де РЕАЛЬНИЙ
-        //     пул після фільтрації виявляється значно меншим (підтвердж­
-        //     ено на BF2: груба оцінка > 66, реальний пул без м'яких
-        //     донорів — лише 57, тоді як з м'якими донорами — 91). Тому
-        //     м'які донори підключаються, лише якщо БЕЗ них справді не
-        //     вистачає — за РЕАЛЬНИМ перетином, а не оцінкою.
+        //     додавати м'які донори" приймається ПІСЛЯ повної фільтрації
+        //     й перетину всіх шрифтів (а не на основі грубої оцінки
+        //     кількості кандидатів ДО фільтрації перетинів/геометрії/
+        //     висоти, яка ненадійна — грубий підрахунок не відображає
+        //     РЕАЛЬНИЙ розмір пулу після фільтрації) — м'які донори
+        //     підключаються, лише якщо БЕЗ них справді не вистачає.
         // EN: TWO separate final pools instead of one — WITHOUT soft
         //     donors (zero risk to other languages) and WITH them (risk
         //     to languages that actually use that code). The decision
-        //     "are soft donors needed" is made AFTER full filtering and
-        //     intersection across all fonts, not from a crude estimate of
-        //     the candidate count BEFORE overlap/geometry/height
-        //     filtering: a crude estimate is unreliable — it counts
-        //     candidates BEFORE filtering, so it can look sufficient
-        //     (e.g. above 66) where the REAL pool after filtering turns
-        //     out much smaller (confirmed on BF2: crude estimate > 66,
-        //     real pool without soft donors only 57, versus 91 with soft
-        //     donors). So soft donors are only pulled in if the pool is
-        //     genuinely insufficient without them — based on the REAL
-        //     intersection, not an estimate.
+        //     "whether to add soft donors" is made AFTER full filtering
+        //     and intersection across all fonts (not from a crude
+        //     candidate count taken BEFORE overlap/geometry/height
+        //     filtering, which is unreliable — a crude count doesn't
+        //     reflect the REAL pool size after filtering) — soft donors
+        //     are only pulled in if the pool is genuinely insufficient
+        //     without them.
         HashSet<int> FinalSafePoolBaseOnly,
         HashSet<int> FinalSafePoolWithSoft,
         // UA: Потрібен для GlyphDonorMatcher.Assign — переводить висоту
@@ -149,39 +149,46 @@ public static class GenerateLocalizedCoreCommand
         var root = UcfbReader.ReadFile(inputFilePath);
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(inputFilePath);
 
-        // UA: Сканування Locl-текстів має сліпу зону: код, не знайдений у
-        //     Locl-рядках core.lvl, НЕ обов'язково вільний — деякі рядки
-        //     гри (напр. пункт меню "Exit to Windows") використовують
-        //     друковні ASCII-символи поза таблицею Locl (жорстко вшиті
-        //     рядки, інші .lvl-файли), тож "не знайдено в Locl-тексті" не
-        //     доводить "гра ніколи це не покаже".
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — пункт меню "Exit to
+        //     Windows"): гра показала "WINDOГs" замість "Windows" — код
+        //     'w' (0x77) насправді використовується, хоча НЕ зустрічається
+        //     в жодному з 6 мов Locl-текстів core.lvl (десь-інде — жорстко
+        //     вшитий рядок, інший .lvl-файл — джерело не з'ясовувалось,
+        //     бо для рішення це не має значення). Це показує: "не знайдено
+        //     в Locl-тексті" НЕ ДОВОДИТЬ "гра ніколи це не покаже" —
+        //     сканування Locl має сліпу зону на будь-який текст поза ним.
         //
         //     Тому ДРУКОВНІ ASCII-символи (0x20-0x7E — літери, цифри,
         //     пунктуація: усе, що ТЕОРЕТИЧНО могло б зустрітись як
         //     видимий текст ДЕСЬ у грі) ЗАВЖДИ вважаються зайнятими,
         //     незалежно від результату сканування Locl — англійський
-        //     текст не чіпається взагалі. Лишаються доступними лише
-        //     НЕДРУКОВНІ керівні коди (0x00-0x1F, 0x7F) — їх не може
-        //     містити жоден легітимний рядок тексту, і коди 128-255, де
-        //     сканування Locl 6 мов лишається єдиним і достатнім
-        //     джерелом істини.
-        // EN: Scanning Locl text has a blind spot: a code not found in
-        //     core.lvl's Locl strings is NOT necessarily free — some game
-        //     strings (e.g. the "Exit to Windows" menu item) use
-        //     printable ASCII characters outside the Locl table
-        //     (hardcoded strings, other .lvl files), so "not found in
-        //     Locl text" does not prove "the game will never display
-        //     this".
+        //     текст (латиниця) принципово не чіпається донорським
+        //     підбором. Лишаються доступними лише НЕДРУКОВНІ керівні коди
+        //     (0x00-0x1F, 0x7F) — їх не може містити жоден легітимний
+        //     рядок тексту, і коди 128-255, де сканування Locl 6 мов
+        //     лишається єдиним і достатнім джерелом істини (перевірено
+        //     багаторазово в проєкті без подібних збоїв).
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows" menu
+        //     item): the game showed "WINDOГs" instead of "Windows" —
+        //     'w' (0x77) IS actually used, though it never appears in any
+        //     of the 6 languages' Locl text in core.lvl (somewhere else —
+        //     a hardcoded string, another .lvl file — the exact source
+        //     wasn't chased down, since it doesn't matter for the fix).
+        //     This shows: "not found in Locl text" does NOT prove "the
+        //     game will never display this" — scanning Locl has a blind
+        //     spot for any text outside it.
         //
         //     So PRINTABLE ASCII (0x20-0x7E — letters, digits,
         //     punctuation: anything that could THEORETICALLY appear as
         //     visible text SOMEWHERE in the game) is ALWAYS treated as
-        //     used, regardless of the Locl scan result — English text is
-        //     never touched at all. Only NON-PRINTABLE control codes
-        //     (0x00-0x1F, 0x7F) remain eligible — no legitimate text
-        //     string can contain them — and codes 128-255, where scanning
-        //     the 6 languages' Locl text remains the sole and sufficient
-        //     source of truth.
+        //     used, regardless of the Locl scan result — English text
+        //     (Latin script) is deliberately never touched by donor
+        //     selection. Only NON-PRINTABLE control codes (0x00-0x1F,
+        //     0x7F) remain eligible — no legitimate text string can
+        //     contain them — and codes 128-255, where scanning the 6
+        //     languages' Locl text remains the sole and sufficient
+        //     source of truth (already verified repeatedly in the
+        //     project, with no similar failures).
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);
@@ -193,14 +200,12 @@ public static class GenerateLocalizedCoreCommand
 
         var baseSafeCandidates = Enumerable.Range(0, 256).Where(x => !IsUsed((ushort)x)).ToHashSet();
 
-        // UA: М'які кандидати рахуються ЗАВЖДИ (дешева операція), а не
-        //     лише "за потреби" за грубим попереднім підрахунком — сама
-        //     РІШЕННЯ про їх використання приймається нижче, ПІСЛЯ
+        // UA: М'які кандидати рахуються ЗАВЖДИ (дешева операція), а
+        //     РІШЕННЯ використовувати їх чи ні приймається нижче, ПІСЛЯ
         //     реальної фільтрації й перетину.
-        // EN: Soft candidates are ALWAYS computed (cheap), not only "if
-        //     needed" based on a crude pre-filter count — the DECISION to
-        //     use them or not is made below, AFTER real filtering and
-        //     intersection.
+        // EN: Soft candidates are ALWAYS computed (cheap), and the
+        //     DECISION to use them or not is made below, AFTER real
+        //     filtering and intersection.
         var softCandidateCodes = SoftDonorAnalysis.ComputeSoftCandidates(summary).Select(c => c.Code).ToHashSet();
 
         var fonts = FontChunkLocator.FindAll(root);
@@ -342,22 +347,23 @@ public static class GenerateLocalizedCoreCommand
         // =====================================================================
         // UA: ПЕРЕТИН — спочатку СПРОБА без м'яких донорів (нульовий
         //     ризик для інших мов). Лише якщо цього перетину РЕАЛЬНО не
-        //     вистачає — рахуємо ДРУГИЙ перетин з м'якими донорами.
-        //     Рішення "чи потрібні м'які донори" приймається за РЕАЛЬНИМ
-        //     перетином, а не за грубою попередньою оцінкою — груба
-        //     оцінка ненадійна (на BF2, при ширшому пулі ASCII, вона
-        //     піднімається вище 66, тоді як РЕАЛЬНИЙ перетин без м'яких
-        //     донорів — лише 57, і файл не був би записаний, хоча з
-        //     м'якими донорами виходить 91).
+        //     вистачає — рахується ДРУГИЙ перетин з м'якими донорами.
+        //     Рішення "чи потрібні м'які донори" базується на РЕАЛЬНОМУ
+        //     перетині ПІСЛЯ фільтрації, а не на грубому підрахунку ДО
+        //     неї — грубий підрахунок ненадійний (напр. на BF2, після
+        //     розширення пулу ASCII, груба оцінка кандидатів піднімається
+        //     вище 66, тоді як РЕАЛЬНИЙ перетин без м'яких донорів може
+        //     виявитись лише 57, а з ними — 91).
         // EN: INTERSECTION — first TRY without soft donors (zero risk to
         //     other languages). Only if that intersection is genuinely
-        //     insufficient do we compute a SECOND intersection with soft
+        //     insufficient is a SECOND intersection computed, with soft
         //     donors included. The "are soft donors needed" decision is
-        //     based on the REAL intersection, not a crude prior estimate
-        //     — a crude estimate is unreliable (on BF2, with a wider
-        //     ASCII pool, it rises above 66, while the REAL intersection
-        //     without soft donors is only 57, which would leave the file
-        //     unwritten, even though it works out to 91 WITH soft donors).
+        //     based on the REAL intersection AFTER filtering, not a
+        //     crude count taken BEFORE it — a crude count is unreliable
+        //     (e.g. on BF2, after widening the ASCII pool, the crude
+        //     candidate estimate rises above 66, while the REAL
+        //     intersection without soft donors can turn out to be only
+        //     57, and 91 with them).
         // =====================================================================
         var sharedPoolBaseOnly = analyses[0].FinalSafePoolBaseOnly;
         foreach (var a in analyses.Skip(1))
@@ -444,17 +450,17 @@ public static class GenerateLocalizedCoreCommand
                    $"({sharedPool.Count} codes in the intersection of {analyses.Count} fonts, {CyrillicAlphabet.AllLetters.Count} needed).");
 
         // UA: Деталі по КОЖНІЙ літері — щоб бачити конкретні числа для
-        //     "підозрілих" літер (напр. 'в'/'ж' в BF1 виглядають як
-        //     крихітні фрагменти), а не гадати. HeightFrac — відносна
-        //     висота (ціль: до еталонної великої кириличної літери;
-        //     донор: до referenceCapHeight шрифту) — саме цей доданок
-        //     компенсує "стрибучі" літери.
+        //     "підозрілих" літер (напр. 'в'/'ж' на скріншотах BF1
+        //     виглядають як крихітні фрагменти), а не гадати. HeightFrac
+        //     — відносна висота (ціль: до еталонної великої кириличної
+        //     літери; донор: до referenceCapHeight шрифту) — саме цей
+        //     доданок мав виправити "стрибучі" літери.
         // EN: Per-letter details — to see concrete numbers for
-        //     "suspicious" letters (e.g. 'в'/'ж' in BF1 look like tiny
-        //     fragments), instead of guessing. HeightFrac — relative
-        //     height (target: to the reference capital Cyrillic letter;
-        //     donor: to the font's referenceCapHeight) — this is the
-        //     term that compensates for "jumping" letters.
+        //     "suspicious" letters (e.g. 'в'/'ж' in BF1 screenshots look
+        //     like tiny fragments), instead of guessing. HeightFrac —
+        //     relative height (target: to the reference capital Cyrillic
+        //     letter; donor: to the font's referenceCapHeight) — this is
+        //     the term meant to fix "jumping" letters.
         report.Log($"UA: [{label}] Деталі призначення (66 літер):");
         report.Log($"EN: [{label}] Assignment details (66 letters):");
         report.Log("    Літера  Донор  Розмір(WxH)  Пропорція ціль/донор  HeightFrac ціль/донор");
@@ -490,18 +496,14 @@ public static class GenerateLocalizedCoreCommand
             report.Log($"UA: [{label}] {analysis.BaseName}: додано {result.LettersInjected} літер.");
             injectedFontNames.Add(analysis.BaseName);
 
-            // UA: Фактичний розмір ПІСЛЯ росту (GrowthResolver) — пряма
-            //     відповідь на питання "чи домальовує ріст ідеальні
-            //     клітинки, чи впирається у відсутність вільного місця":
-            //     PostAspect/TargetAspect близькі → ріст компенсував
-            //     поганий донор; PostWxH ≈ PreWxH (майже без змін) →
-            //     навколо донора просто немає вільного місця для росту.
-            // EN: The ACTUAL size AFTER growth (GrowthResolver) — a
-            //     direct answer to "does growth draw proper cells, or is
-            //     it blocked by no free space": PostAspect/TargetAspect
-            //     close → growth compensated for a bad donor; PostWxH ≈
-            //     PreWxH (barely changed) → there's simply no free space
-            //     around that donor to grow into.
+            // UA: Фактичний розмір ПІСЛЯ росту (GrowthResolver): якщо
+            //     PostAspect/TargetAspect близькі, ріст компенсував
+            //     поганий донор; якщо PostWxH ≈ PreWxH (майже без змін),
+            //     навколо донора немає вільного місця для росту.
+            // EN: The actual size AFTER growth (GrowthResolver): when
+            //     PostAspect/TargetAspect are close, growth compensated
+            //     for a bad donor; when PostWxH ≈ PreWxH (barely changed),
+            //     there is no free space around that donor to grow into.
             report.Log($"UA: [{label}] {analysis.BaseName}: розмір ДО/ПІСЛЯ росту (66 літер):");
             report.Log($"EN: [{label}] {analysis.BaseName}: size BEFORE/AFTER growth (66 letters):");
             report.Log("    Літера  Донор  До(WxH)   Після(WxH)  Пропорція ціль/після");
@@ -564,44 +566,49 @@ public static class GenerateLocalizedCoreCommand
                 report.Log();
             }
 
-            // UA: Показує ПОЛЯ FBOD, які наш код НІКОЛИ не змінює — вони
-            //     завжди КОПІЮЮТЬСЯ з донора (GlyphAtlasPatcher.BuildReplacements,
+            // UA: Детальне логування всіх параметрів. Показує ПОЛЯ FBOD,
+            //     які код НІКОЛИ не змінює — вони завжди КОПІЮЮТЬСЯ з
+            //     донора (GlyphAtlasPatcher.BuildReplacements,
             //     задокументовано там же: "PageIndex/Bearing/CellHeight/
             //     ReservedByte4 — усе решта НЕ вказано тут, тож `with`
             //     копіює їх з donor без змін"). Якщо ГРА використовує
             //     CellHeight/Bearing для ВЕРТИКАЛЬНОГО позиціонування чи
             //     масштабування гліфа під час рендеру (а не лише як
             //     метадані) — тоді нова кирилична літера успадковує це
-            //     значення від СТАРОЇ, нічим не пов'язаної англійської
-            //     літери/символу донора, і жодне вдосконалення пікселів у
-            //     PNG цього не виправить, бо рушій може перемасштовувати/
-            //     зсувати квад ПОВЕРХ уже намальованих пікселів, за цим
-            //     чужим числом. CellHeight корелює з розміром чорнила
-            //     (FontGlyphRecord.cs, 53-76% відхилення), але ця
-            //     кореляція не доводить, що саме воно керує вертикальним
-            //     позиціонуванням (див. CellHeightHypothesisTestCommand).
-            //     Мета цього логу — дати сирі дані для порівняння: чи в
-            //     донорів "стрибучих" літер CellHeight/Bearing
-            //     систематично інші, ніж у "спокійних".
-            // EN: Shows the FBOD fields our code NEVER changes — they're
-            //     always COPIED from the donor (GlyphAtlasPatcher.BuildReplacements,
+            //     значення від НЕПОВ'ЯЗАНОЇ англійської літери/символу
+            //     донора — і жодне вдосконалення пікселів у PNG цього не
+            //     виправить, бо рушій може перемасштабовувати/зсувати
+            //     квад ПОВЕРХ уже намальованих пікселів, за цим чужим
+            //     числом. FontGlyphRecord.cs перевіряє кореляцію
+            //     Bearing/XAdvance з вертикальним позиціонуванням і
+            //     кореляцію CellHeight з розміром чорнила (53-76%
+            //     відхилення), але не перевіряє CellHeight/Bearing саме як
+            //     "джерело стрибання". Мета цього логу — дати сирі дані
+            //     для порівняння: чи в донорів "стрибучих" (за
+            //     скріншотом) літер CellHeight/Bearing систематично інші,
+            //     ніж у "спокійних".
+            // EN: Detailed logging of all parameters. Shows the FBOD
+            //     fields this code NEVER changes — they're always COPIED
+            //     from the donor (GlyphAtlasPatcher.BuildReplacements,
             //     documented there: "PageIndex/Bearing/CellHeight/
             //     ReservedByte4 — everything else is NOT specified here,
             //     so `with` copies them from donor unchanged"). If the
             //     GAME uses CellHeight/Bearing for VERTICAL positioning or
             //     scaling of the glyph AT RENDER TIME (not just as
             //     metadata) — then the new Cyrillic letter inherits this
-            //     value from the OLD, unrelated English letter/symbol
-            //     donor, and no amount of PNG pixel refinement would fix
-            //     that, since the engine could be rescaling/offsetting the
-            //     quad ON TOP OF already-correct pixels, by this unrelated
-            //     inherited number. CellHeight correlates with ink size
-            //     (FontGlyphRecord.cs, 53-76% deviation), but that
-            //     correlation doesn't prove it drives vertical positioning
-            //     (see CellHeightHypothesisTestCommand). This log's
-            //     purpose is to give raw data for comparison: do the
-            //     donors of "jumping" letters have systematically
-            //     different CellHeight/Bearing than the "calm" ones.
+            //     value from the UNRELATED English letter/symbol donor —
+            //     and no amount of PNG pixel refinement would fix that,
+            //     since the engine could be rescaling/offsetting the quad
+            //     ON TOP OF already-correct pixels, by this unrelated
+            //     inherited number. FontGlyphRecord.cs checks the
+            //     correlation of Bearing/XAdvance with vertical
+            //     positioning and the correlation of CellHeight with ink
+            //     size (53-76% deviation), but does not check
+            //     CellHeight/Bearing specifically as a "jumping" source.
+            //     This log's purpose is to give raw data for comparison:
+            //     do the donors of "jumping" letters (per the screenshot)
+            //     have systematically different CellHeight/Bearing than
+            //     the "calm" ones.
             report.Log($"UA: [{label}] {analysis.BaseName}: поля FBOD, УСПАДКОВАНІ від донора без змін (для перевірки — чи саме вони спричиняють стрибання):");
             report.Log($"EN: [{label}] {analysis.BaseName}: FBOD fields INHERITED from the donor unchanged (to check whether THEY cause the jumping):");
             report.Log("    Літера  Донор  Сторінка  CellHeight  Bearing  ReservedByte4  InkWidth(нов./new)  XAdvance(нов./new)");
@@ -662,18 +669,14 @@ public static class GenerateLocalizedCoreCommand
         // UA: Файл-супутник поруч із core.lvl — та сама sharedAssignments,
         //     якою РЕАЛЬНО патчились шрифти вище, тож GUI (кодек кирилиці)
         //     ГАРАНТОВАНО побачить точно ті самі байт-коди, що фізично є
-        //     в атласах цього конкретного файлу. Формат файла-супутника
-        //     (а не окремий чанк у core.lvl чи перерахунок логіки в Core)
-        //     обрано, щоб GUI читав готовий результат напряму, без
-        //     дублювання логіки призначення кодів.
+        //     в атласах цього конкретного файлу. Рішення: файл-супутник,
+        //     а не окремий чанк у core.lvl і не перерахунок логіки в Core.
         // EN: Sidecar file next to core.lvl — the exact sharedAssignments
         //     that ACTUALLY patched the fonts above, so the GUI (Cyrillic
         //     codec) is GUARANTEED to see the exact same byte-codes
-        //     physically present in this specific file's atlases. A
-        //     sidecar file (rather than a separate core.lvl chunk or
-        //     re-deriving the logic in Core) lets the GUI read the ready
-        //     result directly, without duplicating the code-assignment
-        //     logic.
+        //     physically present in this specific file's atlases.
+        //     Decision: a sidecar file, not a separate core.lvl chunk and
+        //     not re-deriving the logic in Core.
         var codeTable = new CyrillicCodeTable
         {
             Game = label,

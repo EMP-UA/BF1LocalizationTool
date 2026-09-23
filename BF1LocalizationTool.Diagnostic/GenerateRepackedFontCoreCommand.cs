@@ -2,18 +2,19 @@
 // BF1LocalizationTool.Diagnostic — GenerateRepackedFontCoreCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
 // UA: Валідаційний місток перед рендером з TTF. Бере наявний core.lvl,
 //     ПЕРЕПАКОВУЄ кожен шрифт у свіжий атлас (ті самі пікселі/метрики/коди,
 //     лише нова розкладка й UV — FontRepacker), і записує новий core.lvl
-//     у font-output/. Мета — довести В ГРІ, що наш bin-packer + генерація
+//     у font-output/. Мета — довести В ГРІ, що bin-packer + генерація
 //     UV/FBOD + FontResourceBuilder дають ПРАЦЮЮЧИЙ шрифт, ЩЕ ДО того, як
 //     додавати свіжий рендер літер зі збільшенням.
 //
 //     Очікування: у грі текст має виглядати ІДЕНТИЧНО оригіналу (гліфи ті
 //     самі, змінилось лише де вони лежать у текстурі). Якщо ідентично —
 //     writer-конвеєр повністю робочий на реальному двигуні. Якщо текст
-//     побитий/зсунутий — проблема в UV/packing, і ми бачимо це до
+//     побитий/зсунутий — проблема в UV/packing, і це видно до
 //     найскладнішої частини.
 //
 //     Разом із записом робить IN-MEMORY self-check: витягує пікселі
@@ -22,7 +23,7 @@
 // EN: A validation bridge before TTF rendering. Takes an existing core.lvl,
 //     REPACKS each font into a fresh atlas (same pixels/metrics/codes, only
 //     a new layout and UVs — FontRepacker), and writes a new core.lvl to
-//     font-output/. The goal is to prove IN-GAME that our bin-packer +
+//     font-output/. The goal is to prove IN-GAME that the bin-packer +
 //     UV/FBOD generation + FontResourceBuilder produce a WORKING font,
 //     BEFORE adding fresh, enlarged letter rendering.
 //
@@ -144,13 +145,14 @@ public static class GenerateRepackedFontCoreCommand
         var page = font.Pages[g.PageIndex];
         // UA: FLOOR лівого/верхнього краю + округлення розмаху — та сама
         //     half-texel-конвенція, що й FontRepacker (тексель n має центр
-        //     n+0.5, тож floor(u·W)=перший тексель); будь-яка інша
-        //     конвенція (напр. round замість floor) дала б хибні
-        //     "розбіжності" в self-check.
+        //     n+0.5, тож floor(u·W)=перший тексель) — узгоджена з тим, як
+        //     FontRepacker обчислює (pl.X+0.5); ClampRound тут давав би
+        //     хибні "розбіжності" в self-check.
         // EN: FLOOR of the left/top edge + rounded span — the same half-texel
         //     convention as FontRepacker (texel n has center n+0.5, so
-        //     floor(u·W)=first texel); any other convention (e.g. round
-        //     instead of floor) would report false self-check "mismatches".
+        //     floor(u·W)=first texel) — matching how FontRepacker computes
+        //     (pl.X+0.5); ClampRound here would report false self-check
+        //     "mismatches".
         var minUpx = Math.Min(g.U0, g.U1) * page.Width;
         var maxUpx = Math.Max(g.U0, g.U1) * page.Width;
         var minVpx = Math.Min(g.V0, g.V1) * page.Height;

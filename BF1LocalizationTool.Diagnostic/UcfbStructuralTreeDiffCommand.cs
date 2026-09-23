@@ -2,37 +2,37 @@
 // BF1LocalizationTool.Diagnostic — UcfbStructuralTreeDiffCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Порівнює ДЕРЕВО З ДЕРЕВОМ (чанк із відповідним чанком за
-//     СТРУКТУРНОЮ позицією, не байтовим офсетом) — на відміну від
-//     UcfbNoOpByteDiffCommand (спільний префікс/суфікс за АБСОЛЮТНИМ
-//     зміщенням), цей підхід лишається коректним і тоді, коли десь
-//     усередині зникає/додається N байт: УСІ наступні байти фізично
-//     ЗСУВАЮТЬСЯ, тож порівняння "за офсетом" показало б майже ВЕСЬ файл
-//     як "відмінний", навіть якщо сусідні чанки насправді байт-в-байт
-//     ідентичні — просто зсунуті.
+//     СТРУКТУРНОЮ позицією, не байтовим офсетом) — а не сирий байтовий
+//     diff за АБСОЛЮТНИМ зміщенням, який непридатний, коли десь
+//     усередині зникає N байт: усі наступні байти фізично ЗСУВАЮТЬСЯ, і
+//     порівняння "за офсетом" показує майже ВЕСЬ файл як "відмінний",
+//     хоча сусідні чанки насправді байт-в-байт ідентичні — просто
+//     зсунуті (підтверджено окремо через UcfbWriteRoundTripCommand).
 //
 //     Рекурсивно обходить root (з оригіналу) і повторно розпарсений
 //     UcfbReader.ReadFile(rewrittenBytes) ОДНОЧАСНО, звіряючи на
 //     кожному вузлі: FourCC/Id, DataSize, кількість дітей, і для
 //     листків — байт-в-байт RawData. Друкує ПЕРШИЙ вузол, де щось не
-//     збігається — це і є справжнє джерело розбіжності, без жодного
-//     артефакту зсуву.
+//     збігається — це і є справжнє джерело втрати 1024/1308 байт, без
+//     жодного артефакту зсуву.
 // EN: Compares TREE TO TREE (chunk to its corresponding chunk by
-//     STRUCTURAL position, not byte offset) — unlike UcfbNoOpByteDiffCommand
-//     (common prefix/suffix by ABSOLUTE offset), this approach stays
-//     correct even when N bytes vanish/appear somewhere mid-stream: ALL
-//     subsequent bytes physically SHIFT, so an offset-based comparison
-//     would show almost the ENTIRE file as "different", even when
-//     neighboring chunks are actually byte-for-byte identical — just
-//     shifted.
+//     STRUCTURAL position, not byte offset) — rather than a raw byte
+//     diff by ABSOLUTE offset, which doesn't work when N bytes vanish
+//     somewhere mid-stream: all subsequent bytes physically SHIFT, so an
+//     offset-based comparison shows almost the ENTIRE file as
+//     "different", even though neighboring chunks are actually
+//     byte-for-byte identical — just shifted (confirmed separately via
+//     UcfbWriteRoundTripCommand).
 //
 //     Recursively walks root (from the original) and a freshly re-parsed
 //     UcfbReader.ReadFile(rewrittenBytes) SIMULTANEOUSLY, checking at
 //     every node: FourCC/Id, DataSize, child count, and for leaves —
 //     byte-for-byte RawData. Prints the FIRST node where something
-//     mismatches — that IS the true source of the discrepancy, with no
-//     shift artifact.
+//     mismatches — that IS the true source of the 1024/1308-byte loss,
+//     with no shift artifact.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;

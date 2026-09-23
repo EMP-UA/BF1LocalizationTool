@@ -2,14 +2,17 @@
 // BF1LocalizationTool.Diagnostic — WordRenderInspectCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: НЕ перевіряє формулу, НЕ рендерить окремо/повторно — читає РЕАЛЬНІ,
 //     УЖЕ ЗАПАТЧЕНІ пікселі напряму з "output"-файлу (той самий core.lvl,
 //     який гра фактично завантажує), для конкретних слів реального
 //     перекладу, і складає їх у ОДНЕ велике зображення з зумом і
-//     напрямною лінією — щоб дивитись на реальні пікселі напряму, при
-//     збільшенні, де можна виміряти піксель-в-піксель, а не здогадуватись
-//     по стиснутому, дрібному скріншоту гри під кутом.
+//     напрямною лінією — щоб дивитись на реальні пікселі напряму, а не
+//     здогадуватись по стиснутому, дрібному скріншоту гри під кутом
+//     (3 послідовні "виправлення" не дали видимого результату саме
+//     тому, що жодне не звірялось з РЕАЛЬНИМ растром такого розміру,
+//     на якому можна виміряти піксель-в-піксель).
 //
 //     Джерело даних — FontChunkLocator/FontGlyphTable/
 //     FontTexturePixelReader, ті самі, перевірені утиліти, що й в усіх
@@ -25,9 +28,11 @@
 //     REAL, ALREADY-PATCHED pixels directly from the "output" file (the
 //     exact core.lvl the game actually loads), for specific words of the
 //     real translation, and composites them into ONE large image with
-//     zoom and a guide line — to look at real pixels directly, at a size
-//     where pixel-for-pixel measurement is possible, instead of guessing
-//     from a compressed, tiny, angled in-game screenshot.
+//     zoom and a guide line — to look at real pixels directly instead of
+//     guessing from a compressed, tiny, angled in-game screenshot (3
+//     consecutive "fixes" produced no visible result precisely because
+//     none was checked against a REAL raster at a size where
+//     pixel-for-pixel measurement is possible).
 //
 //     Data source — FontChunkLocator/FontGlyphTable/
 //     FontTexturePixelReader, the SAME verified utilities used by every
@@ -61,37 +66,32 @@ public static class WordRenderInspectCommand
     private const int RowPaddingBottom = 40;
     private const int LeftPadding = 12;
 
-    // UA: Реальні рядки перекладу (bf1.txt поруч з output) — репрезентативний
-    //     набір слів для перевірки вертикального вирівнювання літер.
-    // EN: Real translation lines (bf1.txt next to output) — a
-    //     representative set of words for checking letters' vertical
-    //     alignment.
+    // UA: Реальні рядки перекладу (bf1.txt поруч з output, перевірено
+    //     сабагентом) — саме ці слова показують ефект "стрибання" на
+    //     скріншотах.
+    // EN: Real translation lines (bf1.txt next to output, verified by a
+    //     sub-agent) — these exact words are the ones that show the
+    //     "jumping" effect in screenshots.
     private static readonly string[] TestWords =
     [
         "Один", "гравець", "Мультиплеєр", "Налаштування", "Менеджер", "Профілей"
     ];
 
-    // UA: Викликається для КОЖНОЇ гри й КОЖНОГО шрифту окремо — за
-    //     стандартним правилом проєкту "перевірка ЗАВЖДИ вичерпна по
-    //     обох іграх/усіх шрифтах" (та сама вимога вже застосована в
-    //     GenerateLocalizedCoreCommand — усі 5 gamefont_* завжди разом,
-    //     не вибірково): вибіркова перевірка лише частини комбінацій
-    //     могла б пропустити регресію в тих, що лишились неперевіреними.
-    //     runOutputDir — ОДНА спільна підпапка на весь запуск (Program.cs
-    //     створює її РАЗ, timestamp у назві), а не плоска купа PNG у
+    // UA: Перевірка ЗАВЖДИ вичерпна по обох іграх/усіх шрифтах — ОБИДВІ
+    //     гри й УСІ 5 gamefont_* завжди разом, не вибірково (та сама
+    //     вимога, що й у GenerateLocalizedCoreCommand). runOutputDir —
+    //     ОДНА спільна підтека на весь запуск (Program.cs створює її
+    //     РАЗ, timestamp у назві), а не плоска купа PNG у
     //     diagnostic-output — так усі 10 (2 гри × 5 шрифтів) зображень
     //     цього прогону лежать РАЗОМ, окремо від інших перевірок.
-    // EN: Called for EACH game and EACH font separately — per the
-    //     project's standing rule "checks are ALWAYS exhaustive across
-    //     both games/all fonts" (the same requirement already applied in
-    //     GenerateLocalizedCoreCommand — all 5 gamefont_* always
-    //     together, never selective): checking only a subset of
-    //     combinations could miss a regression in the ones left
-    //     unchecked. runOutputDir — ONE shared subfolder for the whole
-    //     run (Program.cs creates it ONCE, a timestamp in the name),
-    //     instead of a flat pile of PNGs in diagnostic-output — so all 10
-    //     (2 games × 5 fonts) images from this run sit TOGETHER, separate
-    //     from other checks.
+    // EN: Checks are ALWAYS exhaustive across both games/all fonts —
+    //     BOTH games and ALL 5 gamefont_* always together, never
+    //     selective (the same requirement as in
+    //     GenerateLocalizedCoreCommand). runOutputDir — ONE shared
+    //     subfolder for the whole run (Program.cs creates it ONCE, a
+    //     timestamp in the name), instead of a flat pile of PNGs in
+    //     diagnostic-output — so all 10 (2 games × 5 fonts) images from
+    //     this run sit TOGETHER, separate from other checks.
     public static void Run(DiagnosticReport report, string outputLvlPath, string label, string fontBaseName, string runOutputDir)
     {
         if (!File.Exists(outputLvlPath))
@@ -234,24 +234,21 @@ public static class WordRenderInspectCommand
                     var page = GetPage(pageIndex);
                     using var glyphBitmap = new Bitmap(srcRect.Width, srcRect.Height, PixelFormat.Format32bppArgb);
 
-                    // UA: Розмір БОКСУ (з FBOD, після росту) і реальна
-                    //     висота чорнила всередині нього — це ДВІ РІЗНІ
-                    //     речі: без контуру боксу неможливо відрізнити
-                    //     "чорнило маленьке, бокс великий, прозоре поле
-                    //     навколо" від "чорнило справді велике". Тому
-                    //     рахуємо РЕАЛЬНУ висоту непрозорих (Alpha>0)
-                    //     рядків — inkTop/inkBottom — і малюємо КОНТУР
-                    //     самого боксу окремим кольором навколо кожної
+                    // UA: Підпис "h=" показує РЕАЛЬНУ висоту непрозорих
+                    //     (Alpha>0) рядків — inkTop/inkBottom, а НЕ розмір
+                    //     БОКСУ (з FBOD, після росту) — без контуру боксу
+                    //     неможливо відрізнити "чорнило маленьке, бокс
+                    //     великий, прозоре поле навколо" від "чорнило
+                    //     справді велике". Контур самого боксу
+                    //     малюється окремим кольором навколо кожної
                     //     літери.
-                    // EN: The BOX size (from FBOD, after growth) and the
-                    //     real ink height inside it are TWO DIFFERENT
-                    //     things: without a box outline there's no way to
-                    //     tell "small ink, big box, transparent margin
-                    //     around it" apart from "the ink itself is big".
-                    //     So we compute the REAL height of opaque
-                    //     (Alpha>0) rows — inkTop/inkBottom — and draw the
-                    //     box's OWN outline in a separate color around
-                    //     every letter.
+                    // EN: The "h=" label shows the REAL height of opaque
+                    //     (Alpha>0) rows — inkTop/inkBottom — NOT the BOX
+                    //     size (from FBOD, after growth) — without a box
+                    //     outline there's no way to tell "small ink, big
+                    //     box, transparent margin around it" apart from
+                    //     "the ink itself is big". The box's OWN outline is
+                    //     drawn in a separate color around every letter.
                     var inkTop = -1;
                     var inkBottom = -1;
                     for (var yy = 0; yy < srcRect.Height; yy++)

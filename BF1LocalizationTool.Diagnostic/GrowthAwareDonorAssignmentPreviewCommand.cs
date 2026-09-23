@@ -2,11 +2,12 @@
 // BF1LocalizationTool.Diagnostic — GrowthAwareDonorAssignmentPreviewCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перевіряє, чи вистачить підтвердженого вільного простору
 //     (DonorSlotGrowthPotentialCommand + GlyphOccupancyOverlayCommand —
 //     обидва підтвердили порожність) на ВЕСЬ алфавіт, а не лише на
-//     кілька "особливих" широких літер.
+//     кілька "особливих" широких літер?
 //
 //     Поєднує два вже написані шматки:
 //       1. Розрахунок потенціалу росту (той самий підхід, що й у
@@ -17,15 +18,15 @@
 //
 //     Плюс ОБОВ'ЯЗКОВА перевірка, якої немає в
 //     DonorSlotGrowthPotentialCommand: там ріст рахувався для КОЖНОГО
-//     донора окремо, у припущенні "тільки він один росте". Якщо ми
-//     реально розширюємо ВСІ 66 призначених донорів одночасно, два
+//     донора окремо, у припущенні "тільки він один росте". Якщо
+//     реально розширити ВСІ 66 призначених донорів одночасно, два
 //     сусідні донори можуть претендувати на ТУ САМУ вільну ділянку.
 //     Ця команда перевіряє САМЕ ЦЕ — чи перетинаються розширені
 //     прямокутники серед ФАКТИЧНО ПРИЗНАЧЕНИХ 66 донорів.
-// EN: Verifies whether the confirmed free space
+// EN: Checks whether the confirmed free space
 //     (DonorSlotGrowthPotentialCommand + GlyphOccupancyOverlayCommand —
-//     both confirmed emptiness) is enough for the WHOLE alphabet, not just
-//     a handful of "special" wide letters.
+//     both confirmed emptiness) enough for the WHOLE alphabet, not just
+//     a handful of "special" wide letters?
 //
 //     Combines two already-written pieces:
 //       1. Growth-potential calculation (the same approach as
@@ -36,8 +37,8 @@
 //
 //     Plus a MANDATORY check missing from
 //     DonorSlotGrowthPotentialCommand: growth there was computed for
-//     EACH donor independently, assuming "only this one grows". If we
-//     actually enlarge ALL 66 assigned donors at once, two neighboring
+//     EACH donor independently, assuming "only this one grows". Actually
+//     enlarging ALL 66 assigned donors at once means two neighboring
 //     donors might claim the SAME free area. This command checks EXACTLY
 //     that — whether the grown rectangles among the ACTUALLY ASSIGNED 66
 //     donors overlap each other.
@@ -59,18 +60,17 @@ public static class GrowthAwareDonorAssignmentPreviewCommand
     {
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
 
-        // UA: ДРУКОВНІ ASCII (0x20-0x7E) ЗАВЖДИ вважаються "зайнятими"
-        //     незалежно від Locl-сканування, оскільки гра використовує їх
-        //     і поза таблицею `Locl` (напр. дослівні англійські рядки, що
-        //     не проходять через хеш-пошук — див. `PatchAddOnMapNameCommand`).
-        //     Лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w', "не знайдена" в
+        //     Locl, реально використовується поза ним). ДРУКОВНІ ASCII
+        //     (0x20-0x7E) ЗАВЖДИ "зайняті" незалежно від Locl-сканування;
+        //     лише недруковні керівні коди (0x00-0x1F, 0x7F) лишаються
         //     кандидатами через реальні дані.
-        // EN: PRINTABLE ASCII (0x20-0x7E) is ALWAYS treated as "used"
-        //     regardless of the Locl scan, because the game also uses them
-        //     outside the `Locl` table (e.g. literal English strings that
-        //     bypass the hash lookup — see `PatchAddOnMapNameCommand`).
-        //     Only non-printable control codes (0x00-0x1F, 0x7F) remain
-        //     real-data candidates.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w', "not found" in Locl, is
+        //     actually used outside it). PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used" regardless of the Locl scan; only non-printable
+        //     control codes (0x00-0x1F, 0x7F) remain real-data candidates.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = summary.Languages.SelectMany(l => l.CodeCounts.Keys).ToHashSet();
         bool IsUsed(ushort code) => IsPrintableAscii(code) || usedByAnyLanguage.Contains(code);
@@ -233,7 +233,7 @@ public static class GrowthAwareDonorAssignmentPreviewCommand
             //     чи не claim'ять вони одну й ту саму вільну ділянку).
             // EN: CRITICAL check — whether grown rectangles among the
             //     ACTUALLY ASSIGNED 66 donors overlap (growth was
-            //     computed independently for each; here we check whether
+            //     computed independently for each; here it's checked whether
             //     they claim the same free area).
             var assignedGrown = assignments
                 .Select(a => grownRectByCode[a.DonorCode])

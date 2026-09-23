@@ -2,10 +2,9 @@
 // BF1LocalizationTool.Diagnostic — RasterizerCanvasSizeCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Одна з передумовних перевірок для GlyphAtlasPatcher.
-//
-//     ВАЖЛИВЕ УТОЧНЕННЯ: питання
+// UA: ВАЖЛИВЕ УТОЧНЕННЯ щодо GdiGlyphRasterizer.cs: питання
 //     "чи розмір донорського прямокутника ЗБІГАЄТЬСЯ з тим, що видає
 //     растеризатор" — вже гарантовано КОНСТРУКЦІЄЮ коду, а не емпіричний
 //     факт: RasterizedGlyph.Width/Height просто КОПІЮЮТЬСЯ з
@@ -23,9 +22,7 @@
 //
 //     Форма символу тут НЕ важлива (беремо нейтральний 'A') — перевіряється
 //     САМЕ розмірна механіка пайплайна, а не візуальна коректність гліфа.
-// EN: One of the precondition checks for GlyphAtlasPatcher.
-//
-//     IMPORTANT CLARIFICATION: the
+// EN: IMPORTANT CLARIFICATION regarding GdiGlyphRasterizer.cs: the
 //     question "does the donor rectangle size MATCH what the rasterizer
 //     outputs" is already guaranteed by code CONSTRUCTION, not an
 //     empirical fact: RasterizedGlyph.Width/Height are simply COPIED from

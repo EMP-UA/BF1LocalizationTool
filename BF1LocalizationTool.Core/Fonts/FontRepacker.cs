@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // BF1LocalizationTool.Core — Fonts/FontRepacker.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
@@ -12,7 +12,7 @@
 //     ПРИЗНАЧЕННЯ — валідаційний місток перед рендером з TTF: гліфи ті
 //     самі (ті самі пікселі, метрики, коди), змінюється ЛИШЕ розкладка
 //     атласу й UV. Якщо гра після цього рендерить текст ІДЕНТИЧНО — це
-//     доводить, що наш bin-packer + генерація UV/FBOD коректні, ЩЕ ДО
+//     доводить, що bin-packer + генерація UV/FBOD коректні, ЩЕ ДО
 //     того, як додавати найризикованішу частину (свіжий рендер літер).
 //
 //     Що зберігається БЕЗ ЗМІН у кожному записі: Code, XAdvance, Bearing,
@@ -23,16 +23,16 @@
 //     Конвенція UV нового атласу: U0=лівий<U1=правий, V0=верхній<V1=нижній
 //     (min(V,·)=верх, §4.2). Пікселі копіюються рядок-за-рядком зверху
 //     вниз, тому напрямок узгоджений незалежно від того, який був у
-//     оригіналі (оригінал міг мати U0>U1 чи V0>V1 — ми нормалізуємо).
+//     оригіналі (оригінал міг мати U0>U1 чи V0>V1 — значення нормалізуються).
 // EN: Repacks an EXISTING font into a FRESH atlas: extracts each glyph's
 //     pixels from its original page, re-lays-out all glyphs
-//     (GlyphAtlasPacker) into new texture pages of our own size, copies
+//     (GlyphAtlasPacker) into new texture pages sized to fit, copies
 //     pixels BYTE-FOR-BYTE (no decoding — raw A4R4G4B4 uint16), and
 //     rebuilds the glyph table (FBOD) with new UVs/page.
 //
 //     PURPOSE — a validation bridge before TTF rendering: the glyphs are
 //     the same (same pixels, metrics, codes), only the atlas layout and
-//     UVs change. If the game then renders text IDENTICALLY, it proves our
+//     UVs change. If the game then renders text IDENTICALLY, it proves the
 //     bin-packer + UV/FBOD generation are correct, BEFORE adding the
 //     riskiest part (freshly rendering the letters).
 //
@@ -44,7 +44,7 @@
 //     New atlas UV convention: U0=left<U1=right, V0=top<V1=bottom
 //     (min(V,·)=top, §4.2). Pixels are copied row-by-row top-to-bottom, so
 //     the direction is consistent regardless of the original's (which may
-//     have had U0>U1 or V0>V1 — we normalize).
+//     have had U0>U1 or V0>V1 — the values are normalized).
 // =============================================================================
 
 namespace BF1LocalizationTool.Core.Fonts;
@@ -114,16 +114,18 @@ public static class FontRepacker
             //     100% дробова 0.0 = край текселя). Тому НЕ хардкодимо зсув —
             //     зберігаємо оригінальну FracX/FracY і відтворюємо її нижче.
             //     Так тест тотожності (гліф не переміщено) дає РІВНО ванільний
-            //     UV для ОБОХ ігор.
+            //     UV для ОБОХ ігор. ClampRound (округлення) тут давав би для
+            //     106.5 значення 107 → зсув блоку на тексель → рендер гірший.
             // EN: Extract the texel block the glyph's UV ACTUALLY covers. Left/
             //     top edge via FLOOR (block's first texel), width/height by
             //     rounding the span. The FRACTIONAL part (minUpx - x0) is the
             //     UV edge phase. CRITICAL: BF2 and BF1 use DIFFERENT conventions
             //     (empirically: BF2 = 100% frac 0.5 = D3D9 texel center; BF1 =
-            //     100% frac 0.0 = texel edge). So we DON'T hardcode an offset —
-            //     we store the original FracX/FracY and reproduce it below. Thus
+            //     100% frac 0.0 = texel edge). So no offset is hardcoded —
+            //     the original FracX/FracY is stored and reproduced below. Thus
             //     the identity test (glyph not relocated) yields EXACTLY the
-            //     vanilla UV for BOTH games.
+            //     vanilla UV for BOTH games. ClampRound would give 107 for
+            //     106.5 → a one-texel block shift → worse rendering.
             var minUpx = Math.Min(g.U0, g.U1) * page.Width;
             var maxUpx = Math.Max(g.U0, g.U1) * page.Width;
             var minVpx = Math.Min(g.V0, g.V1) * page.Height;
@@ -274,21 +276,42 @@ public static class FontRepacker
         };
     }
 
-    // UA: Пакує РАЗОМ і ІСНУЮЧІ гліфи шрифту (їхні пікселі переносяться
-    //     1-в-1, без масштабування — завжди scale=1 семантика), і НОВІ
-    //     (щойно зрендерені, передані як сирі пікселі+метрики) — через
-    //     GlyphAtlasPacker (сортування за спаданням висоти + автоматичний
-    //     перехід на нову сторінку, коли місця не залишилось), той самий
-    //     пакувальник, що й Repack. Завдяки цьому жодна літера не
-    //     пропускається через брак місця: кількість сторінок зростає
-    //     рівно настільки, скільки треба.
-    // EN: Packs the font's EXISTING glyphs (pixels carried over 1:1, no
-    //     scaling — always scale=1 semantics) TOGETHER with NEW ones
-    //     (freshly rendered, passed as raw pixels+metrics), via
-    //     GlyphAtlasPacker (descending-height sort + automatic new-page
-    //     spillover) — the same packer Repack uses. This guarantees no
-    //     letter is ever skipped for lack of space: the page count simply
-    //     grows to fit.
+    // UA: Переповнення атласу при кириличній ін'єкції
+    //     (реальний прогін:
+    //     BF2 gamefont_large 23/66 літер, gamefont_small 41/66 — решта
+    //     "немає місця"). Корінь: GenerateNoDonorCyrillicCoreCommand
+    //     клав НОВІ гліфи ЛИШЕ у вільний простір ІСНУЮЧИХ сторінок
+    //     (наївний top-left скан, без сортування за розміром, без росту
+    //     сторінок) — на відміну від цього файлу, який УЖЕ вміє рости
+    //     (GenerateEnlargedFontCoreCommand, той самий прогін, працює).
+    //     Фікс — не латка: замість патчити алгоритм
+    //     GenerateNoDonorCyrillicCoreCommand рістом сторінок "на додачу", цей
+    //     метод перевикористовує вже перевірений GlyphAtlasPacker
+    //     (сортування за спаданням висоти + автоматичний перехід на нову
+    //     сторінку, коли місця не залишилось) — той самий, що й Repack.
+    //     ВІДМІННІСТЬ від Repack: тут пакуються РАЗОМ і ІСНУЮЧІ гліфи
+    //     шрифту (їхні пікселі переносяться 1-в-1, без масштабування —
+    //     завжди scale=1 семантика), і НОВІ (щойно зрендерені кириличні,
+    //     передані як сирі пікселі+метрики). Результат — жодна літера
+    //     більше НЕ пропускається через брак місця: сторінок стає
+    //     стільки, скільки треба.
+    // EN: Atlas overflow during Cyrillic injection (a
+    //     real run: BF2
+    //     gamefont_large 23/66 letters, gamefont_small 41/66 — the rest
+    //     "no space"). Root cause: GenerateNoDonorCyrillicCoreCommand only
+    //     placed NEW glyphs into the FREE space of EXISTING pages (a naive
+    //     top-left scan, no size-based sorting, no page growth) — unlike
+    //     this very file, which ALREADY knows how to grow
+    //     (GenerateEnlargedFontCoreCommand, the same run, works fine). The
+    //     fix is not a patch: instead of bolting page growth onto the old
+    //     algorithm, this reuses the already-proven GlyphAtlasPacker
+    //     (descending-height sort + automatic new-page spillover) — the
+    //     same one Repack uses. DIFFERENCE from Repack: here BOTH the
+    //     font's EXISTING glyphs (pixels carried over 1:1, no scaling —
+    //     always scale=1 semantics) and NEW ones (freshly rendered
+    //     Cyrillic, passed as raw pixels+metrics) are packed TOGETHER. The
+    //     result: no letter is ever skipped for lack of space — the page
+    //     count simply grows to fit.
     public static FontResourceData RepackWithAdditions(
         FontResourceData src, IReadOnlyList<NewGlyphInput> additions, int pageWidth, int pageHeight, int padding = 1)
     {
@@ -424,10 +447,10 @@ public static class FontRepacker
         }
 
         // UA: 5. FBOD МУСИТЬ лишатись відсортованим за Code (бінарний
-        //     пошук гри, FONT_FORMAT_SPEC.md §11.3) — FontResourceBuilder.Build
+        //     пошук гри, FONT_FORMAT_SPEC.md §7.2) — FontResourceBuilder.Build
         //     пише Glyphs як є, сортування не робить.
         // EN: 5. FBOD MUST stay sorted by Code (the game's binary search,
-        //     FONT_FORMAT_SPEC.md §11.3) — FontResourceBuilder.Build writes
+        //     FONT_FORMAT_SPEC.md §7.2) — FontResourceBuilder.Build writes
         //     Glyphs as-is, it does not sort.
         newGlyphs = newGlyphs.OrderBy(gl => gl.Code).ToList();
 
@@ -549,4 +572,40 @@ public static class FontRepacker
         var r = (int)Math.Round(v, MidpointRounding.AwayFromZero);
         return r < 0 ? 0 : r > 15 ? 15 : r;
     }
+
+    // -------------------------------------------------------------------------
+    // UA: `FontHeightPx` СВІДОМО не перераховується тут. HEAD-висота і
+    //     справді застаріває після збільшення гліфів (22 при реальних 32 px
+    //     для `gamefont_large` — вимір лишається чинним), і саме через це
+    //     `NewButtonWindow` рахує замалий бекграунд заголовка вікна
+    //     (`bgexpandy = fontHeight * 0.5`, `ifelem_buttonwindow`). Але це —
+    //     СПІЛЬНИЙ ресурс, що читають 47 місць у 21 скрипті; правити його тут
+    //     означало б лізти в `core.lvl` й повторно звіряти геометрію на КОЖНОМУ
+    //     екрані, що викликає `ScriptCB_GetFontHeight` (включно з тими, що
+    //     зараз коректні, напр. `ifs_opt_sound`) — ще до підтвердження в грі.
+    //     Дефект вужчий: доведено (дизасемблюванням `AddIFText`,
+    //     `interface_util`), що `texth`/`bgexpandy`/`y` читаються з таблиці
+    //     ВІДЖЕТА в момент показу екрана — тобто саме там, де вже працює
+    //     перевірений шлях виправлень (`AnchorInheritancePatchBuilder` +
+    //     `Bf2LayoutTable.txt`, той самий, що дав 0 дефектів на `ifs_login`).
+    //     Правильний масштаб втручання — точкова правка полів на конкретному
+    //     `titleBarElement` через цю таблицю, а не зміна спільного ресурсу.
+    // EN: `FontHeightPx` is DELIBERATELY not recomputed here. The HEAD height
+    //     genuinely does go stale after glyph enlargement (still measured:
+    //     22 vs the real 32 px for `gamefont_large`), and that is why
+    //     `NewButtonWindow` computes an undersized title-bar background
+    //     (`bgexpandy = fontHeight * 0.5`, `ifelem_buttonwindow`). But this is
+    //     a SHARED resource read from 47 call sites across 21 scripts; fixing
+    //     it here would mean touching `core.lvl` and re-checking geometry on
+    //     every screen that calls `ScriptCB_GetFontHeight` (including
+    //     currently-correct ones, e.g. `ifs_opt_sound`) — before even
+    //     confirming the fix in-game. The defect is narrower: disassembling
+    //     `AddIFText` (`interface_util`) proved `texth`/`bgexpandy`/`y` are
+    //     read from the widget's table at screen-show time — exactly where
+    //     the already-verified fix path already operates
+    //     (`AnchorInheritancePatchBuilder` + `Bf2LayoutTable.txt`, the same
+    //     mechanism that brought `ifs_login` to 0 defects). The right scope
+    //     is a targeted field correction on the specific `titleBarElement`
+    //     via that table, not a change to the shared resource.
+    // -------------------------------------------------------------------------
 }

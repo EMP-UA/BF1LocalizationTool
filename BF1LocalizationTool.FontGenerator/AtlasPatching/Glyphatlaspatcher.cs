@@ -13,15 +13,14 @@
 //     без вигаданих значень), і підготовка Dictionary<long,byte[]> для
 //     UcfbWriter.WriteFile.
 //
-//     Патчаться РАЗОМ і BODY, і FBOD, бо:
+//     Патчаються і BODY (пікселі), і FBOD (метадані гліфа), бо:
 //       а) при цільовому рості прямокутника (підтверджено
 //          TargetedGrowthDonorAssignmentPreviewCommand — без регресу на
-//          всіх 11 шрифтах) старі U0-V1 оригінального слоту донора вже не
-//          описують реальне розташування пікселів;
-//       б) XAdvance має оновлюватись пропорційно новій ширині
-//          (підтверджено FontGlyphMetricsCorrelationCommand: XAdvance ≈
-//          InkWidth + стала, стандартне відхилення 0,40-1,44 по всіх 11
-//          шрифтах).
+//          всіх 11 шрифтах) старі U0-V1 більше не описують реальне
+//          розташування пікселів;
+//       б) XAdvance має оновитись пропорційно новій ширині (підтверджено
+//          FontGlyphMetricsCorrelationCommand: XAdvance ≈ InkWidth +
+//          стала, стандартне відхилення 0,40-1,44 по всіх 11 шрифтах).
 //
 //     Контракт UcfbWriter.WriteFile підтверджено РЕАЛЬНИМ використанням
 //     у UcfbWriteRoundTripCommand.cs: ключ Dictionary —
@@ -40,12 +39,13 @@
 //     values), and preparing a Dictionary<long,byte[]> for
 //     UcfbWriter.WriteFile.
 //
-//     Both BODY and FBOD are patched together, because:
+//     Both BODY (pixels) and FBOD (glyph metadata) are patched,
+//     because:
 //       a) with targeted slot growth (confirmed by
 //          TargetedGrowthDonorAssignmentPreviewCommand — no regression
-//          across all 11 fonts) the donor's original slot U0-V1 no
-//          longer describe the actual pixel location;
-//       b) XAdvance must update proportionally to the new width
+//          across all 11 fonts) the old U0-V1 no longer describe the
+//          actual pixel location;
+//       b) XAdvance should update proportionally to the new width
 //          (confirmed by FontGlyphMetricsCorrelationCommand: XAdvance ≈
 //          InkWidth + a per-font constant, standard deviation 0.40-1.44
 //          across all 11 fonts).
@@ -70,14 +70,14 @@ namespace BF1LocalizationTool.FontGenerator.AtlasPatching;
 //     прямокутника МОЖЕ відрізнятись від оригінального донора (цільовий
 //     ріст, підтверджений TargetedGrowthDonorAssignmentPreviewCommand —
 //     покращення без регресу на всіх 11 шрифтах обох ігор) — саме тому
-//     FBOD патчиться разом із пікселями: якщо прямокутник виріс, старі
-//     U0-V1 не описують реальну позицію.
+//     тепер патчиться і FBOD, не лише пікселі: якщо прямокутник виріс,
+//     старі U0-V1 більше не описують реальну позицію.
 // EN: One patch request: "write THESE pixel bytes into THIS rectangle of
 //     THIS page, AND update this code's FBOD record accordingly".
 //     Rectangle size CAN differ from the original donor (targeted
 //     growth, confirmed by TargetedGrowthDonorAssignmentPreviewCommand —
 //     improvement with no regression across all 11 fonts in both games)
-//     — that's exactly why FBOD is patched together with the pixels: if
+//     — that's exactly why FBOD is now patched too, not just pixels: if
 //     the rectangle grew, the old U0-V1 no longer describe the real
 //     position.
 public sealed record GlyphPatch
@@ -120,7 +120,7 @@ public sealed record GlyphPatch
     // UA: Верхній лівий кут ПРЯМОКУТНИКА, У ЯКИЙ ПИШЕМО (не обов'язково
     //     оригінальний прямокутник донора — може бути результатом
     //     цільового росту, TargetedGrowthDonorAssignmentPreviewCommand).
-    // EN: Top-left corner of the rectangle WE'RE WRITING INTO (not
+    // EN: Top-left corner of the rectangle BEING WRITTEN INTO (not
     //     necessarily the donor's original rectangle — may be the result
     //     of targeted growth, TargetedGrowthDonorAssignmentPreviewCommand).
     public required int RectMinX { get; init; }
@@ -167,21 +167,19 @@ public sealed record GlyphPatch
     //     "tight crop" nature of BF1 slots.
     public required byte NewInkWidth { get; init; }
 
-    // UA: Bearing і CellHeight (метрична модель, GlyphMetricModel)
-    //     задаються явно й записуються, а НЕ копіюються з донора — інакше
-    //     нова кирилична літера успадкувала б вертикальні метрики
-    //     випадкового англійського донора, що ламає вертикальне
-    //     вирівнювання гліфа (підтверджено двома експериментами — див.
+    // UA: Bearing і CellHeight ЗАДАЮТЬСЯ явно й записуються (метрична
+    //     модель, GlyphMetricModel), а НЕ копіюються з донора — копіювання
+    //     з випадкового англійського донора спричиняє "стрибання" нової
+    //     кириличної літери (підтверджено двома експериментами — див.
     //     GlyphMetricModel.cs). Інваріант гри (перевірено на 28
     //     англійських літерах): Bearing + висота_бокса(px) = CellHeight;
     //     викликач (CyrillicFontInjector) гарантує CanvasHeight =
     //     CellHeight − Bearing, тож масштаб рендеру гри = 1 (різкість).
-    // EN: Bearing and CellHeight (metric model, GlyphMetricModel) are set
-    //     explicitly and written, NOT copied from the donor — otherwise a
-    //     new Cyrillic letter would inherit the vertical metrics of a
-    //     random English donor, breaking the glyph's vertical alignment
-    //     (confirmed by two experiments — see GlyphMetricModel.cs). The
-    //     game's invariant (verified on 28 English letters): Bearing +
+    // EN: Bearing and CellHeight are set explicitly and written (metric
+    //     model, GlyphMetricModel), NOT copied from the donor — copying
+    //     from a random English donor causes a new Cyrillic letter to
+    //     "jump" (confirmed by two experiments — see GlyphMetricModel.cs).
+    //     The game's invariant (verified on 28 English letters): Bearing +
     //     box_height(px) = CellHeight; the caller (CyrillicFontInjector)
     //     guarantees CanvasHeight = CellHeight − Bearing, so the game's
     //     render scale = 1 (crisp).
@@ -302,12 +300,14 @@ public static class GlyphAtlasPatcher
                 V1 = newV1,
                 XAdvance = patch.NewXAdvance,
                 InkWidth = patch.NewInkWidth,
-                // UA: Bearing/CellHeight (метрична модель) задаються явно з
-                //     патча, а НЕ копіюються з донора (див. коментар біля
+                // UA: ЗМІНЕНО (метрична модель) — Bearing/CellHeight ТЕПЕР
+                //     задаються явно з патча, а НЕ копіюються з донора.
+                //     Це і є виправлення "стрибання" (див. коментар біля
                 //     GlyphPatch.NewBearing/NewCellHeight та GlyphMetricModel).
-                // EN: Bearing/CellHeight (metric model) are set explicitly
-                //     from the patch, NOT copied from the donor (see the
-                //     comment at GlyphPatch.NewBearing/NewCellHeight and
+                // EN: CHANGED (metric model) — Bearing/CellHeight are NOW
+                //     set explicitly from the patch, NOT copied from the
+                //     donor. This is the fix for "jumping" (see the comment
+                //     at GlyphPatch.NewBearing/NewCellHeight and
                 //     GlyphMetricModel).
                 Bearing = patch.NewBearing,
                 CellHeight = patch.NewCellHeight,

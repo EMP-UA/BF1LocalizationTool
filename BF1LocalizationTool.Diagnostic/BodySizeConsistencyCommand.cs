@@ -2,21 +2,23 @@
 // BF1LocalizationTool.Diagnostic — BodySizeConsistencyCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Перевіряє формулу "BODY.Length == Width×Height×2" (без padding) на
-//     КОЖНІЙ текстурній сторінці КОЖНОГО шрифту, в обох іграх — не лише
-//     на прикладі з розділу 3 специфікації (gamefont_super_tiny_tex0).
+// UA: Перевіряє, чи формула "BODY.Length == Width×Height×2" (розділ 3
+//     специфікації, підтверджена лише на ОДНОМУ прикладі —
+//     gamefont_super_tiny_tex0) виконується для КОЖНОЇ текстурної
+//     сторінки КОЖНОГО шрифту в обох іграх, а не лише для _tex0.
 //     GlyphAtlasPatcher рахує офсет запису пікселя як (row*texW + col)*2
-//     БЕЗ жодного padding; якби хоч одна сторінка мала інший фактичний
-//     розмір BODY (напр. через вирівнювання рядків), цей офсет був би
-//     хибним і зіпсував би сусідні рядки.
-// EN: Verifies the formula "BODY.Length == Width×Height×2" (no padding)
-//     on EVERY texture page of EVERY font, in both games — not just the
-//     single example in spec section 3 (gamefont_super_tiny_tex0).
-//     GlyphAtlasPatcher computes a pixel's write offset as
-//     (row*texW + col)*2 with NO padding; if even one page had a
+//     БЕЗ жодного padding — якщо хоч одна сторінка має інший фактичний
+//     розмір BODY (напр. через вирівнювання рядків), цей офсет буде
+//     хибним і зіпсує сусідні рядки.
+// EN: Checks whether the formula "BODY.Length == Width×Height×2" (spec
+//     section 3, confirmed on only ONE example — gamefont_super_tiny_tex0)
+//     holds for EVERY texture page of EVERY font in both games, not just
+//     _tex0. GlyphAtlasPatcher computes a pixel's write offset as
+//     (row*texW + col)*2 with NO padding — if even one page has a
 //     different actual BODY size (e.g. due to row alignment), that
-//     offset would be wrong and would corrupt neighboring rows.
+//     offset would be wrong and corrupt neighboring rows.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;

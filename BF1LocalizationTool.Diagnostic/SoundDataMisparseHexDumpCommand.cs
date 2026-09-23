@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — SoundDataMisparseHexDumpCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: ПРЯМА перевірка гіпотези, народженої з ContainerSlackSpaceCommand:
 //     дрібні звукові чанки "DATA" (DataSize=9) парсяться як контейнери з

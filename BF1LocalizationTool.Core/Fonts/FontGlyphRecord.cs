@@ -7,9 +7,9 @@
 //     FONT_FORMAT_SPEC.md, розділ 4 — на контрастних символах M/W/i/l/./,.
 //     Порядок полів U0,U1,V0,V1 (НЕ U0,V0,U1,V1).
 //
-//     offset=2 — ПІДТВЕРДЖЕНО (GlyphPageGroupingOverlapCommand, 11 шрифтів,
-//     обидві гри, 100% нульових перетинів UV-прямокутників після
-//     групування записів за цим байтом): це 0-based ІНДЕКС ТЕКСТУРНОЇ
+//     ПІДТВЕРДЖЕНО (GlyphPageGroupingOverlapCommand, 11 шрифтів, обидві
+//     гри, 100% нульових перетинів UV-прямокутників після групування
+//     записів за цим байтом): offset=2 — це 0-based ІНДЕКС ТЕКСТУРНОЇ
 //     СТОРІНКИ ({ім'я}_texN), якій належить гліф. Для шрифтів з кількома
 //     сторінками (напр. gamefont_medium — 4 сторінки) кожен гліф
 //     фізично існує ЛИШЕ на ОДНІЙ із них; інші сторінки на тих самих
@@ -52,9 +52,9 @@
 //     characters M/W/i/l/./,.
 //     Field order is U0,U1,V0,V1 (NOT U0,V0,U1,V1).
 //
-//     offset=2 — CONFIRMED (GlyphPageGroupingOverlapCommand, 11 fonts,
-//     both games, 100% zero UV-rectangle overlaps after grouping records
-//     by this byte): it is the 0-based TEXTURE PAGE INDEX ({name}_texN)
+//     CONFIRMED (GlyphPageGroupingOverlapCommand, 11 fonts, both games,
+//     100% zero UV-rectangle overlaps after grouping records by this
+//     byte): offset=2 is the 0-based TEXTURE PAGE INDEX ({name}_texN)
 //     this glyph belongs to. For fonts with multiple pages (e.g.
 //     gamefont_medium — 4 pages) each glyph physically exists on ONLY
 //     ONE of them; the other pages at the same UV coordinates hold

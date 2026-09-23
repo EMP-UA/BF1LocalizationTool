@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — SoftDonorGeometryCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Продовження перевірок перед GlyphAtlasPatcher — специфічно для
 //     BF2, де базових безпечних донорів (не використаних ЖОДНОЮ мовою)
@@ -17,7 +18,7 @@
 //     (перетин лише в межах PageIndex, нульова площа), АЛЕ з іншим
 //     критерієм "з ким не можна перетинатись": не з будь-яким
 //     використаним кодом, а конкретно з кодом, використовуваним
-//     англійською (бо саме її свідомо вирішено ніколи не чіпати).
+//     англійською (код англійської мови донорський підбір ніколи не чіпає).
 //     Перетин м'якого кандидата з кодом іншої НЕ-англійської мови —
 //     очікуваний і прийнятний (обидва однаково "жертвуються").
 //
@@ -38,8 +39,8 @@
 //     geometric logic as PerFontSafeDonorCommand (overlap only within
 //     PageIndex, zero area), BUT with a different "who it must not
 //     overlap with" criterion: not any used code, but specifically a
-//     code used by English (since that's the one deliberately never
-//     touched). A soft candidate overlapping another non-English
+//     code used by English (donor selection never touches English code).
+//     A soft candidate overlapping another non-English
 //     language's code is expected and acceptable (both are equally
 //     being "sacrificed").
 //

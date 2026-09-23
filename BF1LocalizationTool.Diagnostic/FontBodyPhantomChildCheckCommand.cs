@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontBodyPhantomChildCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: КРИТИЧНА перевірка, що випливає з FourCCPhantomChildScanCommand:
 //     "BODY" — саме FourCC, у якому лежать пікселі шрифтових текстур —
@@ -14,7 +15,7 @@
 //
 //     ЦЕ КРИТИЧНО ДЛЯ GlyphAtlasPatcher: UcfbWriter.WriteChunk застосовує
 //     replacements ТІЛЬКИ якщо chunk.HasChildren==false. Якщо BODY якогось
-//     ДОНОРСЬКОГО шрифту потрапляє в цю пастку — запис нашого
+//     ДОНОРСЬКОГО шрифту потрапляє в цю пастку — запис
 //     сконвертованого гліфа буде МОВЧКИ ПРОІГНОРОВАНИЙ, і замість нього
 //     серіалізуються фантомні сміттєві діти, знищуючи всю текстуру.
 //
@@ -32,7 +33,7 @@
 //
 //     THIS IS CRITICAL FOR GlyphAtlasPatcher: UcfbWriter.WriteChunk only
 //     applies replacements if chunk.HasChildren==false. If a DONOR font's
-//     BODY falls into this trap — writing our converted glyph would be
+//     BODY falls into this trap — writing the converted glyph would be
 //     SILENTLY IGNORED, and junk phantom children would be serialized
 //     instead, destroying the entire texture.
 //

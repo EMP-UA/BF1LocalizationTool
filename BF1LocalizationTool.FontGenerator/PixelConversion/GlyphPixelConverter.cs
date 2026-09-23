@@ -86,9 +86,8 @@ public static class GlyphPixelConverter
     //     (великі) / ~51% (малі). Через це кирилиця виглядає сірою/тьмяною
     //     проти англійської. alphaGain піднімає покриття (з клампом до 255),
     //     відновлюючи суцільне "тіло" літери. Виміряно: gain≈1.5 виводить
-    //     нашу частку повної альфи до ~65%, майже точно як оригінал.
-    //     gain=1.0 — тотожність (значення за замовчуванням; донорський
-    //     конвеєр викликає без alphaGain і лишається незачепленим).
+    //     частку повної альфи до ~65%, майже точно як оригінал.
+    //     gain=1.0 — тотожність (шлях донорів не чіпається).
     // EN: Overload with alphaGain — a multiplier on COVERAGE (alpha) in the
     //     8-bit domain BEFORE quantizing to 4 bits. Reason (EMPIRICALLY
     //     measured on the real atlas): glyphs produced by
@@ -98,9 +97,9 @@ public static class GlyphPixelConverter
     //     glyphs are ~63% (uppercase) / ~51% (lowercase). This makes
     //     Cyrillic look gray/dim next to English. alphaGain lifts coverage
     //     (clamped to 255), restoring the letter's solid "body". Measured:
-    //     gain≈1.5 brings our full-alpha fraction to ~65%, nearly matching
-    //     the original. gain=1.0 is the identity (the default; the donor
-    //     pipeline calls without alphaGain and is unaffected).
+    //     gain≈1.5 brings the full-alpha fraction to ~65%, nearly matching
+    //     the original. gain=1.0 is identity (the donor path is
+    //     untouched).
     // -------------------------------------------------------------------------
     public static byte[] ToA4R4G4B4(RasterizedGlyph glyph, double alphaGain)
     {

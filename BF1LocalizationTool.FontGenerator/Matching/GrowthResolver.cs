@@ -196,7 +196,7 @@ public static class GrowthResolver
     //     growth. Usually the target height is SMALLER than the donor
     //     (donors 19-30px, targets 16-22px) — then the slot simply SHRINKS
     //     (no space needed). If the donor is SMALLER than the target (e.g.
-    //     'ж', donor 0x88 ≈ 11px, target ≈16px) — we GROW into free space
+    //     'ж', donor 0x88 ≈ 11px, target ≈16px) — the slot GROWS into free space
     //     (the same occupancy map that already accounts for earlier ones in
     //     the queue). If space is short — take the largest possible (clamp);
     //     then the on-screen height is a bit under ideal, but that's a rare
@@ -239,8 +239,8 @@ public static class GrowthResolver
             // UA: Спершу звільняємо власні клітинки донора (їх перезаписуємо
             //     — вони доступні), щоб сканування вільного простору навколо
             //     не спотикалось об самого донора.
-            // EN: First free the donor's own cells (we overwrite them — they
-            //     are available), so scanning free space around doesn't trip
+            // EN: First free the donor's own cells (they are overwritten and
+            //     become available), so scanning free space around doesn't trip
             //     over the donor itself.
             for (var x = rect.MinX; x < rect.MaxX; x++)
                 for (var y = rect.MinY; y < rect.MaxY; y++)

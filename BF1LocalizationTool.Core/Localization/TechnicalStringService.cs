@@ -21,7 +21,7 @@
 //          тексту (див. нижче) — джерело: translator-review.txt, реальні
 //          рядки, які ШІ-перекладач сам класифікував як "залишити як є".
 //
-//     ЧОМУ КУРОВАНІ СПИСКИ, А НЕ РЕГЕКС:
+//     ЧОМУ КУРОВАНІ СПИСКИ, А НЕ РЕГЕКС (принциповий поділ):
 //       - Чит-код "FODDER" неможливо відрізнити патерном від пункту меню
 //         "LOAD" — обидва ALL-CAPS-слово. Тому чит-коди — явний список.
 //       - Дефіс-абревіатури як "AT-ST" регекс `^[A-Z]+(-[A-Z]+)+$` зловив
@@ -77,14 +77,14 @@ public static class TechnicalStringService
 
     // UA: Лише форматні змінні, пробіли та обрамлююча пунктуація — без жодного слова.
     //     Ловить: "%s", "{btn_a}", "<   %s   >", "[ %d ]", "%s." , "%d:", "%s!"
-    //     Пунктуація .,:;!?…- включена в обрамлюючий клас: без неї "%s." не
-    //     зловилось б лише через крапку в кінці, хоча перекладати там
-    //     нічого — лише змінна й знак.
+    //     Клас містить пунктуацію .,:;!?…- , щоб рядки типу "%s." (лише
+    //     змінна з крапкою в кінці) теж розпізнавались як суто технічні —
+    //     перекладати там нічого, лише змінна + знак.
     // EN: Only format variables, spaces, and surrounding punctuation — no real words.
     //     Catches: "%s", "{btn_a}", "<   %s   >", "[ %d ]", "%s.", "%d:", "%s!"
-    //     Punctuation .,:;!?…- is included in the surrounding class: without
-    //     it, "%s." wouldn't match just because of the trailing dot, even
-    //     though there's nothing to translate — only a variable and a mark.
+    //     The class includes punctuation .,:;!?…- so strings like "%s."
+    //     (just a variable with a trailing dot) are also recognized as
+    //     purely technical — there's nothing to translate, only a variable + a mark.
     private static readonly Regex OnlyFormatVars = new(
         @"^[\s<>\[\]().,:;!?…\-]*((%[sdifcux%]|\{[^}]+\})[\s<>\[\]().,:;!?…\-]*)+$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -134,10 +134,10 @@ public static class TechnicalStringService
         "Lucas Licensing", "Beta Breakers", "Burning Goddesses", "Enzyme Labs",
         "Star Wars Battlefront",
         // UA: системні/IME-клавіші та елементи введення / EN: system/IME keys and input controls
-        //     "Return" — клавіша Return/Enter (підтверджено користувачем; у BF1
-        //     як "RETURN", у BF2 як "Return" — збіг без урахування регістру).
-        //     "Return" — the Return/Enter key (user-confirmed; "RETURN" in BF1,
-        //     "Return" in BF2 — case-insensitive match covers both).
+        //     "Return" — клавіша Return/Enter (у BF1 як "RETURN", у BF2 як
+        //     "Return" — збіг без урахування регістру).
+        //     "Return" — the Return/Enter key ("RETURN" in BF1, "Return" in
+        //     BF2 — case-insensitive match covers both).
         "KANA", "KANJI", "CONVERT", "NOCONVERT", "SYSTEM RQ", "D-Pad", "Return",
         // UA: мережеві мітки / EN: network labels
         "IP:", "IP :", "T1+", "T1 * 2",
@@ -183,11 +183,15 @@ public static class TechnicalStringService
             @"Volume (Up|Down|Mute)|" +
             // UA: РОЗШИРЕНІ мультимедійні клавіші клавіатури — та сама
             //     категорія, що й "Volume Up/Down/Mute" вище, лише інші
-            //     конкретні клавіші (той самий екран перепризначення
-            //     клавіш у грі).
+            //     конкретні клавіші: у GUI-таблиці ("Без перекладу") ці 5
+            //     рядків стоять поруч із "Volume Mute" (той самий екран
+            //     перепризначення клавіш) — явна прогалина словника, не нова
+            //     окрема категорія.
             // EN: EXTENDED multimedia keyboard keys — the SAME category as
-            //     "Volume Up/Down/Mute" above, just different specific
-            //     keys (the same key-rebinding screen in the game).
+            //     "Volume Up/Down/Mute" above, just different specific keys:
+            //     in the GUI table ("Untranslated") these 5 strings sit right
+            //     next to "Volume Mute" (the same key-rebinding screen) — a
+            //     clear dictionary gap, not a new separate category.
             @"Mute|Play Pause|Web Home|App Menu Key|Wake|" +
             @"Num Lock|Caps ?Lock|Scroll Lock|Print Screen|Windows Key|" +
             @"F1[0-9]|F[1-9]|" +
@@ -223,22 +227,21 @@ public static class TechnicalStringService
     private static readonly Regex ExtendedGlyphDump = new(
         @"^[-ÿ\s]{8,}$", RegexOptions.Compiled);
 
-    // UA: Короткі UI-абревіатури, що традиційно не перекладаються в іграх,
-    //     включно з "CEO"/"ID"/"XL" — знайдено емпірично в реальних "Без
-    //     перекладу" рядках core.lvl (BF1 і BF2): усі три — універсальні
-    //     скорочення, які в українській локалізації ігор традиційно лишають
-    //     як є (немає короткого відповідника без втрати впізнаваності:
-    //     "ID" не "Ід.", "CEO" не абревіатура з укр. слів, "XL" — розмір,
-    //     як у S/M/L/XL). "ID" зустрічається В ОБОХ іграх незалежно — не
-    //     випадковість.
-    // EN: Short UI abbreviations conventionally left untranslated in games,
-    //     including "CEO"/"ID"/"XL" — found empirically in real
-    //     "Untranslated" core.lvl strings (BF1 and BF2): all three are
-    //     universal abbreviations conventionally kept as-is in Ukrainian
-    //     game localization (no short equivalent without losing
-    //     recognizability: "ID" not "Ід.", "CEO" isn't a Ukrainian-letter
-    //     abbreviation, "XL" is a size code like S/M/L/XL). "ID" appears
-    //     in BOTH games independently — not a coincidence.
+    // UA: Короткі UI-абревіатури, що традиційно не перекладаються в іграх:
+    //     "CEO"/"ID"/"XL" знайдено в реальних "Без перекладу" рядках
+    //     core.lvl (BF1 і BF2): усі три — універсальні скорочення, які в
+    //     українській локалізації ігор традиційно лишають як є (немає
+    //     короткого відповідника без втрати впізнаваності: "ID" не "Ід.",
+    //     "CEO" не абревіатура з укр. слів, "XL" — розмір, як у S/M/L/XL).
+    //     "ID" зустрілось В ОБОХ іграх незалежно — не випадковість.
+    // EN: Short UI abbreviations conventionally left untranslated in games:
+    //     "CEO"/"ID"/"XL" found in real "Untranslated" core.lvl strings
+    //     (BF1 and BF2): all three are universal abbreviations
+    //     conventionally kept as-is in Ukrainian game localization (no
+    //     short equivalent without losing recognizability: "ID" not
+    //     "Ід.", "CEO" isn't a Ukrainian-letter abbreviation, "XL" is a
+    //     size code like S/M/L/XL). "ID" showed up in BOTH games
+    //     independently — not a coincidence.
     private static readonly HashSet<string> UiAbbreviations = new(StringComparer.OrdinalIgnoreCase)
     {
         "ON", "OFF", "OK", "VS.", "VS", "VSYNC", "PC", "PSI",

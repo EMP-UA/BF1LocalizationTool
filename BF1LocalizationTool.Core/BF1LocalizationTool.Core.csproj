@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,4 +9,64 @@
     <RootNamespace>BF1LocalizationTool.Core</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- UA: Таблиця авторської розкладки BF2 (див. AnchorInheritancePatchBuilder). -->
+    <!-- EN: BF2 authored-layout table (see AnchorInheritancePatchBuilder). -->
+    <EmbeddedResource Include="Bf2Widescreen\Data\Bf2LayoutTable.txt" />
+
+    <!--
+    UA: Скомпільований d3d9-проксі-фікс субтитрів фільмів. НЕ код/дані гри —
+        окрема, самостійна бібліотека, зібрана з tools/bf2_d3d9_widescreen_fix/
+        d3d9_proxy.cpp (джерело — у репозиторії, поруч). У теку гри
+        (GameData\d3d9.dll) кладеться інсталятором (installer/); ніколи не
+        чіпає BattlefrontII.exe.
+    EN: The compiled d3d9 proxy fix for movie subtitles. NOT game code/data —
+        a separate, standalone library built from
+        tools/bf2_d3d9_widescreen_fix/d3d9_proxy.cpp (source included in this
+        repository, alongside). Placed into the game folder
+        (GameData\d3d9.dll) by the installer (installer/); never touches
+        BattlefrontII.exe.
+    -->
+    <EmbeddedResource Include="Bf2Widescreen\Data\MovieSubtitleD3D9Fix.dll" />
+
+    <!--
+    UA: Вихідний код (.cpp/.def) ТОГО САМОГО фіксу, вбудований поруч із
+        бінарником — для перевірки походження (MovieSubtitleD3D9FixProvenance.cs,
+        GenerateD3D9FixProvenanceReportCommand у BF1LocalizationTool.Diagnostic).
+        Include вказує на
+        КАНОНІЧНЕ місце файлів у репозиторії (tools\bf2_d3d9_widescreen_fix\) —
+        це не копія "про всяк випадок", а РІВНО той файл, з якого зібрано
+        MovieSubtitleD3D9Fix.dll вище; Link лише визначає ім'я вбудованого
+        ресурсу (без нього C# SDK взяв би ім'я з реального шляху й вийшло б
+        "..тools.bf2_d3d9_widescreen_fix.d3d9_proxy.cpp").
+    EN: Source code (.cpp/.def) for the SAME fix, embedded alongside the
+        binary — for provenance verification (MovieSubtitleD3D9FixProvenance.cs,
+        GenerateD3D9FixProvenanceReportCommand in BF1LocalizationTool.Diagnostic).
+        Include points at the
+        CANONICAL location of these files in the repository
+        (tools\bf2_d3d9_widescreen_fix\) — this is not a "just in case" copy,
+        it is EXACTLY the file MovieSubtitleD3D9Fix.dll above was built from;
+        Link only controls the embedded resource's name (without it the C#
+        SDK would derive the name from the real path, giving
+        "..tools.bf2_d3d9_widescreen_fix.d3d9_proxy.cpp" instead).
+    -->
+    <EmbeddedResource Include="..\tools\bf2_d3d9_widescreen_fix\d3d9_proxy.cpp" Link="Bf2Widescreen\Data\Source\d3d9_proxy.cpp" />
+    <EmbeddedResource Include="..\tools\bf2_d3d9_widescreen_fix\d3d9_proxy.def" Link="Bf2Widescreen\Data\Source\d3d9_proxy.def" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+    UA: Iced — незалежний, MIT-ліцензований x86/x64-дизасемблер (НЕ бібліотека
+        Battlefront/EA, жодного коду гри в собі не містить). Потрібен лише
+        для Bf2Exe\MovieSubtitleAlphaScanner.cs — READ-ONLY статичного аналізу
+        локальної копії BattlefrontII.exe користувача (дивись коментар на
+        початку того файлу щодо меж і законності такого аналізу).
+    EN: Iced — an independent, MIT-licensed x86/x64 disassembler (NOT a
+        Battlefront/EA library, contains no game code whatsoever). Needed
+        only by Bf2Exe\MovieSubtitleAlphaScanner.cs for READ-ONLY static
+        analysis of the user's own local copy of BattlefrontII.exe (see the
+        comment at the top of that file for the scope and legality of this).
+    -->
+    <PackageReference Include="Iced" Version="1.21.0" />
+  </ItemGroup>
 </Project>

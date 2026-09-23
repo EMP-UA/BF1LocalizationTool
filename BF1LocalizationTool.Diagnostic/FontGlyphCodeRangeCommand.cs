@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FontGlyphCodeRangeCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Дамп СИРОГО списку кодів, визначених у FBOD конкретного шрифту —
 //     жодної фільтрації (не "безпечні донори", не конкретний код на

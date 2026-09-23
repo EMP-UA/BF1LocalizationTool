@@ -2,9 +2,10 @@
 // BF1LocalizationTool.Diagnostic — GlyphPageAssignmentCheckCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: КРИТИЧНА ПЕРЕВІРКА, виявлена аналізом PerFontSafeDonorCommand:
-//     FBOD-запис (24 байти) НЕ МІСТИТЬ поля "номер сторінки". Усі наші
+//     FBOD-запис (24 байти) НЕ МІСТИТЬ поля "номер сторінки". Усі
 //     попередні команди (GlyphAtlasStyleAnalyzer, GlyphRectOverlapCommand,
 //     GlyphOverlapRiskCommand, PerFontSafeDonorCommand) застосовували
 //     ВЕСЬ спільний список гліфів ДО КОЖНОЇ сторінки шрифту з кількома
@@ -23,7 +24,7 @@
 //     аналіз перетинів для multi-page шрифтів потребує повторення з
 //     урахуванням фактичної належності гліфа до сторінки.
 // EN: CRITICAL CHECK surfaced by PerFontSafeDonorCommand's analysis: an
-//     FBOD record (24 bytes) contains NO "page number" field. All our
+//     FBOD record (24 bytes) contains NO "page number" field. All
 //     previous commands (GlyphAtlasStyleAnalyzer, GlyphRectOverlapCommand,
 //     GlyphOverlapRiskCommand, PerFontSafeDonorCommand) applied the
 //     ENTIRE shared glyph list TO EVERY page of a multi-_texN font —

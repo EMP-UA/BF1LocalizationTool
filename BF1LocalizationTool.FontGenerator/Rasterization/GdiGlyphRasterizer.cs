@@ -26,12 +26,13 @@
 //     R/G/B на суб-пікселях краю літери (кольорова бахрома), що ЗЛАМАЄ
 //     крок 2 (luminance перестає коректно відображати покриття).
 //
-//     ПІДТВЕРДЖЕНО (GlyphAtlasStyleAnalyzer, FONT_FORMAT_SPEC.md розділ
-//     3.1): донорські гліфи в реальній текстурі BF1 мають RGB=білий і
-//     лише варіативну Alpha — саме тому цей растеризатор форсує
-//     RGB=(0xFF,0xFF,0xFF) і не зберігає жодного іншого кольору. Якщо це
-//     припущення колись треба переглянути — коригується крок запису в
-//     BODY (GlyphPixelConverter), растеризатор змінювати не треба.
+//     Припущення "донорські гліфи в реальній текстурі мають RGB=білий,
+//     лише варіативну Alpha" перевіряється діагностикою
+//     GlyphAtlasStyleAnalyzer (через GlyphAtlasStyleReportCommand): поле
+//     NonZeroAlphaNonWhiteRgbCount рахує саме пікселі з Alpha>0 і
+//     RGB≠білий, по КОЖНОМУ шрифту й КОЖНІЙ текстурній сторінці. Якщо це
+//     поле ненульове для якогось шрифту — крок запису в BODY (наступний
+//     етап) має враховувати це, растеризатор коригувати не треба.
 // EN: IGlyphRasterizer implementation via System.Drawing.Common (GDI+).
 //     Windows-only — that's fine (consistent with the SteamWorld Heist
 //     project).
@@ -56,12 +57,14 @@
 //     values on a glyph edge's sub-pixels (color fringing), which BREAKS
 //     step 2 (luminance no longer correctly reflects coverage).
 //
-//     CONFIRMED (GlyphAtlasStyleAnalyzer, FONT_FORMAT_SPEC.md section
-//     3.1): real donor glyphs in the BF1 texture have RGB=white with only
-//     Alpha varying — which is exactly why this rasterizer forces
-//     RGB=(0xFF,0xFF,0xFF) and never preserves any other color. Should
-//     that assumption ever need revisiting, the BODY-writing step
-//     (GlyphPixelConverter) is what would change, not this rasterizer.
+//     The assumption "donor glyphs in the real texture have RGB=white,
+//     with only Alpha varying" is checked by the GlyphAtlasStyleAnalyzer
+//     diagnostic (via GlyphAtlasStyleReportCommand): the
+//     NonZeroAlphaNonWhiteRgbCount field counts exactly the pixels with
+//     Alpha>0 and RGB!=white, per font and per texture page. If that
+//     field is nonzero for a given font, the BODY-writing step (next
+//     stage) needs to account for it — the rasterizer does not need
+//     adjusting.
 // =============================================================================
 
 using System.Drawing;
@@ -91,28 +94,30 @@ public sealed class GdiGlyphRasterizer : IGlyphRasterizer
         //     avoids the GDI+ black-fringe bug.
         using var grayscaleBitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
 
-        // UA: `options.FontFamilyName` — ВІДНОСНИЙ ШЛЯХ файлу шрифту (не
-        //     назва родини), і `PrivateFontRegistry.Get` повертає ПАРУ
+        // UA: `options.FontFamilyName` — ВІДНОСНИЙ ШЛЯХ файлу (не назва
+        //     родини), і `PrivateFontRegistry.Get` повертає ПАРУ
         //     (FontFamily, FontStyle), де стиль ГАРАНТОВАНО той, що несе
         //     САМЕ ЦЕЙ файл (ізольована колекція на файл,
-        //     PrivateFontRegistry.cs). Це важливо, бо коли кілька .ttf
+        //     PrivateFontRegistry.cs). ПРИЧИНА: коли кілька .ttf
         //     зливаються в ОДНУ family (класичний GDI-квартет
         //     Regular/Bold/Italic/BoldItalic — родина "Fira Sans" без
         //     суфікса), `new Font(family, size, FontStyle.Regular, unit)`
-        //     не завжди чесно обирає саме Regular (розділ 11.13
-        //     FONT_FORMAT_SPEC.md). `options.Style` не використовується
-        //     для приватних шрифтів (див. GlyphRasterizeOptions).
+        //     ПІДТВЕРДЖЕНО не завжди чесно обирає саме Regular (розділ
+        //     11.13 FONT_FORMAT_SPEC.md) — тому style береться напряму з
+        //     `Get`, а не з `options.Style`, який для приватних шрифтів
+        //     не використовується.
         // EN: `options.FontFamilyName` is a RELATIVE FILE PATH (not a
         //     family name), and `PrivateFontRegistry.Get` returns a
         //     (FontFamily, FontStyle) PAIR whose style is GUARANTEED to
         //     match what THIS file actually carries (one isolated
-        //     collection per file, PrivateFontRegistry.cs). This matters
-        //     because when several .ttf files merge into ONE family (the
-        //     classic GDI quartet Regular/Bold/Italic/BoldItalic — bare
-        //     "Fira Sans"), `new Font(family, size, FontStyle.Regular, unit)`
-        //     does not always honestly pick Regular (FONT_FORMAT_SPEC.md
-        //     section 11.13). `options.Style` is not used for private
-        //     fonts (see GlyphRasterizeOptions).
+        //     collection per file, PrivateFontRegistry.cs). REASON: when
+        //     several .ttf files merge into ONE family (the classic GDI
+        //     quartet Regular/Bold/Italic/BoldItalic — bare "Fira Sans"),
+        //     `new Font(family, size, FontStyle.Regular, unit)` is
+        //     CONFIRMED to not always honestly pick Regular
+        //     (FONT_FORMAT_SPEC.md section 11.13) — so the style is taken
+        //     directly from `Get` rather than from `options.Style`, which
+        //     is not used for private fonts.
         var (resolvedFamily, resolvedStyle) = PrivateFontRegistry.Get(options.FontFamilyName);
 
         using (var g = Graphics.FromImage(grayscaleBitmap))
@@ -121,16 +126,15 @@ public sealed class GdiGlyphRasterizer : IGlyphRasterizer
             // UA: g.Clear() тут ДОЗВОЛЕНО (і обов'язково) — це власний
             //     ізольований canvas одного гліфа, а НЕ спільний атлас.
             //     Заборона "g.Clear() forbidden" зі SteamWorld Heist
-            //     стосується запису В АТЛАС (GlyphAtlasPatcher.ApplyPixelPatch,
-            //     AtlasPatching-проєкт) — там Clear() стер би сусідні
-            //     гліфи. Тут такого ризику немає.
+            //     стосується запису В АТЛАС (наступний, ще не реалізований
+            //     крок FontGenerator) — там Clear() стер би сусідні гліфи.
+            //     Тут такого ризику немає.
             // EN: g.Clear() is ALLOWED here (and required) — this is a
             //     private, isolated single-glyph canvas, NOT the shared
             //     atlas. The "g.Clear() forbidden" rule from SteamWorld
-            //     Heist applies to WRITING INTO THE ATLAS
-            //     (GlyphAtlasPatcher.ApplyPixelPatch, the AtlasPatching
-            //     project) — there, Clear() would erase neighboring
-            //     glyphs. No such risk here.
+            //     Heist applies to WRITING INTO THE ATLAS (next,
+            //     not-yet-implemented FontGenerator step) — there,
+            //     Clear() would erase neighboring glyphs. No such risk here.
             g.Clear(Color.Black);
 
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -142,19 +146,19 @@ public sealed class GdiGlyphRasterizer : IGlyphRasterizer
             // UA: Позиціонування за базовою лінією: BaselineY заданий
             //     викликаючим кодом (формула тут не вираховується).
             //     Використовуємо ascent шрифту, щоб верх гліфа опинився
-            //     на BaselineY - ascent. GetCellAscent/GetEmHeight
-            //     запитуються для resolvedStyle (не options.Style) —
-            //     метрики мають відповідати ТОМУ САМОМУ стилю, яким
-            //     РЕАЛЬНО намальовано текст (font сконструйований з
+            //     на BaselineY - ascent, — САМЕ resolvedStyle (не
+            //     options.Style): GetCellAscent/GetEmHeight мають
+            //     запитувати метрики ТОГО САМОГО стилю,
+            //     яким РЕАЛЬНО намальовано текст (font сконструйований з
             //     resolvedStyle вище) — інакше, для родин зі злитими
             //     стилями (де resolvedStyle міг би виявитись не Regular),
             //     ascent рахувався б за ЧУЖИМ стилем.
             // EN: Baseline positioning: BaselineY is supplied by the
-            //     caller (formula not derived here). We use the font's
-            //     ascent so the glyph's top lands at BaselineY - ascent.
-            //     GetCellAscent/GetEmHeight are queried for resolvedStyle
-            //     (not options.Style) — the metrics must match the SAME
-            //     style the text was ACTUALLY drawn with (the font was
+            //     caller (formula not derived here). The font's ascent
+            //     puts the glyph's top at BaselineY - ascent, using
+            //     resolvedStyle specifically (not options.Style):
+            //     GetCellAscent/GetEmHeight must query metrics for the
+            //     SAME style the text was ACTUALLY drawn with (font was
             //     constructed with resolvedStyle above) — otherwise, for
             //     families with merged styles (where resolvedStyle could
             //     turn out not to be Regular), ascent would be computed

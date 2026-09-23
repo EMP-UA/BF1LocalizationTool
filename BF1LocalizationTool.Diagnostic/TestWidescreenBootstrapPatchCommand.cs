@@ -2,30 +2,35 @@
 // BF1LocalizationTool.Diagnostic — TestWidescreenBootstrapPatchCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Перевіряє Lua50BytecodeWriter + ShellEntryPointPatcher трьома
-//     незалежними тестами, без запуску самої гри:
+// UA: Перевіряє щойно написаний Lua50BytecodeWriter + ShellEntryPointPatcher
+//     трьома незалежними тестами (компілятора .NET для реального
+//     білда/рантайму в цій пісочниці немає — це найкраща доступна
+//     заміна):
 //
-//     1. Round-trip НАШОГО bootstrap-стабу: Build → Write → Parse →
+//     1. Round-trip bootstrap-стабу: Build → Write → Parse →
 //        порівняти дизасемблерний текст (не сирі байти — Writer свідомо
 //        НЕ зберігає номери рядків, тому байти відрізнятимуться, а
 //        логіка — ні).
 //     2. Round-trip на РЕАЛЬНОМУ існуючому скрипті з shell.lvl (значно
 //        суворіший тест: локальні змінні, upvalues, вкладені прототипи,
-//        усі опкоди — не лише наш вузький підмножина).
+//        усі опкоди — не лише вузьку підмножину, задіяну тут).
 //     3. Повний ApplyBootstrapPatch на копії реального shell.lvl "у
 //        пам'яті" — список top-level "scr_" ДО/ПІСЛЯ + дизасемблер нового
 //        bootstrap-стабу і повторно розібраної "stock_"-копії.
-// EN: Verifies Lua50BytecodeWriter + ShellEntryPointPatcher with three
-//     independent tests, without launching the game itself:
+// EN: Verifies the freshly written Lua50BytecodeWriter + ShellEntryPointPatcher
+//     with three independent tests (there's no .NET compiler in this
+//     sandbox for an actual build/run — this is the best available
+//     substitute):
 //
-//     1. Round-trip of OUR bootstrap stub: Build → Write → Parse → compare
+//     1. Round-trip of the bootstrap stub: Build → Write → Parse → compare
 //        disassembly text (not raw bytes — the Writer deliberately does
 //        NOT retain line numbers, so bytes will differ while the logic
 //        won't).
 //     2. Round-trip on a REAL existing script from shell.lvl (a much
 //        stricter test: locals, upvalues, nested prototypes, every
-//        opcode — not just our narrow subset).
+//        opcode — not just the narrow subset used elsewhere).
 //     3. A full ApplyBootstrapPatch on an in-memory copy of real
 //        shell.lvl — the list of top-level "scr_" chunks BEFORE/AFTER +
 //        disassembly of the new bootstrap stub and of the re-parsed
@@ -44,7 +49,7 @@ public static class TestWidescreenBootstrapPatchCommand
     public static void Run(DiagnosticReport report, string shellLvlPath)
     {
         report.Log("UA: === Тест 1: round-trip власного bootstrap-стабу ===");
-        report.Log("EN: === Test 1: round-trip of our own bootstrap stub ===");
+        report.Log("EN: === Test 1: round-trip of the bootstrap stub ===");
         report.Log();
         RunBootstrapRoundTrip(report);
         report.Log();
@@ -100,8 +105,8 @@ public static class TestWidescreenBootstrapPatchCommand
         LuaDisassembler.Disassemble(reparsed.Root, "built", afterLines);
 
         var identical = beforeLines.SequenceEqual(afterLines);
-        report.Log($"UA: bodyBytes.Length={bytes.Length}, LeftoverBytes після повторного парсингу={reparsed.LeftoverBytes} (очікується 0 — увесь запис мусить бути спожитий)");
-        report.Log($"EN: bodyBytes.Length={bytes.Length}, LeftoverBytes after re-parsing={reparsed.LeftoverBytes} (expected 0 — the whole write must be consumed)");
+        report.Log($"UA: bodyBytes.Length={bytes.Length}, LeftoverBytes після повторного парсингу={reparsed.LeftoverBytes} (очікується 1 — хвостовий 0x00, як у 99/99 реальних чанків; див. Lua50BytecodeWriter.Write)");
+        report.Log($"EN: bodyBytes.Length={bytes.Length}, LeftoverBytes after re-parsing={reparsed.LeftoverBytes} (expected 1 — the trailing 0x00, as in 99/99 real chunks; see Lua50BytecodeWriter.Write)");
         report.Log($"UA: Дизасемблер до/після ІДЕНТИЧНИЙ: {identical}");
         report.Log($"EN: Disassembly before/after IDENTICAL: {identical}");
 
@@ -121,9 +126,59 @@ public static class TestWidescreenBootstrapPatchCommand
     }
 
     // -------------------------------------------------------------------------
+    // UA: Еталонний зразок для перевірки Writer'а. Тест будує ВЛАСНИЙ
+    //     мінімальний, але не тривіальний зразок, не залежний від
+    //     жодного конкретного widescreen-білдера чи гіпотези про
+    //     геометрію: збереження оригіналу глобальної функції у резервну
+    //     назву + встановлення замість неї замикання, що викликає
+    //     оригінал. Це той самий набір конструкцій (GETGLOBAL/SETGLOBAL/
+    //     CLOSURE/CALL/RETURN, вкладений прототип, рядкові константи,
+    //     умовний перехід), який знадобиться будь-якому майбутньому
+    //     патчу, тож тест лишається змістовним незалежно від конкретної
+    //     реалізації патчу.
+    // EN: A reference sample for exercising the Writer. The test builds
+    //     its OWN minimal but non-trivial sample, independent of any
+    //     specific widescreen builder or geometry hypothesis: back up a
+    //     global function under a new name and install a closure that
+    //     calls the original. It uses the same constructs any future
+    //     patch will need (GETGLOBAL/SETGLOBAL/CLOSURE/CALL/RETURN, a
+    //     nested prototype, string constants, a conditional jump), so
+    //     the test stays meaningful regardless of the specific patch
+    //     implementation.
+    // -------------------------------------------------------------------------
+    private static LuaFunctionPrototype BuildWriterProbeScript()
+    {
+        const string target = "AddIFObjectBase";
+        const string backup = "_probe_o_" + target;
+
+        var inner = new Lua50FunctionBuilder { NumParams = 1, IsVararg = 0, MaxStackSize = 4 };
+        var kBackup = inner.AddStringConstant(backup);
+        inner.EmitABx(LuaOpcode.GetGlobal, a: 1, bx: kBackup);
+        inner.Emit(LuaOpcode.Move, a: 2, b: 0);
+        inner.Emit(LuaOpcode.Call, a: 1, b: 2, c: 1);
+        inner.Emit(LuaOpcode.Return, a: 0, b: 1);
+
+        var root = new Lua50FunctionBuilder { NumParams = 0, IsVararg = 0, MaxStackSize = 4 };
+        var kTarget = root.AddStringConstant(target);
+        var kBackupRoot = root.AddStringConstant(backup);
+
+        root.EmitABx(LuaOpcode.GetGlobal, a: 0, bx: kTarget);
+        root.EmitTest(register: 0, c: 0);
+        var skip = root.EmitJumpPlaceholder();
+        root.EmitABx(LuaOpcode.SetGlobal, a: 0, bx: kBackupRoot);
+        var nested = root.AddNestedPrototype(inner.Build(path: "probe/inner"));
+        root.EmitABx(LuaOpcode.Closure, a: 0, bx: nested);
+        root.EmitABx(LuaOpcode.SetGlobal, a: 0, bx: kTarget);
+        root.PatchJump(skip, root.NextPc);
+        root.Emit(LuaOpcode.Return, a: 0, b: 1);
+
+        return root.Build();
+    }
+
+    // -------------------------------------------------------------------------
     private static void RunWrapperRoundTrip(DiagnosticReport report)
     {
-        var built = WidescreenWrapperBuilder.BuildWidescreenWrapperScript(WidescreenWrapperBuilder.ConfirmedTableXyFunctions);
+        var built = BuildWriterProbeScript();
         var bytes = Lua50BytecodeWriter.Write(built);
 
         LuaChunkParseResult reparsed;
@@ -144,8 +199,8 @@ public static class TestWidescreenBootstrapPatchCommand
         LuaDisassembler.Disassemble(reparsed.Root, "wrapper", afterLines);
 
         var identical = beforeLines.SequenceEqual(afterLines);
-        report.Log($"UA: bodyBytes.Length={bytes.Length}, LeftoverBytes={reparsed.LeftoverBytes} (очікується 0), дизасемблер ідентичний={identical}");
-        report.Log($"EN: bodyBytes.Length={bytes.Length}, LeftoverBytes={reparsed.LeftoverBytes} (expected 0), disassembly identical={identical}");
+        report.Log($"UA: bodyBytes.Length={bytes.Length}, LeftoverBytes={reparsed.LeftoverBytes} (очікується 1 — хвостовий 0x00), дизасемблер ідентичний={identical}");
+        report.Log($"EN: bodyBytes.Length={bytes.Length}, LeftoverBytes={reparsed.LeftoverBytes} (expected 1 — the trailing 0x00), disassembly identical={identical}");
         report.Log();
         foreach (var line in beforeLines) report.Log(line);
     }
@@ -249,14 +304,19 @@ public static class TestWidescreenBootstrapPatchCommand
             return;
         }
 
-        // UA: СПРАВЖНІЙ widescreen-wrapper (формула x*W/800, y*H/600 для
-        //     NewIFContainer) — не заглушка. Round-trip самого wrapper-
-        //     скрипту вже перевірено окремо в Тесті 1б.
-        // EN: the REAL widescreen wrapper (the x*W/800, y*H/600 formula
-        //     for NewIFContainer) — not a placeholder. The wrapper
-        //     script's own round-trip was already verified separately in
-        //     Test 1b.
-        var wrapperProto = WidescreenWrapperBuilder.BuildWidescreenWrapperScript(WidescreenWrapperBuilder.ConfirmedTableXyFunctions);
+        // UA: Реальний, не порожній скрипт-зразок (див. BuildWriterProbeScript):
+        //     резервна копія глобальної функції + замикання, що викликає
+        //     оригінал. Перевіряється МЕХАНІЗМ вставки, а не якась конкретна
+        //     формула геометрії — усі схеми глобального перетворення були
+        //     спростовані вимірюванням і видалені. Round-trip самого зразка
+        //     вже перевірено окремо в Тесті 1б.
+        // EN: A real, non-empty sample script (see BuildWriterProbeScript):
+        //     back up a global function plus a closure calling the original.
+        //     This exercises the splicing MECHANISM, not any particular
+        //     geometry formula — every global-transform scheme was refuted by
+        //     measurement and removed. The sample's own round-trip is verified
+        //     separately in Test 1b.
+        var wrapperProto = BuildWriterProbeScript();
         var wrapperBytes = Lua50BytecodeWriter.Write(wrapperProto);
 
         ShellEntryPointPatcher.ApplyBootstrapPatch(root, entryName, stockName, wrapperName, wrapperBytes);

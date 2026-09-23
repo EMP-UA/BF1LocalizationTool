@@ -2,8 +2,9 @@
 // BF1LocalizationTool.Diagnostic — UcfbWriteRoundTripCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Перевірка перед GlyphAtlasPatcher: чи UcfbWriter коректно
+// UA: ОСТАННЯ перевірка перед GlyphAtlasPatcher: чи UcfbWriter коректно
 //     записує заміну для ОДНОГО листового чанку (BODY текстурної
 //     сторінки шрифту) на РЕАЛЬНОМУ core.lvl, і чи файл після цього
 //     лишається коректним (round-trip save → read → save, звірка з
@@ -16,7 +17,7 @@
 //     один і той самий контрольний 16-бітний код (0x0FFF — RGB=білий,
 //     Alpha=0, узгоджено з підтвердженою схемою запису). Мета — не
 //     перевірити растеризацію, а лише механіку UcfbWriter/UcfbReader.
-// EN: Check before GlyphAtlasPatcher: does UcfbWriter correctly
+// EN: FINAL check before GlyphAtlasPatcher: does UcfbWriter correctly
 //     write a replacement for a SINGLE leaf chunk (a font texture page's
 //     BODY) on a REAL core.lvl, and does the file remain valid afterward
 //     (round-trip save → read → save, verified against a control pattern
@@ -77,9 +78,9 @@ public static class UcfbWriteRoundTripCommand
         report.Log($"    Розмір файлу: оригінал={originalBytes.Length}, після запису={writtenBytes.Length}");
 
         // UA: Перечитуємо ЗАПИСАНІ байти заново — незалежна перевірка,
-        //     а не довіра до того, що ми щойно самі згенерували.
+        //     а не довіра до того, що щойно згенеровано самим кодом.
         // EN: Re-read the WRITTEN bytes from scratch — an independent
-        //     check, not trusting what we just generated ourselves.
+        //     check, not trusting what was just generated.
         UcfbChunk rereadRoot;
         try
         {
@@ -125,9 +126,9 @@ public static class UcfbWriteRoundTripCommand
         }
 
         // UA: Перевіряємо FBOD цього ж шрифту — теж має лишитись
-        //     незмінним (ми міняли лише пікселі, не таблицю гліфів).
+        //     незмінним (змінено лише пікселі, не таблицю гліфів).
         // EN: Verify FBOD of the same font — should also remain
-        //     unchanged (we only modified pixels, not the glyph table).
+        //     unchanged (only pixels were modified, not the glyph table).
         var originalFbod = UcfbReader.FindFirst(font.Chunk, "FBOD");
         var rereadFbod = UcfbReader.FindFirst(rereadFont!.Chunk, "FBOD");
         var fbodMatches = originalFbod is not null && rereadFbod is not null &&

@@ -1,12 +1,18 @@
 ; ==============================================================================
-; Star Wars: Battlefront (Classic, 2004) - Ukrainian Localization Installer Script
+; bf1_installer.iss
+; UA: Інсталятор української локалізації для Star Wars: Battlefront
+;     (Classic, 2004). Окремий скрипт для Star Wars: Battlefront II
+;     (Classic, 2005): bf2_installer.iss.
+; EN: Ukrainian localization installer for Star Wars: Battlefront
+;     (Classic, 2004). Separate script for Star Wars: Battlefront II
+;     (Classic, 2005): bf2_installer.iss.
 ; Автор / Author: EMP_UA (https://github.com/EMP-UA)
 ; ==============================================================================
 
 #define AppName "Star Wars: Battlefront (Classic, 2004) Українізатор"
-#define AppVersion "1.00"
+#define AppVersion "1.01"
 #define AppPublisher "EMP_UA"
-#define AppURL "https://emp-ua-site.pages.dev/"
+#define AppURL "https://emp-ua.com/"
 ; Унікальний ID проєкту (GUID має починатися з ДВОХ фігурних дужок)
 #define AppId "{{09B7E782-B752-4F6A-BA2F-5D7CEAE6D382}}"
 ; Офіційний ID гри у Steam
@@ -29,7 +35,7 @@ DirExistsWarning=no
 CloseApplications=yes
 UsePreviousAppDir=no
 OutputDir=Output
-OutputBaseFilename=SWB_UA_v{#AppVersion}
+OutputBaseFilename=SWB1_UA_v{#AppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -39,8 +45,8 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-ukrainian.SelectDirDesc=Виберіть папку, у якій встановлено Star Wars: Battlefront (Classic, 2004).
-ukrainian.SelectDirLabel3=Інсталятор встановить локалізацію у відповідну папку.
+ukrainian.SelectDirDesc=Виберіть теку, у якій встановлено Star Wars: Battlefront (Classic, 2004).
+ukrainian.SelectDirLabel3=Інсталятор встановить локалізацію у відповідну теку.
 english.SelectDirDesc=Select the folder where Star Wars: Battlefront (Classic, 2004) is installed.
 english.SelectDirLabel3=The installer will place the localization into the respective folder.
 
@@ -51,7 +57,7 @@ ukrainian.ViewReadme=Переглянути Readme
 english.ViewReadme=View Readme
 
 [Files]
-; Папка GameData поруч із компілятором автоматично накладеться на папку з грою
+; Тека GameData поруч із компілятором автоматично накладеться на теку з грою
 Source: "GameData\*"; DestDir: "{app}\GameData"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "Readme.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
@@ -69,10 +75,11 @@ Filename: "{app}\Readme.txt"; Description: "{cm:ViewReadme}"; Flags: postinstall
 var
   GitHubLabel: TNewStaticText;
   ShellExecErrorCode: Integer;
+  FinishedLinksCreated: Boolean;
 
 procedure GitHubLabelClick(Sender: TObject);
 begin
-  ShellExec('open', 'https://github.com/EMP-UA/BF1LocalizationTool/tree/main/installer/packexe.iss', '', '', SW_SHOWNORMAL, ewNoWait, ShellExecErrorCode);
+  ShellExec('open', 'https://github.com/EMP-UA/BF1LocalizationTool/tree/main/installer/bf1_installer.iss', '', '', SW_SHOWNORMAL, ewNoWait, ShellExecErrorCode);
 end;
 
 procedure InitializeWizard();
@@ -87,6 +94,133 @@ begin
   GitHubLabel.Cursor := crHand;
   GitHubLabel.OnClick := @GitHubLabelClick;
   GitHubLabel.Parent := WizardForm;
+end;
+
+{ UA: Блок посилань автора на сторінці "Завершено": сайт (розділ проєктів),
+  Telegram і Discord (один рядок), YouTube і Twitch (один рядок), сторінка
+  локалізацій на NexusMods. Усього чотири рядки.
+  EN: A block of the author's own links on the "Finished" page: the
+  website (projects section), Telegram and Discord (one line), YouTube
+  and Twitch (one line), and the NexusMods localization page. Four lines
+  total. }
+procedure OpenAuthorLink(const Url: String);
+var
+  LinkErrorCode: Integer;
+begin
+  ShellExec('open', Url, '', '', SW_SHOWNORMAL, ewNoWait, LinkErrorCode);
+end;
+
+procedure SiteLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://emp-ua.com/localizations/');
+end;
+
+procedure TelegramLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://t.me/EMP_UA');
+end;
+
+procedure DiscordLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://discord.gg/QdmgsCgPkp');
+end;
+
+procedure YouTubeLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://www.youtube.com/@EMPs_UA');
+end;
+
+procedure TwitchLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://www.twitch.tv/emp_ua');
+end;
+
+procedure NexusModsLinkClick(Sender: TObject);
+begin
+  OpenAuthorLink('https://www.nexusmods.com/profile/EMPsUA/mods');
+end;
+
+{ UA: Клікабельний фрагмент рядка (посилання) — підкреслений, кольору
+  посилання. Left передається явно, щоб кілька посилань могли стояти
+  в одному рядку одне за одним.
+  EN: A clickable line fragment (link) — underlined, link-colored. Left
+  is passed explicitly so several links can sit on the same line, one
+  after another. }
+function MakeFinishedLink(Top, Left: Integer; const Caption: String): TNewStaticText;
+begin
+  Result := TNewStaticText.Create(WizardForm);
+  Result.Parent := WizardForm.FinishedPage;
+  Result.AutoSize := True;
+  Result.Left := Left;
+  Result.Top := Top;
+  Result.Anchors := [akLeft, akBottom];
+  Result.Caption := Caption;
+  Result.Font.Color := clHotLight;
+  Result.Font.Style := [fsUnderline];
+  Result.Cursor := crHand;
+end;
+
+{ UA: Неклікабельний фрагмент того самого рядка — роздільник між двома
+  посиланнями або опис після них.
+  EN: A non-clickable fragment of the same line — a separator between two
+  links, or the description that follows them. }
+function MakeFinishedText(Top, Left: Integer; const Caption: String): TNewStaticText;
+begin
+  Result := TNewStaticText.Create(WizardForm);
+  Result.Parent := WizardForm.FinishedPage;
+  Result.AutoSize := True;
+  Result.Left := Left;
+  Result.Top := Top;
+  Result.Anchors := [akLeft, akBottom];
+  Result.Caption := Caption;
+end;
+
+procedure CreateFinishedPageLinks();
+var
+  BaseTop, LineLeft: Integer;
+  SiteLink, TelegramLink, DiscordLink, YouTubeLink, TwitchLink, NexusModsLink: TNewStaticText;
+  Sep1, Desc1, Sep2, Desc2: TNewStaticText;
+begin
+  if FinishedLinksCreated then
+    Exit;
+  FinishedLinksCreated := True;
+
+  LineLeft := WizardForm.FinishedLabel.Left;
+  BaseTop := WizardForm.FinishedPage.ClientHeight - 98;
+
+  { UA: Рядок 1 — сайт (сторінка проєктів автора).
+    EN: Line 1 — website (the author's projects page). }
+  SiteLink := MakeFinishedLink(BaseTop, LineLeft, '🌐 emp-ua.com/localizations — проєкти автора');
+  SiteLink.OnClick := @SiteLinkClick;
+
+  { UA: Рядок 2 — Telegram і Discord (сервери для обговорень).
+    EN: Line 2 — Telegram and Discord (discussion servers). }
+  TelegramLink := MakeFinishedLink(BaseTop + 22, LineLeft, '🔵 Telegram');
+  TelegramLink.OnClick := @TelegramLinkClick;
+  Sep1 := MakeFinishedText(BaseTop + 22, TelegramLink.Left + TelegramLink.Width, ' · ');
+  DiscordLink := MakeFinishedLink(BaseTop + 22, Sep1.Left + Sep1.Width, '🟣 Discord');
+  DiscordLink.OnClick := @DiscordLinkClick;
+  Desc1 := MakeFinishedText(BaseTop + 22, DiscordLink.Left + DiscordLink.Width, ' — сервери для обговорень');
+
+  { UA: Рядок 3 — YouTube і Twitch (українізований ігролад).
+    EN: Line 3 — YouTube and Twitch (Ukrainianized gameplay). }
+  YouTubeLink := MakeFinishedLink(BaseTop + 44, LineLeft, '🔴 YouTube');
+  YouTubeLink.OnClick := @YouTubeLinkClick;
+  Sep2 := MakeFinishedText(BaseTop + 44, YouTubeLink.Left + YouTubeLink.Width, ' · ');
+  TwitchLink := MakeFinishedLink(BaseTop + 44, Sep2.Left + Sep2.Width, '🟢 Twitch');
+  TwitchLink.OnClick := @TwitchLinkClick;
+  Desc2 := MakeFinishedText(BaseTop + 44, TwitchLink.Left + TwitchLink.Width, ' — українізований ігролад');
+
+  { UA: Рядок 4 — сторінка локалізацій на NexusMods.
+    EN: Line 4 — the NexusMods localization page. }
+  NexusModsLink := MakeFinishedLink(BaseTop + 66, LineLeft, '🟠 NexusMods — слідкуйте за оновленнями локалізації');
+  NexusModsLink.OnClick := @NexusModsLinkClick;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpFinished then
+    CreateFinishedPageLinks();
 end;
 
 { Перевіряє, чи шлях НЕ містить заборонених у Windows символів
@@ -217,7 +351,7 @@ begin
              'УВАГА: Оскільки переклад замінював оригінальні файли, гра зараз не запуститься.' #13#10#13#10 +
              'Щоб відновити оригінальну англійську версію:' #13#10 +
              '1. Відкрийте Steam' #13#10 +
-             '2. Натисніть правою кнопкою миші на Star Wars: Battlefront' #13#10 +
+             '2. Натисніть правою кнопкою миші на STAR WARS™ Battlefront (Classic, 2004)' #13#10 +
              '3. "Властивості" -> "Встановлені файли"' #13#10 +
              '4. "Перевірити цілісність файлів гри"', 
              mbInformation, MB_OK)
@@ -226,7 +360,7 @@ begin
              'WARNING: Essential files are missing and the game will not start.' #13#10#13#10 +
              'To restore the original English version:' #13#10 +
              '1. Open Steam' #13#10 +
-             '2. Right-click on Star Wars: Battlefront' #13#10 +
+             '2. Right-click on STAR WARS™ Battlefront (Classic, 2004)' #13#10 +
              '3. "Properties" -> "Installed Files"' #13#10 +
              '4. "Verify integrity of game files"', 
              mbInformation, MB_OK);

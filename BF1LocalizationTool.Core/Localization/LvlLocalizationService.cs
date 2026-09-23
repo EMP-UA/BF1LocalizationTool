@@ -12,9 +12,8 @@
 //     знаходимо потрібний чанк у дереві → будуємо нові байти → підміняємо
 //     за зміщенням файлу.
 //
-//     Версія гри визначається автоматично за шляхом до файлу
-//     ("Battlefront II" у шляху = BF2, інакше = BF1) — надійніше, ніж
-//     рахувати "Locl" чанки, бо обидві гри використовують формат Locl.
+//     Версія гри визначається автоматично за наявністю "Locl" чанків
+//     у дереві (не за шляхом до файлу і не за наявністю теки на диску).
 //
 // EN: High-level facade for working with .lvl file localization.
 //
@@ -25,10 +24,8 @@
 //     find the target chunk in the tree → build new bytes → replace
 //     at the file offset.
 //
-//     Game version is detected automatically by the file path
-//     ("Battlefront II" in the path = BF2, otherwise = BF1) — more
-//     reliable than counting "Locl" chunks, since both games use the
-//     Locl format.
+//     Game version is detected automatically by presence of "Locl" chunks
+//     in the tree (not by file path and not by presence of a disk folder).
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;
@@ -262,11 +259,12 @@ public class LvlLocalizationService
     // UA: ПЕРЕСАДКА ШРИФТІВ З ОРИГІНАЛУ В РОБОЧИЙ ФАЙЛ.
     //
     //     ПРИЧИНА: SaveAsync серіалізує _root РОБОЧОГО файлу ЦІЛКОМ,
-    //     підмінюючи лише локалізаційні чанки — отже шрифти в грі завжди
-    //     беруться З РОБОЧОГО файлу, а не з оригіналу. Якщо робочий файл
-    //     був відкритий до того, як шрифти в оригіналі перегенерували,
-    //     збереження мовчки лишало б СТАРІ шрифти, скільки б разів
-    //     оригінал не перегенеровувався.
+    //     підмінюючи лише локалізаційні чанки. Отже в гру їхали б шрифти З
+    //     РОБОЧОГО файлу, а не з (перегенерованого) оригіналу. Якщо
+    //     робочий файл відкрито через "Відкрити робочий" (а його діалог за
+    //     замовчуванням веде саме в output\ — теку РАНІШЕ ЗБЕРЕЖЕНИХ
+    //     файлів), користувач мовчки отримував би СТАРІ шрифти, скільки б
+    //     разів не перегенеровував.
     //
     //     ЩО РОБИТЬ: копіює ДІТЕЙ кожного шрифтового чанка з source у
     //     однойменний (BaseName) шрифтовий чанк цього файлу. Той самий
@@ -282,11 +280,12 @@ public class LvlLocalizationService
     // EN: TRANSPLANT FONTS FROM THE ORIGINAL INTO THE WORKING FILE.
     //
     //     REASON: SaveAsync serializes the WORKING file's _root in FULL,
-    //     replacing only the localization chunks — so the fonts that ship
-    //     to the game always come FROM THE WORKING FILE, not from the
-    //     original. If the working file was opened before the original's
-    //     fonts were regenerated, saving would silently keep OLD fonts no
-    //     matter how many times the original got regenerated.
+    //     replacing only the localization chunks. So the fonts shipping to
+    //     the game would come FROM THE WORKING FILE, not from the
+    //     (regenerated) original. If the working file was opened via "Open
+    //     working" (whose dialog defaults to output\ — the folder of
+    //     PREVIOUSLY SAVED files), the user would silently get OLD fonts no
+    //     matter how many times they regenerated.
     //
     //     WHAT IT DOES: copies the CHILDREN of every font chunk from
     //     source into the same-named (BaseName) font chunk of this file.

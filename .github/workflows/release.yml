@@ -1,0 +1,64 @@
+# =============================================================================
+# UA: Автозбірка релізу при пуші тегу vX.Y.Z (наприклад v1.0.0).
+#     Публікує self-contained win-x64 білд GUI + консольний Diagnostic,
+#     пакує їх у один .zip і прикріплює до GitHub Release.
+# EN: Auto-builds a release when a vX.Y.Z tag is pushed (e.g. v1.0.0).
+#     Publishes a self-contained win-x64 build of the GUI + Diagnostic
+#     console tool, zips them together, and attaches to a GitHub Release.
+# =============================================================================
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout / Клонування
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore BF1LocalizationTool.sln
+
+      - name: Publish GUI (win-x64, self-contained)
+        run: >
+          dotnet publish BF1LocalizationTool.GUI/BF1LocalizationTool.GUI.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/BF1LocalizationTool
+
+      - name: Publish Diagnostic (win-x64, self-contained)
+        run: >
+          dotnet publish BF1LocalizationTool.Diagnostic/BF1LocalizationTool.Diagnostic.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/BF1LocalizationTool
+
+      - name: Copy README / LICENSE into publish folder
+        shell: pwsh
+        run: |
+          Copy-Item README.md publish/BF1LocalizationTool/
+          Copy-Item LICENSE publish/BF1LocalizationTool/
+
+      - name: Create ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/BF1LocalizationTool/* `
+            -DestinationPath BF1LocalizationTool-${{ github.ref_name }}-win-x64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: BF1LocalizationTool-${{ github.ref_name }}-win-x64.zip
+          generate_release_notes: true

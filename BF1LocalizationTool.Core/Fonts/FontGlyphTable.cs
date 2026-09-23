@@ -8,8 +8,8 @@
 //     FBOD — лист (Children.Count == 0), фіксовані записи по 24 байти,
 //     без пропусків (FONT_FORMAT_SPEC.md, розділ 4).
 //
-//     Serialize використовується GlyphAtlasPatcher для запису
-//     локалізованого шрифту. Пише рівно records.Count * 24 байти, у
+//     Serialize використовується в GlyphAtlasPatcher для запису
+//     локалізованого шрифту. Записує рівно records.Count * 24 байти, у
 //     ТОМУ САМОМУ порядку полів, що й Parse читає — включно з
 //     ReservedByte4 (значення береться з самого запису, Serialize
 //     нічого не вигадує й не занулює).
@@ -19,10 +19,9 @@
 //     no gaps (FONT_FORMAT_SPEC.md, section 4).
 //
 //     Serialize is used by GlyphAtlasPatcher to write the localized
-//     font. It writes exactly records.Count * 24 bytes, in the SAME
-//     field order Parse reads — including ReservedByte4 (the value
-//     comes from the record itself, Serialize never invents or zeroes
-//     it).
+//     font. Writes exactly records.Count * 24 bytes, in the SAME field
+//     order Parse reads — including ReservedByte4 (the value comes from
+//     the record itself, Serialize never invents or zeroes it).
 // =============================================================================
 
 namespace BF1LocalizationTool.Core.Fonts;

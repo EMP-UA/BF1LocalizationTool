@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — FourCCPhantomChildScanCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Узагальнює факт, знайдений SoundDataMisparseHexDumpCommand на
 //     ОДНОМУ прикладі (root>snd_>DATA): дитина з DataSize=0 і без

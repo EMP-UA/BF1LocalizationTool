@@ -2,6 +2,7 @@
 // BF1LocalizationTool.Diagnostic — AnalyzeShellScriptConstantsCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
 // UA: Перший практичний крок widescreen-фікса меню BF2 (Classic): повний,
 //     безпечний (без виконання СТОРОННІХ .exe) дамп усіх Lua-констант
@@ -27,7 +28,7 @@
 // EN: The first practical step of the BF2 (Classic) menu widescreen fix:
 //     a full, safe (no THIRD-PARTY .exe execution) dump of all Lua
 //     constants (numbers and strings) from EVERY "scr_" chunk of
-//     shell.lvl (main menu) and ingame.lvl (HUD), via our own
+//     shell.lvl (main menu) and ingame.lvl (HUD), via the
 //     Lua50BytecodeReader (BF1LocalizationTool.Core.Scripts) — format
 //     confirmed byte-for-byte against the official Lua 5.0.3 source.
 //

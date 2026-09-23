@@ -2,57 +2,61 @@
 // BF1LocalizationTool.Diagnostic — PerFontSafeDonorCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
+// Тип / Type: ДІАГНОСТИКА (не генерує ігрових файлів — лише діагностичні дані) / DIAGNOSTIC (generates no game files — diagnostic data only)
 // =============================================================================
-// UA: Перетин рахується ЛИШЕ між гліфами з ОДНАКОВИМ
-//     FontGlyphRecord.PageIndex — точно так, як гліфи фізично лежать
-//     в атласі (FBOD.offset=2 визначає ЄДИНУ сторінку, якій гліф
-//     насправді належить; підтверджено GlyphPageGroupingOverlapCommand:
-//     0 перетинів у 11/11 шрифтів після групування за цим полем).
-//     Рахувати перетин проти УСІХ сторінок шрифту одразу дав би хибно
-//     завищені "перетини", яких фізично немає.
-// EN: Overlap is only counted between glyphs with the SAME
-//     FontGlyphRecord.PageIndex — exactly how glyphs are physically
-//     laid out in the atlas (FBOD.offset=2 determines the SINGLE page a
-//     glyph actually belongs to; confirmed by
-//     GlyphPageGroupingOverlapCommand: 0 overlaps in 11/11 fonts after
-//     grouping by this field). Counting overlap against ALL of a font's
-//     pages at once would produce falsely inflated "overlaps" that don't
-//     physically exist.
+// UA: ВСТАНОВЛЕНО (GlyphPageGroupingOverlapCommand: 0 перетинів у
+//     11/11 шрифтів після групування за FontGlyphRecord.PageIndex):
+//     FBOD.offset=2 визначає ЄДИНУ сторінку, якій гліф насправді
+//     належить. Тому перетин рахується ЛИШЕ між гліфами з ОДНАКОВИМ
+//     PageIndex — точно так, як гліфи фізично лежать в атласі.
+//     Застосування спільного списку гліфів до КОЖНОЇ сторінки шрифту
+//     без урахування PageIndex дає хибно завищені "перетини" (напр.
+//     для gamefont_medium — 0 з 90 безпечних донорів, артефакт методу
+//     підрахунку, не факт).
+// EN: CONFIRMED (GlyphPageGroupingOverlapCommand: 0 overlaps in 11/11
+//     fonts after grouping by FontGlyphRecord.PageIndex): FBOD.offset=2
+//     determines the SINGLE page a glyph actually belongs to. So
+//     overlap is counted ONLY between glyphs with the SAME PageIndex —
+//     exactly how glyphs are physically laid out in the atlas. Applying
+//     the shared glyph list to EVERY page of a font without accounting
+//     for PageIndex produces falsely inflated "overlaps" (e.g. for
+//     gamefont_medium — 0 of 90 safe donors, an artifact of the
+//     counting method, not a fact).
 // =============================================================================
 // UA: UvRectBoundsCheckCommand/RasterizerCanvasSizeCheckCommand/
 //     GlyphSlotUniquenessCommand (перевірки перед GlyphAtlasPatcher)
-//     показують, що в КОЖНОМУ шрифті обох ігор є коди з ГЕОМЕТРИЧНО
+//     фіксують, що в КОЖНОМУ шрифті обох ігор є коди з ГЕОМЕТРИЧНО
 //     ВИРОДЖЕНИМ UV-прямокутником (CanvasWidth==0 або CanvasHeight==0) —
 //     0x20/0xA0 (пробіли, площа 0×0 — очікувано), а в BF2 ще й 0x5F, 0xAF,
 //     0xB7 (підкреслення/макрон/середня крапка — ширина або висота 0,
 //     ймовірно артефакт округлення тонкої лінії при бекінгу шрифту;
-//     причина не має значення для GlyphAtlasPatcher — важливий сам факт
-//     нульової площі).
+//     причина не з'ясовувалась глибше, бо для GlyphAtlasPatcher вона не
+//     має значення — важливий сам факт нульової площі).
 //
-//     Такий код НЕ використовує жодна мова (тому раніше проходив як
-//     "безпечний донор"), АЛЕ й не має жодного пікселя, який можна
-//     перезаписати — стратегія "перезаписати існуючий гліф-слот"
+//     Такий код не використовує жодна мова, тож сам собою проходить
+//     фільтр невикористаних кодів, АЛЕ й не має жодного пікселя, який
+//     можна перезаписати — стратегія "перезаписати існуючий гліф-слот"
 //     (FONT_FORMAT_SPEC.md розділ 5) вимагає слоту з площею > 0.
 //
-//     Тому такі коди тепер ЯВНО виключаються з "ефективно безпечних
-//     донорів" ОКРЕМИМ фільтром (не через геометричний перетин — вони
-//     ні з чим не перетинаються, площа 0×0 не перетинається ні з чим).
+//     Тому такі коди ЯВНО виключаються з "ефективно безпечних донорів"
+//     ОКРЕМИМ фільтром (не через геометричний перетин — вони ні з чим
+//     не перетинаються, площа 0×0 не перетинається ні з чим).
 // EN: UvRectBoundsCheckCommand/RasterizerCanvasSizeCheckCommand/
-//     GlyphSlotUniquenessCommand (pre-GlyphAtlasPatcher checks) show that
-//     EVERY font in both games has codes with a GEOMETRICALLY DEGENERATE
-//     UV rectangle (CanvasWidth==0 or CanvasHeight==0) — 0x20/0xA0
-//     (spaces, 0×0 area — expected), and in BF2 also 0x5F, 0xAF, 0xB7
-//     (underscore/macron/middle dot — zero width or height, likely a
-//     thin-line rounding artifact from font baking; the cause doesn't
-//     matter for GlyphAtlasPatcher — the zero-area fact itself is what
-//     matters).
+//     GlyphSlotUniquenessCommand (pre-GlyphAtlasPatcher checks) find
+//     that EVERY font in both games has codes with a GEOMETRICALLY
+//     DEGENERATE UV rectangle (CanvasWidth==0 or CanvasHeight==0) —
+//     0x20/0xA0 (spaces, 0×0 area — expected), and in BF2 also 0x5F,
+//     0xAF, 0xB7 (underscore/macron/middle dot — zero width or height,
+//     likely a thin-line rounding artifact from font baking; the cause
+//     wasn't investigated further since it doesn't matter for
+//     GlyphAtlasPatcher — the zero-area fact itself is what matters).
 //
-//     Such a code is unused by any language (so it previously passed as
-//     a "safe donor"), BUT also has zero pixels to overwrite — the
-//     "overwrite existing glyph slot" strategy (FONT_FORMAT_SPEC.md
+//     Such a code is unused by any language, so it passes the unused-
+//     code filter on its own, BUT also has zero pixels to overwrite —
+//     the "overwrite existing glyph slot" strategy (FONT_FORMAT_SPEC.md
 //     section 5) requires a slot with area > 0.
 //
-//     Such codes are now EXPLICITLY excluded from "effectively safe
+//     Such codes are EXPLICITLY excluded from "effectively safe
 //     donors" via a SEPARATE filter (not via geometric overlap — a 0×0
 //     area never overlaps anything).
 // =============================================================================
@@ -74,22 +78,22 @@ public static class PerFontSafeDonorCommand
         var service = new LvlLocalizationService();
         await service.LoadAsync(filePath);
 
-        // UA: "Не знайдено в Locl" НЕ доводить "гра ніколи не покаже" —
-        //     гра використовує ASCII-рядки і поза таблицею `Locl` (напр.
-        //     дослівні англійські рядки, що не проходять через хеш-пошук
-        //     — див. `PatchAddOnMapNameCommand`). Тому ДРУКОВНІ ASCII
-        //     (0x20-0x7E) ЗАВЖДИ вважаються "зайнятими", незалежно від
-        //     сканування Locl. Лише недруковні керівні коди (0x00-0x1F,
-        //     0x7F) лишаються кандидатами через реальні дані — їх не може
-        //     містити жоден легітимний рядок.
-        // EN: "Not found in Locl" does NOT prove "the game will never show
-        //     this" — the game uses ASCII strings outside the `Locl` table
-        //     too (e.g. literal English strings that bypass the hash
-        //     lookup — see `PatchAddOnMapNameCommand`). So PRINTABLE ASCII
-        //     (0x20-0x7E) is ALWAYS treated as "used", regardless of the
-        //     Locl scan. Only non-printable control codes (0x00-0x1F,
-        //     0x7F) remain real-data candidates — no legitimate string can
-        //     contain them.
+        // UA: ВСТАНОВЛЕНО (реальний скріншот BF1 — "Exit to
+        //     Windows" показало "WINDOГs": мала 'w' 0x77, "не знайдена" в
+        //     Locl-тексті core.lvl, насправді десь використовується поза
+        //     ним). "Не знайдено в Locl" НЕ доводить "гра ніколи не
+        //     покаже" — тому ДРУКОВНІ ASCII (0x20-0x7E) ЗАВЖДИ "зайняті",
+        //     незалежно від сканування Locl. Лише недруковні керівні
+        //     коди (0x00-0x1F, 0x7F) лишаються кандидатами через реальні
+        //     дані — їх не може містити жоден легітимний рядок.
+        // EN: CONFIRMED (real BF1 screenshot — "Exit to Windows"
+        //     showed "WINDOГs": lowercase 'w' 0x77, "not found" in
+        //     core.lvl's Locl text, is actually used somewhere outside
+        //     it). "Not found in Locl" does NOT prove "the game will
+        //     never show this" — so PRINTABLE ASCII (0x20-0x7E) is
+        //     ALWAYS "used", regardless of the Locl scan. Only
+        //     non-printable control codes (0x00-0x1F, 0x7F) remain real-
+        //     data candidates — no legitimate string can contain them.
         bool IsPrintableAscii(ushort code) => code is >= 0x20 and <= 0x7E;
         var usedByAnyLanguage = new HashSet<int>();
         foreach (var lang in service.AvailableLanguages)
@@ -106,29 +110,38 @@ public static class PerFontSafeDonorCommand
 
         var globalSafeCandidates = Enumerable.Range(0, 256).Where(x => !IsUsed((ushort)x)).ToHashSet();
 
-        // UA: М'які кандидати — ТОЧНО той самий набір і та сама умова
-        //     активації (`< neededGlyphCodes`), що й у
-        //     GenerateLocalizedCoreCommand, щоб перетин нижче відображав
-        //     РЕАЛЬНИЙ пул генерації, а не гіпотетичний окремий підрахунок.
-        //     Рахуються ЗАВЖДИ (дешево), а чи вони справді потрібні —
-        //     видно з РЕАЛЬНОГО перетину (intersection) нижче, а не з
-        //     грубого підрахунку (globalSafeCandidates.Count <
-        //     neededGlyphCodes) ДО фільтрації шрифтів — грубий підрахунок
-        //     не враховує, що perFont-фільтри (перетин у межах PageIndex,
-        //     нульова площа, замалий донор) можуть суттєво зменшити
-        //     реальний пул нижче того, що виглядало достатнім глобально.
-        // EN: Soft candidates — the EXACT SAME set and activation
-        //     condition (`< neededGlyphCodes`) as in
-        //     GenerateLocalizedCoreCommand, so the intersection below
-        //     reflects the REAL generation pool, not a separate
-        //     hypothetical count. They're ALWAYS computed (cheap), and
-        //     whether they're actually needed shows up from the REAL
-        //     intersection below, rather than from a crude count
-        //     (globalSafeCandidates.Count < neededGlyphCodes) taken BEFORE
-        //     filtering the fonts — a crude count doesn't account for
-        //     per-font filters (overlap within PageIndex, zero area,
-        //     too-small donor) that can shrink the real pool well below
-        //     what looked sufficient globally.
+        // UA: М'які кандидати, ТОЧНО той самий набір і та сама умова
+        //     активації (`< neededGlyphCodes`), що й у GenerateLocalizedCoreCommand,
+        //     щоб перетин нижче відображав РЕАЛЬНИЙ пул генерації, а не
+        //     гіпотетичний окремий підрахунок.
+        // EN: Soft candidates, the EXACT SAME set and activation
+        //     condition (`< neededGlyphCodes`) as in GenerateLocalizedCoreCommand,
+        //     so the intersection below reflects the REAL generation pool,
+        //     not a separate hypothetical count.
+        // UA: УЗГОДЖЕНО З GenerateLocalizedCoreCommand: рішення "чи
+        //     потрібні м'які донори" приймається ПІСЛЯ фільтрації
+        //     шрифтів, за РЕАЛЬНИМ перетином (intersection) нижче — а не
+        //     за грубим підрахунком (globalSafeCandidates.Count <
+        //     neededGlyphCodes) ДО фільтрації, який ненадійний: на BF2,
+        //     після розширення пулу ASCII, груба оцінка піднімається
+        //     вище 66, через що груба перевірка вимкнула б м'які донори,
+        //     тоді як РЕАЛЬНИЙ перетин без них — лише 57 (замість 91 з
+        //     м'якими донорами), і команда генерації відмовилася б
+        //     писати файл. Тому м'які кандидати рахуються ЗАВЖДИ
+        //     (дешево), а чи вони справді потрібні — видно з РЕАЛЬНОГО
+        //     перетину нижче.
+        // EN: ALIGNED WITH GenerateLocalizedCoreCommand: the "are soft
+        //     donors needed" decision is made AFTER filtering the fonts,
+        //     from the REAL intersection below — not from a crude count
+        //     (globalSafeCandidates.Count < neededGlyphCodes) BEFORE
+        //     filtering, which is unreliable: on BF2, after widening the
+        //     ASCII pool, the crude estimate rises above 66, which would
+        //     disable soft donors under the crude check, while the REAL
+        //     intersection without them is only 57 (instead of 91 with
+        //     soft donors) — the generation command would refuse to write
+        //     the file. So soft candidates are ALWAYS computed (cheap),
+        //     and whether they're actually needed shows up from the REAL
+        //     intersection below.
         var summary = await SoftDonorAnalysis.BuildSummaryAsync(filePath);
         var softCandidateCodes = SoftDonorAnalysis.ComputeSoftCandidates(summary).Select(c => c.Code).ToHashSet();
 
@@ -137,8 +150,8 @@ public static class PerFontSafeDonorCommand
             .SelectMany(l => l.CodeCounts.Keys)
             .ToHashSet();
 
-        report.Log($"=== [{label}] Ефективно безпечні донори ПО КОЖНОМУ РОЗМІРУ ШРИФТУ (виправлено: перетин лише в межах PageIndex) ===");
-        report.Log($"=== [{label}] Effectively safe donors PER FONT SIZE (fixed: overlap only within PageIndex) ===");
+        report.Log($"=== [{label}] Ефективно безпечні донори ПО КОЖНОМУ РОЗМІРУ ШРИФТУ (перетин лише в межах PageIndex) ===");
+        report.Log($"=== [{label}] Effectively safe donors PER FONT SIZE (overlap only within PageIndex) ===");
         report.Log($"    Глобальних кандидатів (не використовує жодна мова): {globalSafeCandidates.Count}");
         report.Log($"    Потрібно кодів для повного кириличного алфавіту: {neededGlyphCodes}");
         report.Log();
@@ -245,7 +258,7 @@ public static class PerFontSafeDonorCommand
             var deficit = neededGlyphCodes - effectivelySafe.Count;
 
             report.Log($"  {font.BaseName}:");
-            report.Log($"    Виключено через геометричний перетин у ЦЬОМУ шрифті (виправлено): {unsafeForThisFont.Count}");
+            report.Log($"    Виключено через геометричний перетин у ЦЬОМУ шрифті: {unsafeForThisFont.Count}");
             report.Log($"    Виключено через нульову площу слоту (нема пікселів для перезапису): {zeroAreaForThisFont.Count(c => globalSafeCandidates.Contains(c))}");
             report.Log($"    Ефективно безпечних кодів: {effectivelySafe.Count}");
             report.Log(deficit <= 0
@@ -294,8 +307,8 @@ public static class PerFontSafeDonorCommand
                 //     лише не зупиняємо звіт заради решти шрифтів).
                 // EN: No A-Z in this font — no basis to compute a reference
                 //     height, skip the "too small" filter (a real run would
-                //     throw the same exception — here we just don't stop the
-                //     report for the remaining fonts).
+                //     throw the same exception — here the report simply continues
+                //     for the remaining fonts).
                 finalPoolBaseOnly = candidatePoolBaseOnly.ToHashSet();
                 finalPoolWithSoft = candidatePoolWithSoft.ToHashSet();
             }

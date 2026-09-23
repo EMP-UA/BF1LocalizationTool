@@ -8,9 +8,9 @@
 //     на нову сторінку, коли поточна заповнена. Детермінований, повністю
 //     тестується БЕЗ гри й БЕЗ GDI.
 //
-//     Це НОВА можливість, потрібна для генерації свіжого атласу: досі ми
-//     лише вписували кирилицю в наявні донорські слоти (позиції фіксовані
-//     оригіналом); тепер САМІ обираємо позиції всіх гліфів.
+//     Потрібен для генерації свіжого атласу, де позиції всіх гліфів
+//     обираються вільно — на відміну від вписування кирилиці в наявні
+//     донорські слоти, де позиції фіксовані оригіналом.
 //
 //     Алгоритм: гліфи сортуються за спаданням висоти (щоб полиці були
 //     щільніші), кладуться зліва направо в поточну полицю; коли не влазить
@@ -29,9 +29,9 @@
 //     current one is full. Deterministic, fully testable WITHOUT the game
 //     and WITHOUT GDI.
 //
-//     This is a NEW capability needed for fresh-atlas generation: until now
-//     we only fit Cyrillic into existing donor slots (positions fixed by
-//     the original); now we choose ALL glyphs' positions ourselves.
+//     Needed for fresh-atlas generation, where ALL glyphs' positions are
+//     chosen freely — unlike fitting Cyrillic into existing donor slots,
+//     where positions are fixed by the original.
 //
 //     Algorithm: glyphs are sorted by descending height (for tighter
 //     shelves), placed left-to-right on the current shelf; when a glyph
