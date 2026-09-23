@@ -110,10 +110,18 @@ without hand-picking a value.
 
 **UA:** Кирилицю намальовано заново, реальними кодами Unicode — без запозичення
 слотів іншої мови й без накладання на існуючі латинські літери. Малюнок
-літер узято зі шрифту Fira Sans (SIL Open Font License), підібраного за
-товщиною штриха й формою під стиль оригінальних шрифтів гри.
+літер узято зі шрифтів **Unbounded** (`gamefont_large`/`medium`/`small`)
+та **Exo 2** (`gamefont_tiny`/`gamefont_super_tiny`), обидва SIL Open
+Font License — точний перелік файлів по розміру: README, розділ
+"Подяки", або `FONT_FORMAT_SPEC.md` §7.6. Обрано замість Fira Sans:
+частина кириличних літер у Fira Sans має форму, яка не читається як
+кирилична.
 
 **EN:** Cyrillic glyphs were drawn from scratch as real Unicode code points — not
 borrowed from another language's slots and not overlaid on existing Latin
-letters. The letterforms come from Fira Sans (SIL Open Font License),
-chosen to match the stroke weight and shape of the game's own fonts.
+letters. The letterforms come from **Unbounded**
+(`gamefont_large`/`medium`/`small`) and **Exo 2**
+(`gamefont_tiny`/`gamefont_super_tiny`), both SIL Open Font License —
+the exact file per size is listed in the README's Credits section, or
+`FONT_FORMAT_SPEC.md` §7.6. Chosen instead of Fira Sans: some Fira Sans
+Cyrillic letterforms don't read as genuinely Cyrillic.
