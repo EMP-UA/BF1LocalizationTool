@@ -40,10 +40,15 @@ area only actually grows in the multiplayer variant (see below).
 
 | Список | Підкладка заголовка (до побудови) | Позиція заголовка (`@post:`) | Вікно списку (`@post:`) |
 |---|---|---|---|
-| `MapListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=295.5` | `posy=-315;posx=-102.0` | `posx=570;posy=511;winsize=414;winsize2=644` |
-| `ModeListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=347.2` | `posy=-110;posx=-117.5` | `posx=1026;winsize=482;winsize2=230;posy=305` |
-| `EraListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=347.2` | `posy=-187;posx=-117.5` | `posx=1026;winsize=482;winsize2=388;posy=638` |
-| `PlayListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=377.6` | `posy=-315;posx=-127.0` | `posx=1534;posy=511;winsize=518;winsize2=644` |
+| `MapListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5.5;bg_width=295.5` | `posy=-315;posx=-85.5` | `posx=570;posy=511;winsize=414;winsize2=644` |
+| `ModeListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5;bg_width=347.2` | `posy=-110;posx=-100` | `posx=1026;winsize=482;winsize2=230;posy=305` |
+| `EraListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-4.5;bg_width=347.2` | `posy=-187;posx=-100.5` | `posx=1026;winsize=482;winsize2=388;posy=638` |
+| `PlayListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5.5;bg_width=377.6` | `posy=-315;posx=-110.5` | `posx=1534;posy=511;winsize=518;winsize2=644` |
+
+`bgexpandy`/`bgoffsety` — вивід ванільної формули `NewButtonWindow` після
+фіксу висоти шрифту (`BF2_UI_LAYOUT_FIX.md`, розділ про пропорції
+підкладок); `bgoffsetx` і `posx` — горизонтальне центрування підкладки й
+тексту заголовка відносно рамки списку.
 
 (Значення в авторському масштабі 800×600; при збірці інструмент сам
 масштабує їх під цільову роздільність — механізм описано в
@@ -58,10 +63,15 @@ the popup is being created, long before the patch point.
 
 | List | Title backdrop (pre-build) | Title position (`@post:`) | List window (`@post:`) |
 |---|---|---|---|
-| `MapListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=295.5` | `posy=-315;posx=-102.0` | `posx=570;posy=511;winsize=414;winsize2=644` |
-| `ModeListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=347.2` | `posy=-110;posx=-117.5` | `posx=1026;winsize=482;winsize2=230;posy=305` |
-| `EraListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=347.2` | `posy=-187;posx=-117.5` | `posx=1026;winsize=482;winsize2=388;posy=638` |
-| `PlayListbox` | `bgexpandy=20;bgoffsety=8;bgoffsetx=0;bg_width=377.6` | `posy=-315;posx=-127.0` | `posx=1534;posy=511;winsize=518;winsize2=644` |
+| `MapListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5.5;bg_width=295.5` | `posy=-315;posx=-85.5` | `posx=570;posy=511;winsize=414;winsize2=644` |
+| `ModeListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5;bg_width=347.2` | `posy=-110;posx=-100` | `posx=1026;winsize=482;winsize2=230;posy=305` |
+| `EraListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-4.5;bg_width=347.2` | `posy=-187;posx=-100.5` | `posx=1026;winsize=482;winsize2=388;posy=638` |
+| `PlayListbox` | `bgexpandy=3;bgoffsety=2;bgoffsetx=-5.5;bg_width=377.6` | `posy=-315;posx=-110.5` | `posx=1534;posy=511;winsize=518;winsize2=644` |
+
+`bgexpandy`/`bgoffsety` are the vanilla `NewButtonWindow` formula's output
+after the font-height fix (`BF2_UI_LAYOUT_FIX.md`, the backdrop-proportions
+section); `bgoffsetx` and `posx` horizontally centre the backdrop and the
+title text relative to the list frame.
 
 (Values are in the authored 800x600 scale; the tool scales them to the
 target resolution itself at build time — the mechanism is described in
@@ -109,6 +119,10 @@ Era_G_box       posx=793;posy=500
 mode_checkbox   posx=793;posy=204
 ```
 
+Окремо, довший варіант тексту («Галакт. громадянська війна») обрізався
+підкладкою за замовчуванням; виправлено ординарним рядком до побудови:
+`Era_C_box.Text_Era textw=300` і `Era_G_box.Text_Era textw=300`.
+
 **EN:** Three toggle checkboxes are fixed with separate `@post:` rows:
 
 ```
@@ -117,14 +131,24 @@ Era_G_box       posx=793;posy=500
 mode_checkbox   posx=793;posy=204
 ```
 
+Separately, the longer text variant ("Галакт. громадянська війна") was
+clipped by the default backdrop width; fixed with an ordinary pre-build
+row: `Era_C_box.Text_Era textw=300` and `Era_G_box.Text_Era textw=300`.
+
 ## 5. Нижня інформаційна панель (`InfoboxBot`) / The bottom info panel (`InfoboxBot`)
 
 **UA:** Опис карти/режиму внизу екрана відцентровано на середню колонку макета
-(а не на весь екран): `@post:InfoboxBot posx=731.5;posy=960`.
+(а не на весь екран): `@post:InfoboxBot posx=731.5;posy=948`. Рамка опису
+вміщує лише два рядки тексту за авторським розміром; третій рядок (довші
+описи карт) обрізається знизу — виправлено збільшенням поля списку:
+`@post:InfoboxBot.InfoListbox winsize=598;winsize2=78;posy=31.5`.
 
 **EN:** The map/mode description at the bottom of the screen is centered on the
 layout's middle column (not on the whole screen):
-`@post:InfoboxBot posx=731.5;posy=960`.
+`@post:InfoboxBot posx=731.5;posy=948`. The description frame fits only two
+lines of text at the authored size; a third line (longer map descriptions)
+was clipped at the bottom — fixed by enlarging the list field:
+`@post:InfoboxBot.InfoListbox winsize=598;winsize2=78;posy=31.5`.
 
 ## 6. Вкладки та перекриття поля налаштувань / Tabs and the settings-field overlap
 

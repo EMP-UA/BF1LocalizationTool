@@ -497,6 +497,10 @@ List<MenuCategory> BuildCategories() =>
                 "★★ LAYOUT FIX: write shell_layout.lvl (only screens with a screenshot-CONFIRMED vanilla defect)",
                 RunGenerateAnchorFixShell),
             new MenuItem(
+                "★★ ФІКС РОЗКЛАДКИ У БОЮ: записати ingame_layout.lvl (налаштування та лобі в бою; вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl)",
+                "★★ IN-BATTLE LAYOUT FIX: write ingame_layout.lvl (options and lobby in battle; input — reference-files\\BF2-UA-rem\\...\\ingame.lvl)",
+                RunGenerateAnchorFixIngame),
+            new MenuItem(
                 "★ ДІАГНОСТИЧНИЙ ЗОНД: записати shell_probe.lvl — показати РЕАЛЬНЕ \"widescreen\" (4-те значення ScriptCB_GetScreenInfo) як Y-позицію напису на екрані Сеансу",
                 "★ DIAGNOSTIC PROBE: write shell_probe.lvl — display the REAL \"widescreen\" (4th ScriptCB_GetScreenInfo value) as a label's Y-position on the Session screen",
                 RunGenerateScreenInfoProbeShell),
@@ -2008,6 +2012,62 @@ async Task RunSessionListHeaderBlock()
 //     example, the audio screen is correct in vanilla at 1920x1080 on
 //     its own, though without screenshot confirmation a patch could push
 //     its labels and sliders 340 px apart, breaking a working screen.
+// UA: Той самий фікс розкладки для екранів, що відкриваються в бою
+//     (ingame.lvl). Вхід — уже локалізований ingame.lvl із
+//     reference-files\BF2-UA-rem (він містить інші патчі); якщо його немає —
+//     вибір файлу. Які рядки таблиці переносяться — GenerateAnchorFixIngameCommand.KeepRow.
+// EN: The same layout fix for screens that open in battle (ingame.lvl). The
+//     input is the already localized ingame.lvl from reference-files\BF2-UA-rem
+//     (it carries other patches); if missing — a file picker. Which table rows
+//     are carried over — GenerateAnchorFixIngameCommand.KeepRow.
+async Task RunGenerateAnchorFixIngame()
+{
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var ingamePath = FindGameFile(Path.Combine(refRoot, "BF2-UA-rem"), "ingame.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output");
+
+    var report = new DiagnosticReport("GenerateAnchorFixIngame");
+    report.Log("UA: Фікс розкладки для екранів у бою (ingame.lvl).");
+    report.Log("EN: Layout fix for in-battle screens (ingame.lvl).");
+
+    if (ingamePath is null)
+    {
+        report.Log($"UA: ingame.lvl не знайдено під \"{Path.Combine(refRoot, "BF2-UA-rem")}\" — оберіть локалізований ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{Path.Combine(refRoot, "BF2-UA-rem")}\" — pick the localized ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        if (ingamePath is null)
+        {
+            report.Log("UA: Файл не вибрано. / EN: No file selected.");
+            report.Save();
+            return;
+        }
+    }
+
+    report.Log($"UA: Вхідний ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log();
+
+    var outputPath = GenerateAnchorFixIngameCommand.Run(report, ingamePath, outputDir, "ingame_layout.lvl");
+
+    if (outputPath is not null)
+    {
+        report.Log();
+        report.Log("UA: === Як тестувати ===");
+        report.Log("EN: === How to test ===");
+        report.Log(@"UA: 1. Резервна копія: ...\GameData\data\_lvl_pc\ingame.lvl -> ingame.lvl.backup");
+        report.Log(@"EN: 1. Back up: ...\GameData\data\_lvl_pc\ingame.lvl -> ingame.lvl.backup");
+        report.Log($"UA: 2. Скопіюйте \"{outputPath}\" на місце ingame.lvl.");
+        report.Log($"EN: 2. Copy \"{outputPath}\" over ingame.lvl.");
+        report.Log("UA: 3. У бою: Esc → Налаштування → вкладки «Гра», «Відео», «Аудіо», «Керування», «В мережі» — кнопка «Скидання до типових» повністю.");
+        report.Log("EN: 3. In battle: Esc → Options → the «Гра», «Відео», «Аудіо», «Керування», «В мережі» tabs — the reset button shows its full label.");
+        report.Log("UA: 4. Меню паузи (Esc): «Перезапустити місію» повністю; ряд вкладок налаштувань не обрізаний праворуч.");
+        report.Log("EN: 4. Pause menu (Esc): «Перезапустити місію» in full; the options tab row is not clipped on the right.");
+    }
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
 async Task RunGenerateAnchorFixShell()
 {
     var bf2RefDir = Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2");

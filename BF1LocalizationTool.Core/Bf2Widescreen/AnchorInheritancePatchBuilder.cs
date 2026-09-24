@@ -6,8 +6,8 @@
 // =============================================================================
 // UA: Механізм застосування таблиці виправлень розкладки BF2.
 //
-//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 485 рядків на 30
-//     екранів. Кожен рядок додається лише після виміру на реальному знімку
+//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 563 рядки на 34
+//     екрани. Кожен рядок додається лише після виміру на реальному знімку
 //     гри; сама таблиця не зберігає статус перевірки по рядках — це формат
 //     числових значень, а не журнал підтверджень.
 //
@@ -37,8 +37,8 @@
 //
 // EN: Mechanism for applying the BF2 layout correction table.
 //
-//     The correction table (Data/Bf2LayoutTable.txt) holds 485 rows across
-//     30 screens. Each row is added only after measuring a real in-game
+//     The correction table (Data/Bf2LayoutTable.txt) holds 563 rows across
+//     34 screens. Each row is added only after measuring a real in-game
 //     screenshot; the table itself does not store a per-row verification
 //     status — it is a format of numeric values, not a confirmation log.
 //
@@ -1006,7 +1006,7 @@ public static class AnchorInheritancePatchBuilder
             foreach (var segment in parts)
             {
                 b.Emit(LuaOpcode.GetTable, a: scratch, b: scratch,
-                       c: Lua50FunctionBuilder.Rk(k.Str(segment)));
+                       c: Lua50FunctionBuilder.Rk(k.Key(segment)));
                 b.EmitTest(register: scratch, c: 0);
                 exits.Add(b.EmitJumpPlaceholder());
             }
@@ -1056,9 +1056,17 @@ public static class AnchorInheritancePatchBuilder
 
     /// <summary>
     /// UA: Авторські значення одного віджета: шлях у таблиці екрана -> поле -> значення.
+    ///     TextFields — рядкові значення (у таблиці записані в лапках, напр.
+    ///     halign="hcenter"); дозволені лише у звичайних рядках до побудови.
     /// EN: Authored values of one widget: path within the screen table -> field -> value.
+    ///     TextFields — string values (quoted in the table, e.g. halign="hcenter");
+    ///     allowed only in ordinary pre-build rows.
     /// </summary>
-    public sealed record WidgetEntry(string Path, IReadOnlyList<KeyValuePair<string, float>> Fields);
+    public sealed record WidgetEntry(string Path, IReadOnlyList<KeyValuePair<string, float>> Fields,
+        IReadOnlyList<KeyValuePair<string, string>>? TextFields = null)
+    {
+        public IReadOnlyList<KeyValuePair<string, string>> Texts => TextFields ?? [];
+    }
 
     private static IReadOnlyDictionary<string, List<WidgetEntry>>? _table;
 
@@ -1070,7 +1078,15 @@ public static class AnchorInheritancePatchBuilder
     //     its values are measured from the game's own data, and the table
     //     must stay easy to regenerate rather than hand-edited.
     // -------------------------------------------------------------------------
-    public static IReadOnlyDictionary<string, List<WidgetEntry>> Table => _table ??= LoadTable();
+    public static IReadOnlyDictionary<string, List<WidgetEntry>> Table => _tableOverride ?? (_table ??= LoadTable());
+
+    // UA: Відфільтрована таблиця на час однієї побудови інсталятора
+    //     (BuildInstallerScript з rowFilter). Поза цією побудовою — null, і
+    //     всі методи бачать повну таблицю, як і раніше.
+    // EN: A filtered table for the duration of one installer build
+    //     (BuildInstallerScript with rowFilter). Outside that build it is
+    //     null, and every method sees the full table as before.
+    [ThreadStatic] private static IReadOnlyDictionary<string, List<WidgetEntry>>? _tableOverride;
 
     private static IReadOnlyDictionary<string, List<WidgetEntry>> LoadTable()
     {
@@ -1090,10 +1106,32 @@ public static class AnchorInheritancePatchBuilder
             if (parts.Length != 3) continue;
 
             var fields = new List<KeyValuePair<string, float>>();
+            var texts = new List<KeyValuePair<string, string>>();
             foreach (var pair in parts[2].Split(';', StringSplitOptions.RemoveEmptyEntries))
             {
                 var eq = pair.IndexOf('=');
                 if (eq <= 0) continue;
+
+                // UA: Рядкове значення — у лапках (напр. halign="hcenter"). Лише для
+                //     звичайних рядків до побудови: решта механізмів (@post, @hook,
+                //     @globals, @screen, @initlist) пише тільки числа, тож рядок
+                //     там відхиляється явно, а не ігнорується мовчки.
+                // EN: A string value is quoted (e.g. halign="hcenter"). Ordinary
+                //     pre-build rows only: every other mechanism (@post, @hook,
+                //     @globals, @screen, @initlist) writes numbers only, so a string
+                //     there is rejected explicitly rather than silently ignored.
+                var raw = pair[(eq + 1)..];
+                if (raw.Length >= 2 && raw[0] == '"' && raw[^1] == '"')
+                {
+                    if (parts[1].StartsWith('@'))
+                        throw new InvalidDataException(
+                            $"UA: {TableResource}, рядок {lineNumber}: рядкове поле \"{pair}\" дозволене лише " +
+                            $"у звичайному рядку до побудови, а не в \"{parts[1]}\". / " +
+                            $"EN: {TableResource}, line {lineNumber}: string field \"{pair}\" is allowed only " +
+                            $"in an ordinary pre-build row, not in \"{parts[1]}\".");
+                    texts.Add(new KeyValuePair<string, string>(pair[..eq], raw[1..^1]));
+                    continue;
+                }
 
                 // UA: Помилку розбору називаємо ПОІМЕННО — рядок, екран, віджет,
                 //     поле. Реальний випадок: файл не закінчувався переносом
@@ -1117,17 +1155,17 @@ public static class AnchorInheritancePatchBuilder
                 fields.Add(new KeyValuePair<string, float>(pair[..eq], value));
             }
 
-            if (fields.Count == 0) continue;
+            if (fields.Count == 0 && texts.Count == 0) continue;
             if (!result.TryGetValue(parts[0], out var list))
                 result[parts[0]] = list = [];
-            list.Add(new WidgetEntry(parts[1], fields));
+            list.Add(new WidgetEntry(parts[1], fields, texts.Count > 0 ? texts : null));
         }
         return result;
     }
 
     public static int ScreenCount => Table.Count;
     public static int WidgetCount => Table.Values.Sum(v => v.Count);
-    public static int FieldCount => Table.Values.Sum(v => v.Sum(e => e.Fields.Count));
+    public static int FieldCount => Table.Values.Sum(v => v.Sum(e => e.Fields.Count + e.Texts.Count));
 
     // -------------------------------------------------------------------------
     // UA: Дедуплікація констант. Базовий будівник додає НОВУ константу на
@@ -1156,6 +1194,26 @@ public static class AnchorInheritancePatchBuilder
             if (!_numbers.TryGetValue(value, out var i))
                 _numbers[value] = i = builder.AddNumberConstant(value);
             return i;
+        }
+
+        // UA: Ключ сегмента шляху. Сегмент виду "#N" (N — ціле число) — ЧИСЛОВИЙ
+        //     ключ таблиці (t[N]); будь-який інший сегмент — рядковий (t["..."]).
+        //     У Lua t[1] і t["1"] — різні ключі: групи радіокнопок
+        //     (ifelem_AddRadioButtonGroup) зберігають варіанти за числовими
+        //     індексами, а кнопки AddVerticalButtons — за рядковими тегами, тож
+        //     сегмент "1" і далі означає рядковий ключ.
+        // EN: A path segment's key. A segment of the form "#N" (N an integer) is a
+        //     NUMERIC table key (t[N]); any other segment is a string key (t["..."]).
+        //     In Lua t[1] and t["1"] are different keys: radio-button groups
+        //     (ifelem_AddRadioButtonGroup) store their options under numeric
+        //     indices, while AddVerticalButtons buttons use string tags, so the
+        //     segment "1" keeps meaning a string key.
+        public int Key(string segment)
+        {
+            if (segment.Length > 1 && segment[0] == '#' &&
+                int.TryParse(segment.AsSpan(1), NumberStyles.None, CultureInfo.InvariantCulture, out var index))
+                return Num(index);
+            return Str(segment);
         }
 
         public int Count => _strings.Count + _numbers.Count;
@@ -1202,6 +1260,11 @@ public static class AnchorInheritancePatchBuilder
                     need.Add("s:" + name);
                 }
                 need.Add("n:" + value.ToString("R", CultureInfo.InvariantCulture));
+            }
+            foreach (var (name, text) in entry.Texts)
+            {
+                need.Add("s:" + name);
+                need.Add("s:" + text);
             }
 
             if (current.Count > 0 && seen.Union(need).Count() > ConstantBudget)
@@ -1384,13 +1447,13 @@ public static class AnchorInheritancePatchBuilder
             var parts = entry.Path.Split('.');
             var exits = new List<int>();
 
-            b.Emit(LuaOpcode.GetTable, a: 1, b: 0, c: Lua50FunctionBuilder.Rk(k.Str(parts[0])));
+            b.Emit(LuaOpcode.GetTable, a: 1, b: 0, c: Lua50FunctionBuilder.Rk(k.Key(parts[0])));
             b.EmitTest(register: 1, c: 0);
             exits.Add(b.EmitJumpPlaceholder());
 
             for (var i = 1; i < parts.Length; i++)
             {
-                b.Emit(LuaOpcode.GetTable, a: 1, b: 1, c: Lua50FunctionBuilder.Rk(k.Str(parts[i])));
+                b.Emit(LuaOpcode.GetTable, a: 1, b: 1, c: Lua50FunctionBuilder.Rk(k.Key(parts[i])));
                 b.EmitTest(register: 1, c: 0);
                 exits.Add(b.EmitJumpPlaceholder());
             }
@@ -1401,6 +1464,15 @@ public static class AnchorInheritancePatchBuilder
                 b.Emit(LuaOpcode.SetTable, a: 1,
                     b: Lua50FunctionBuilder.Rk(k.Str(name)),
                     c: Lua50FunctionBuilder.Rk(k.Num(final)));
+            }
+
+            // UA: рядкові поля (напр. halign) — без масштабу
+            // EN: string fields (e.g. halign) — never scaled
+            foreach (var (name, text) in entry.Texts)
+            {
+                b.Emit(LuaOpcode.SetTable, a: 1,
+                    b: Lua50FunctionBuilder.Rk(k.Str(name)),
+                    c: Lua50FunctionBuilder.Rk(k.Str(text)));
             }
 
             // UA: наступний віджет починається знову від кореня, тож усі виходи
@@ -1478,14 +1550,14 @@ public static class AnchorInheritancePatchBuilder
             if (parts[0].StartsWith('@'))
                 b.EmitABx(LuaOpcode.GetGlobal, a: 1, bx: k.Str(parts[0][1..]));
             else
-                b.Emit(LuaOpcode.GetTable, a: 1, b: 0, c: Lua50FunctionBuilder.Rk(k.Str(parts[0])));
+                b.Emit(LuaOpcode.GetTable, a: 1, b: 0, c: Lua50FunctionBuilder.Rk(k.Key(parts[0])));
 
             b.EmitTest(register: 1, c: 0);
             exits.Add(b.EmitJumpPlaceholder());
 
             for (var i = 1; i < parts.Length; i++)
             {
-                b.Emit(LuaOpcode.GetTable, a: 1, b: 1, c: Lua50FunctionBuilder.Rk(k.Str(parts[i])));
+                b.Emit(LuaOpcode.GetTable, a: 1, b: 1, c: Lua50FunctionBuilder.Rk(k.Key(parts[i])));
                 b.EmitTest(register: 1, c: 0);
                 exits.Add(b.EmitJumpPlaceholder());
             }
@@ -2107,7 +2179,8 @@ public static class AnchorInheritancePatchBuilder
     //     screen's chunks, then delegate to the original.
     // -------------------------------------------------------------------------
     private static LuaFunctionPrototype BuildDispatchWrapper(float scale, string path,
-        bool includeScreenInfoProbe = false, bool includeBackgroundSizeFix = false)
+        bool includeScreenInfoProbe = false, bool includeBackgroundSizeFix = false,
+        bool includePopupTutorialFix = true)
     {
         var b = new Lua50FunctionBuilder { NumParams = 2, IsVararg = 0, MaxStackSize = 6 };
         var k = new ConstantCache(b);
@@ -2246,9 +2319,12 @@ public static class AnchorInheritancePatchBuilder
         //     it; every later call exits immediately via the nil/already-
         //     wrapped check.
         // ---------------------------------------------------------------------
-        var popupInstall = b.AddNestedPrototype(BuildPopupTutorialInstallStep($"{path}/PopupTutorialInstall"));
-        b.EmitABx(LuaOpcode.Closure, a: 2, bx: popupInstall);
-        b.Emit(LuaOpcode.Call, a: 2, b: 1, c: 1);
+        if (includePopupTutorialFix)
+        {
+            var popupInstall = b.AddNestedPrototype(BuildPopupTutorialInstallStep($"{path}/PopupTutorialInstall"));
+            b.EmitABx(LuaOpcode.Closure, a: 2, bx: popupInstall);
+            b.Emit(LuaOpcode.Call, a: 2, b: 1, c: 1);
+        }
 
         // ---------------------------------------------------------------------
         // UA: ДІАГНОСТИЧНИЙ ЗОНД "widescreen" — крок ВСТАНОВЛЕННЯ обгортки
@@ -2475,8 +2551,46 @@ public static class AnchorInheritancePatchBuilder
     //     explicitly — confirmed by screenshots on 4 of 7 bg_texture values. The separate diagnostic
     //     command (shell_bgfix.lvl) remains for spot-testing new
     //     screens/textures without rebuilding the main patch.
+    // UA: rowFilter — якщо задано, інсталятор будується лише з рядків таблиці,
+    //     для яких фільтр повертає true (екран, запис). Потрібно для
+    //     ingame.lvl: там ті самі екрани налаштувань (ifs_opt_*, з common.lvl),
+    //     але без шапки меню, тож рядки вкладок (_Tabs y=31) і анкерні зсуви
+    //     shell туди не переносяться. includePopupTutorialFix — крок
+    //     Popup_Tutorial (довідка меню); для ingame.lvl вимикається.
+    // EN: rowFilter — when given, the installer is built only from the table
+    //     rows the filter accepts (screen, entry). Needed for ingame.lvl: the
+    //     same options screens live there (ifs_opt_*, from common.lvl) but
+    //     without the menu header, so the tab rows (_Tabs y=31) and the shell
+    //     anchor shifts are not carried over. includePopupTutorialFix — the
+    //     Popup_Tutorial (menu help) step; switched off for ingame.lvl.
     public static LuaFunctionPrototype BuildInstallerScript(float scale = 1.0f,
-        bool includeScreenInfoProbe = false, bool includeBackgroundSizeFix = false)
+        bool includeScreenInfoProbe = false, bool includeBackgroundSizeFix = false,
+        Func<string, WidgetEntry, bool>? rowFilter = null, bool includePopupTutorialFix = true)
+    {
+        if (rowFilter is null)
+            return BuildInstallerScriptCore(scale, includeScreenInfoProbe, includeBackgroundSizeFix, includePopupTutorialFix);
+
+        var full = _table ??= LoadTable();
+        var filtered = new Dictionary<string, List<WidgetEntry>>(StringComparer.Ordinal);
+        foreach (var (screen, entries) in full)
+        {
+            var kept = entries.Where(e => rowFilter(screen, e)).ToList();
+            if (kept.Count > 0) filtered[screen] = kept;
+        }
+
+        _tableOverride = filtered;
+        try
+        {
+            return BuildInstallerScriptCore(scale, includeScreenInfoProbe, includeBackgroundSizeFix, includePopupTutorialFix);
+        }
+        finally
+        {
+            _tableOverride = null;
+        }
+    }
+
+    private static LuaFunctionPrototype BuildInstallerScriptCore(float scale,
+        bool includeScreenInfoProbe, bool includeBackgroundSizeFix, bool includePopupTutorialFix)
     {
         var root = new Lua50FunctionBuilder { NumParams = 0, IsVararg = 0, MaxStackSize = 4 };
 
@@ -2489,7 +2603,7 @@ public static class AnchorInheritancePatchBuilder
 
         root.EmitABx(LuaOpcode.SetGlobal, a: 0, bx: kBackup);
         var nested = root.AddNestedPrototype(BuildDispatchWrapper(
-            scale, "root/layoutfix", includeScreenInfoProbe, includeBackgroundSizeFix));
+            scale, "root/layoutfix", includeScreenInfoProbe, includeBackgroundSizeFix, includePopupTutorialFix));
         root.EmitABx(LuaOpcode.Closure, a: 0, bx: nested);
         root.EmitABx(LuaOpcode.SetGlobal, a: 0, bx: kName);
 

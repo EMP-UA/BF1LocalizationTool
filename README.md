@@ -443,10 +443,18 @@ self-contained `.exe`.
     екрани ([`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md),
     [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)):
     на відміну від першої частини, рушій цієї гри розрахований лише під
-    800×600 і сам широкий екран не підтримує.
-  - `Data\_lvl_pc\ingame.lvl` — зазор між написом "Кількість бійців" і
-    кнопкою "Відродження" на екрані вибору бійця, щоб збільшений
-    кириличний шрифт не перекривав кнопку —
+    800×600 і сам широкий екран не підтримує. На відміну від BF1, де
+    підгонка тексту під ширину поля вирішується посимвольно (розмір
+    гліфа, кернінг, підбір шрифту), у BF2 додана довжина перекладу
+    найчастіше впирається не в сам текст, а в прив'язані елементи
+    інтерфейсу — підкладку заголовка, сусідню кнопку, контейнер списку.
+  - `Data\_lvl_pc\ingame.lvl` — та сама верстка меню налаштувань, паузи
+    й лобі мережевої гри, що й у `shell.lvl` (ці екрани відкриваються і
+    з головного меню, і в бою —
+    [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) §14), а
+    також зазор між написом "Кількість бійців" і кнопкою "Відродження"
+    на екрані вибору бійця, щоб збільшений кириличний шрифт не
+    перекривав кнопку —
     [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
 - **Новий файл:** `d3d9.dll` — ставиться в теку гри поряд із
   `BattlefrontII.exe` (стандартний порядок пошуку DLL у Windows: тека
@@ -493,10 +501,18 @@ self-contained `.exe`.
     ([`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md),
     [`docs/BF2_MISSIONSELECT_LAYOUT.md`](docs/BF2_MISSIONSELECT_LAYOUT.md)):
     unlike the first game, this engine is built for 800x600 only and has
-    no native widescreen support.
-  - `Data\_lvl_pc\ingame.lvl` — a gap between the "Кількість бійців"
-    label and the "Відродження" button on the unit-selection screen, so
-    the enlarged Cyrillic font doesn't cover the button —
+    no native widescreen support. Unlike BF1, where fitting text to a
+    field's width is resolved per character (glyph size, kerning, font
+    selection), in BF2 the added length of a translation most often runs
+    into bound interface elements — a title backdrop, a neighboring
+    button, a list container — rather than the text itself.
+  - `Data\_lvl_pc\ingame.lvl` — the same options-menu, pause-menu, and
+    multiplayer-lobby layout as `shell.lvl` (these screens open both
+    from the main menu and during battle —
+    [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) §14), plus
+    a gap between the "Кількість бійців" label and the "Відродження"
+    button on the unit-selection screen, so the enlarged Cyrillic font
+    doesn't cover the button —
     [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
 - **New file:** `d3d9.dll` — placed in the game folder next to
   `BattlefrontII.exe` (the standard Windows DLL search order: the

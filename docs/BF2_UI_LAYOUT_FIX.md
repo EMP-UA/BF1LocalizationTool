@@ -25,6 +25,20 @@ of the Instant Action screen (`ifs_missionselect` /
 `BF2_MISSIONSELECT_LAYOUT.md` (by far the largest single screen, with its
 own mechanisms).
 
+**UA:** На відміну від BF1, де підгонка тексту під ширину поля вирішується
+посимвольно (розмір гліфа, кернінг, підбір шрифту), у BF2 додана довжина
+перекладу найчастіше впирається не в сам текст, а в прив'язані елементи
+інтерфейсу — підкладку заголовка, сусідню кнопку, контейнер списку. Тому
+переважна більшість виправлень нижче працює на рівні розкладки (позиція
+й розмір віджета), а не на рівні гліфів.
+
+**EN:** Unlike BF1, where fitting text to a field's width is resolved per
+character (glyph size, kerning, font selection), in BF2 the added length
+of a translation most often runs into bound interface elements — a
+title backdrop, a neighboring button, a list container — rather than the
+text itself. So most of the fixes below operate at the layout level (a
+widget's position and size), not at the glyph level.
+
 ## 2. Прив'язка виправлення до конкретної роздільності / Tied to one specific resolution
 
 **UA:** Сам механізм застосування виправлень — прив'язки-частки екрана
@@ -77,6 +91,14 @@ rebuilding.
 `alpha=1.0` — без цього винятку рушій отримав би `alpha=2.4` на 1920×1080
 замість `1.0`.
 
+Значення поля може бути рядком у лапках (напр. `halign="hcenter"`) — лише
+у звичайному рядку до побудови екрана; решта механізмів запису приймають
+тільки числа. Сегмент шляху виду `#N` (N — ціле число, напр.
+`playlistorder.#1.radiotext`) — числовий ключ таблиці Lua (`t[N]`), а не
+рядковий (`t["N"]`); потрібен для елементів, які рушій зберігає за
+числовим індексом, а не рядковим тегом (наприклад, варіанти в групі
+радіокнопок).
+
 Більшість рядків пишуться ДО виклику оригінального `AddIFScreen` (поля ще
 лежать у таблиці-конфігу й не встигли бути прочитаними рушієм). Частина
 значень рушій, однак, читає до того, як патч встигає їх записати, або
@@ -109,6 +131,14 @@ pixel), draw order (`ZPos`), and color channels (`alpha`, `ColorR/G/B`).
 Example of the latter: `ifs_mp_sessionlist` -> `listbox.titleBarElement`
 -> `alpha=1.0` — without this exception the engine would get `alpha=2.4`
 at 1920x1080 instead of `1.0`.
+
+A field's value may be a quoted string (e.g. `halign="hcenter"`) — only in
+an ordinary pre-build row; the other write mechanisms accept numbers
+only. A path segment of the form `#N` (N an integer, e.g.
+`playlistorder.#1.radiotext`) is a numeric Lua table key (`t[N]`), not a
+string one (`t["N"]`); needed for elements the engine stores under a
+numeric index rather than a string tag (e.g. the options in a
+radio-button group).
 
 Most rows are written BEFORE the original `AddIFScreen` call (the fields
 still sit in the config table and haven't been read by the engine yet).
@@ -243,12 +273,14 @@ writes instead (sections below, and a dedicated file for
 
 | Екран | Віджет(и) | Поля (значення в масштабі 800×600) |
 |---|---|---|
-| `ifs_login` | `ProfileBox.titleBarElement` | `bgexpandy=20;bg_width=352;bgoffsetx=-17;bgoffsety=8` (видима смуга заголовка зросла з 19 до 34px) |
+| `ifs_login` | `ProfileBox.titleBarElement` | `bgexpandy=3;bgoffsety=1.5;bgoffsetx=-8;x=-200.5` (підкладка центрована відносно рамки вікна; формула — розділ нижче) |
+| `ifs_login` | `profile_button` | `x=-2.5` (список профілю центровано відносно тієї ж рамки) |
 | `ifs_opt_pccontrols` | `formcontainer` | `y=91` |
 | `ifs_opt_pccontrols` | `bindTitle` | `y=235` |
 | `ifs_opt_pccontrols` | `buttonlabels`, `buttons`, `sliders`, `radiobuttons`, `Info`, `RInfo` | `y=20` |
-| `ifs_mp_sessionlist` | `listbox.titleBarElement` | `bgexpandy=10;bgoffsety=88;alpha=1.0` |
-| `ifs_mp_sessionlist` | `serverinfo.titleBarElement`, `playerlist.titleBarElement` | `bgexpandy=10` |
+| `ifs_mp_sessionlist` | `listbox.titleBarElement` | `bgexpandy=10;bgoffsety=88;alpha=1.0;bgoffsetx=-5` |
+| `ifs_mp_sessionlist` | `serverinfo.titleBarElement`, `playerlist.titleBarElement` | `bgexpandy=10;bgoffsetx=-10;bgoffsety=1.5;x=-449.5`/`x=-439.5` |
+| `ifs_freeform_load`, `ifs_campaign_load` | `listbox.titleBarElement` | `bgoffsetx=-9;bgoffsety=1.5;x=-777.6` |
 
 Повний перелік виміряних параметрів по кожному екрану й елементу
 зберігається у вбудованому файлі даних (`Bf2LayoutTable.txt`) поруч із
@@ -267,12 +299,14 @@ after.
 
 | Screen | Widget(s) | Fields (values in the 800×600 scale) |
 |---|---|---|
-| `ifs_login` | `ProfileBox.titleBarElement` | `bgexpandy=20;bg_width=352;bgoffsetx=-17;bgoffsety=8` (the visible title strip grew from 19 to 34px) |
+| `ifs_login` | `ProfileBox.titleBarElement` | `bgexpandy=3;bgoffsety=1.5;bgoffsetx=-8;x=-200.5` (the backdrop is centered on the window frame; formula in the section below) |
+| `ifs_login` | `profile_button` | `x=-2.5` (the profile list is centered on the same frame) |
 | `ifs_opt_pccontrols` | `formcontainer` | `y=91` |
 | `ifs_opt_pccontrols` | `bindTitle` | `y=235` |
 | `ifs_opt_pccontrols` | `buttonlabels`, `buttons`, `sliders`, `radiobuttons`, `Info`, `RInfo` | `y=20` |
-| `ifs_mp_sessionlist` | `listbox.titleBarElement` | `bgexpandy=10;bgoffsety=88;alpha=1.0` |
-| `ifs_mp_sessionlist` | `serverinfo.titleBarElement`, `playerlist.titleBarElement` | `bgexpandy=10` |
+| `ifs_mp_sessionlist` | `listbox.titleBarElement` | `bgexpandy=10;bgoffsety=88;alpha=1.0;bgoffsetx=-5` |
+| `ifs_mp_sessionlist` | `serverinfo.titleBarElement`, `playerlist.titleBarElement` | `bgexpandy=10;bgoffsetx=-10;bgoffsety=1.5;x=-449.5`/`x=-439.5` |
+| `ifs_freeform_load`, `ifs_campaign_load` | `listbox.titleBarElement` | `bgoffsetx=-9;bgoffsety=1.5;x=-777.6` |
 
 The full list of measured parameters per screen and element lives in the
 embedded data file (`Bf2LayoutTable.txt`) next to the generator code —
@@ -281,7 +315,40 @@ duplicated here. For a new screen, the values are derived the same way:
 measure the actual size at the target font/resolution, work out the
 correction, confirm with an in-game screenshot before and after.
 
-## 6. Спільна група екранів Галактичного завоювання / The shared Galactic Conquest screen group
+## 6. Пропорції синіх підкладок після фіксу висоти шрифту / Blue backdrop proportions after the font-height fix
+
+**UA:** `NewButtonWindow` (заголовок-«плашка» вгорі спливних вікон і списків)
+рахує висоту текстового поля рушійною формулою `texth = висота_шрифту +
+6`, а підкладку розширює на `bgexpandy` (ванільне значення — `3`, тобто
+пів пікселя знизу й зверху від текстового поля на кожен бік). До фіксу
+висоти шрифту (`BF2_FONT_SCALING.md`, поле `HEAD`) рушій читав ЗАСТАРІЛЕ
+значення висоти — підкладка виходила нижчою за текст, і це компенсувалося
+вручну підібраними великими `bgexpandy`/`bgoffsety` (напр. `20`/`8`,
+`12`/`6`). Після фіксу `HEAD` рушій рахує `texth` від СПРАВЖНЬОЇ висоти
+шрифту, і ванільна формула сама дає правильні пропорції — великі
+компенсаційні значення стали зайвими й замінені на близькі до ванільних
+(`bgexpandy=3`, `bgoffsety=1,5…3` залежно від елемента). Це стосується
+підкладок заголовків Галактичного завоювання (розділ нижче), чотирьох
+списків «Миттєвого бою» (`BF2_MISSIONSELECT_LAYOUT.md`) і підкладки
+профілю (розділ вище).
+
+**EN:** `NewButtonWindow` (the title "plate" atop popups and lists) computes
+the text field's height with the engine's own formula `texth =
+font_height + 6`, and expands the backdrop by `bgexpandy` (vanilla value
+`3` — half a pixel above and below the text field on each side). Before
+the font-height fix (`BF2_FONT_SCALING.md`, the `HEAD` field), the engine
+read a STALE height value — the backdrop came out shorter than the text,
+which was compensated with large, hand-picked `bgexpandy`/`bgoffsety`
+values (e.g. `20`/`8`, `12`/`6`). After the `HEAD` fix, the engine
+computes `texth` from the REAL font height, and the vanilla formula
+produces correct proportions on its own — the large compensating values
+became unnecessary and were replaced with values close to vanilla
+(`bgexpandy=3`, `bgoffsety=1.5..3` depending on the element). This
+applies to the Galactic Conquest title backdrops (next section), the four
+Instant Action lists (`BF2_MISSIONSELECT_LAYOUT.md`), and the profile
+backdrop (section above).
+
+## 7. Спільна група екранів Галактичного завоювання / The shared Galactic Conquest screen group
 
 **UA:** 13 екранів Галактичного завоювання й кампанії (`ifs_campaign_battle`,
 `ifs_campaign_battle_card`, `ifs_campaign_summary`, `ifs_freeform_battle`,
@@ -298,10 +365,10 @@ correction, confirm with an in-game screenshot before and after.
 |---|---|
 | `info.skin` | `localpos_l=-836.8;localpos_r=836.8` (розширення інформаційної панелі) |
 | `info.caption`, `info.subcaption`, `info.text` | `x=-820.6;textw=1641.6` |
-| `title.text` | `bgexpandy=12;bgoffsetx=-9;bgoffsety=6` (підкладка заголовка) |
+| `title.text` | `bgexpandy=8;bgoffsetx=-12;bgoffsety=3` (підкладка заголовка; формула — розділ вище) |
 | `player.icon` | `localpos_l=-13;localpos_r=13` |
 | `player` | `y=116` |
-| `action.misc.label`, `action.accept.label`, `action.back.label`, `action.help.label` | `textw=180;bg_width=180;x=-90` (ряд кнопок дій знизу) |
+| `action.misc.label`, `action.accept.label`, `action.back.label`, `action.help.label` | `textw=220;bg_width=220;x=-110` (ряд кнопок дій знизу) |
 
 Окремо на `ifs_freeform_purchase_unit` є ще один рядок — запис у ГЛОБАЛЬНУ
 змінну Lua, а не в поле віджета (псевдошлях `@globals`):
@@ -321,16 +388,16 @@ values fix all 13 screens at once, with no need to re-measure each one:
 |---|---|
 | `info.skin` | `localpos_l=-836.8;localpos_r=836.8` (widening the info panel) |
 | `info.caption`, `info.subcaption`, `info.text` | `x=-820.6;textw=1641.6` |
-| `title.text` | `bgexpandy=12;bgoffsetx=-9;bgoffsety=6` (title backdrop) |
+| `title.text` | `bgexpandy=8;bgoffsetx=-12;bgoffsety=3` (title backdrop; formula in the section above) |
 | `player.icon` | `localpos_l=-13;localpos_r=13` |
 | `player` | `y=116` |
-| `action.misc.label`, `action.accept.label`, `action.back.label`, `action.help.label` | `textw=180;bg_width=180;x=-90` (the bottom row of action buttons) |
+| `action.misc.label`, `action.accept.label`, `action.back.label`, `action.help.label` | `textw=220;bg_width=220;x=-110` (the bottom row of action buttons) |
 
 `ifs_freeform_purchase_unit` alone carries one more row — a write to a
 Lua GLOBAL variable rather than a widget field (the `@globals`
 pseudo-path): `ifs_purchase_tech_use_y=3.45`.
 
-## 7. Значення, які рушій уже спожив до точки патчу (`@post:`) / Values the engine already consumed before the patch point (`@post:`)
+## 8. Значення, які рушій уже спожив до точки патчу (`@post:`) / Values the engine already consumed before the patch point (`@post:`)
 
 **UA:**
 
@@ -419,7 +486,7 @@ If the path's first segment starts with `@`, the root is a Lua GLOBAL
 table rather than the screen table — this is how the label in the help
 popup was fixed (next section): `@post:@Popup_Tutorial.title leading=5`.
 
-## 8. Вкладки затуляють ім'я профілю та версію гри / Tabs covering the profile name and game version
+## 9. Вкладки затуляють ім'я профілю та версію гри / Tabs covering the profile name and game version
 
 **UA:** На 17 екранах меню з вкладками (`ifs_careerstats`, `ifs_freeform_fleet`,
 `ifs_freeform_pickscenario`, `ifs_instant_options`, `ifs_login`,
@@ -430,10 +497,19 @@ popup was fixed (next section): `@post:@Popup_Tutorial.title leading=5`.
 (`_Tabs`/`_Tabs1`/`_Tabs2` — окремий об'єкт `NewIFContainer` із власним
 `y`) на широкому екрані затуляє напис імені профілю й версії гри над
 собою. Виправлення — одноманітний зсув усіх контейнерів вкладок вниз на
-однакову величину, `@post:_Tabs y=31` (і так само для `_Tabs1`/`_Tabs2`,
-де вони є) — застосовано до ВСІХ екранів із вкладками одразу, а не лише
+однакову величину, `_Tabs y=31` (і так само для `_Tabs1`/`_Tabs2`, де
+вони є) — застосовано до ВСІХ екранів із вкладками одразу, а не лише
 до тих, де текст імені профілю справді присутній: інакше висота шапки
 відрізнялася б від екрана до екрана.
+
+Окремо, ряд вкладок горизонтально ширший за розрахункову позицію: заокруглений
+кінець крайньої правої вкладки малюється на кілька пікселів ширше за
+ширину, яку рахує сама верстка вкладок (`ifelem_tabmanager`), тому
+правий край ряду виходить за межі екрана й обрізається. Виправлення —
+додатковий горизонтальний зсув контейнера вкладок ліворуч, тим самим
+рядком `x` (напр. `ifs_login _Tabs x=-11.5`); величина залежить від
+кількості вкладок у ряду — `-11.5` для рядів з 4 і 6 вкладками, `-13.65`
+для ряду з одиночної гри.
 
 **EN:** On 17 menu screens with tabs (`ifs_careerstats`, `ifs_freeform_fleet`,
 `ifs_freeform_pickscenario`, `ifs_instant_options`, `ifs_login`,
@@ -444,12 +520,21 @@ popup was fixed (next section): `@post:@Popup_Tutorial.title leading=5`.
 (`_Tabs`/`_Tabs1`/`_Tabs2` — a separate `NewIFContainer` object with its
 own `y`) covers the profile-name-and-game-version label above it at a
 wide resolution. The fix is a uniform downward shift of every tab
-container by the same amount, `@post:_Tabs y=31` (and likewise for
+container by the same amount, `_Tabs y=31` (and likewise for
 `_Tabs1`/`_Tabs2` where present) — applied to ALL screens with tabs at
 once, not only the ones where the profile label is actually present:
 otherwise the header height would differ from screen to screen.
 
-## 9. Спливне вікно довідки: текст перекриває кнопки / The help popup: text overlapping the buttons
+Separately, the tab row is horizontally wider than its computed position:
+the rounded end of the rightmost tab is drawn a few pixels wider than the
+width the tab layout itself (`ifelem_tabmanager`) computes, so the row's
+right edge runs past the screen edge and gets clipped. The fix is an
+extra leftward shift of the tab container, the same `x` row (e.g.
+`ifs_login _Tabs x=-11.5`); the amount depends on how many tabs are in
+the row — `-11.5` for the 4- and 6-tab rows, `-13.65` for the
+single-player row.
+
+## 10. Спливне вікно довідки: текст перекриває кнопки / The help popup: text overlapping the buttons
 
 **UA:**
 
@@ -518,7 +603,7 @@ Separately, on the same 13 Galactic Conquest and campaign screens listed
 above, the popup title's line spacing is tightened by the table row
 `@post:@Popup_Tutorial.title leading=5`.
 
-## 10. Обрізаний фон (`fnAddBackground`) / Clipped background (`fnAddBackground`)
+## 11. Обрізаний фон (`fnAddBackground`) / Clipped background (`fnAddBackground`)
 
 **UA:**
 
@@ -578,7 +663,7 @@ actually-found `bg_texture` values in `shell.lvl` (`iface_bgmeta_space` —
 This fix ships in the same production patch as the rest of the menu
 layout work, not a separate build.
 
-## 11. Ще не задіяний, але реалізований механізм / An implemented mechanism not currently in use
+## 12. Ще не задіяний, але реалізований механізм / An implemented mechanism not currently in use
 
 **UA:** Обгортка `@hook:<ГлобальнаФункція>:<шлях.до.віджета>` дозволяє
 перезастосовувати виправлення на КОЖЕН виклик довільного рантайм-сеттера
@@ -602,7 +687,7 @@ simpler one-time `@post:option_buttons.setting posx=-100;posy=-15`
 instead (the same row also applies to `ifs_missionselect_pcMulti` and
 `ifs_instant_options`).
 
-## 12. Бойовий HUD (`ingame.lvl`): напис «Кількість бійців» / Combat HUD (`ingame.lvl`): the "unit count" label
+## 13. Бойовий HUD (`ingame.lvl`): напис «Кількість бійців» / Combat HUD (`ingame.lvl`): the "unit count" label
 
 **UA:** На екрані вибору бійця (`ifs_pc_spawnselect`, у `ingame.lvl`) той самий
 шрифт `gamefont_large`, чию висоту (поле `HEAD`) цей інструмент збільшив
@@ -623,3 +708,59 @@ at the same coordinate by construction of the layout formula, regardless
 of font height. This is a separate, specifically fixed defect: the full
 formula breakdown, the exact bytecode instruction, and confirmation by a
 real in-game screenshot — [`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).
+
+## 14. Другий патч розкладки для екранів у бою (`ingame.lvl`) / Second layout patch for in-battle screens (`ingame.lvl`)
+
+**UA:** Меню налаштувань (`ifs_opt_*`), меню паузи (`ifs_pausemenu`) і лобі
+мережевої гри (`ifs_mp_lobby`) відкриваються і з головного меню (`shell.lvl`),
+і під час бою (`ingame.lvl`, який довантажує ці ж скрипти з `common.lvl`
+через `game_interface`) — це один і той самий Lua-код, побудований тим самим
+`AddIFScreen`. Тому інсталятор із розділу 3 вміє збирати ДРУГИЙ,
+окремий патч для `ingame.lvl` — той самий гачок на `AddIFScreen`, та сама
+таблиця виправлень, але з фільтром рядків (`GenerateAnchorFixIngameCommand.
+KeepRow`):
+
+* `ifs_opt_*` — лише виправлення обрізаного тексту (`resetbutton.label`,
+  `autodetectbutton.label`, `logoInfos.envmorphing`) і горизонтальний зсув
+  рядів вкладок (`_Tabs*`, поле `x`);
+* `ifs_pausemenu` — усі рядки (це меню існує лише в бою);
+* `ifs_mp_lobby` — рядок `Helptext_Misc.label`.
+
+Вертикальний зсув рядів вкладок (`_Tabs* y=31`) і всі рядки, специфічні
+для екранів головного меню (`ifs_login`, `ifs_missionselect` тощо), у
+`ingame.lvl` не переносяться: у бою немає шапки з іменем профілю й версії
+гри, яку той зсув відкривав. Довідковий попап (`Popup_Tutorial`) також
+не встановлюється (`includePopupTutorialFix=false`) — з тих самих причин.
+
+Значення для `ifs_sp_briefing` і `ifs_mp_lobby` виміряні тим самим
+способом, що й решта таблиці, але без окремого підтвердження знімком
+конкретно цих двох екранів — обидва відкриваються лише в процесі
+проходження кампанії чи мережевої сесії, а не з головного меню напряму.
+
+**EN:** The options menu (`ifs_opt_*`), the pause menu (`ifs_pausemenu`), and
+the multiplayer lobby (`ifs_mp_lobby`) open both from the main menu
+(`shell.lvl`) and during battle (`ingame.lvl`, which loads the same
+scripts from `common.lvl` via `game_interface`) — it's the same Lua code,
+built by the same `AddIFScreen`. So the installer from section 3 can also
+build a SECOND, separate patch for `ingame.lvl` — the same `AddIFScreen`
+hook, the same correction table, but with a row filter
+(`GenerateAnchorFixIngameCommand.KeepRow`):
+
+* `ifs_opt_*` — only the clipped-text fixes (`resetbutton.label`,
+  `autodetectbutton.label`, `logoInfos.envmorphing`) and the tab rows'
+  horizontal shift (`_Tabs*`, the `x` field);
+* `ifs_pausemenu` — every row (this menu exists only in battle);
+* `ifs_mp_lobby` — the `Helptext_Misc.label` row.
+
+The tab rows' vertical shift (`_Tabs* y=31`) and every row specific to
+main-menu screens (`ifs_login`, `ifs_missionselect`, etc.) are not carried
+into `ingame.lvl`: battle has no header with the profile name and game
+version for that shift to uncover. The help popup (`Popup_Tutorial`) is
+also not installed (`includePopupTutorialFix=false`), for the same
+reason.
+
+The values for `ifs_sp_briefing` and `ifs_mp_lobby` are measured the same
+way as the rest of the table, but without a separate in-game screenshot
+confirming those two screens specifically — both only open in the course
+of playing a campaign or a multiplayer session, not directly from the
+main menu.

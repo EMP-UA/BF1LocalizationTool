@@ -2,68 +2,120 @@
 #     Значення в АВТОРСЬКОМУ масштабі 800x600; при збірці інструмент множить
 #     кожне числове поле на коефіцієнт роздільність_гравця / 800x600, окрім
 #     полів, що масштабуванню не підлягають (ScreenRelativeX/Y, ZPos, alpha,
-#     ColorR/G/B). Якщо перший сегмент шляху починається з `@post:`, `@initlist:`
-#     чи `@hook:` — це один із додаткових механізмів запису (детально в
-#     docs/BF2_UI_LAYOUT_FIX.md, docs/BF2_MISSIONSELECT_LAYOUT.md); шлях, що
-#     починається з `@globals`, записує в глобальну змінну Lua, а не в поле
-#     віджета. Пояснення причини й механізму кожного класу виправлень —
-#     у docs/BF2_UI_LAYOUT_FIX.md і docs/BF2_MISSIONSELECT_LAYOUT.md.
+#     ColorR/G/B). Значення поля може бути рядком у лапках (напр.
+#     halign="hcenter") лише у звичайному рядку до побудови екрана — інші
+#     механізми запису (@post, @hook, @globals, @screen, @initlist) приймають
+#     тільки числа. Сегмент шляху виду "#N" (N — ціле число) — числовий ключ
+#     таблиці Lua (t[N]), а не рядковий (t["N"]); застосовується для елементів
+#     за числовим індексом (наприклад, груп радіокнопок). Якщо перший сегмент
+#     шляху починається з `@post:`, `@initlist:` чи `@hook:` — це один із
+#     додаткових механізмів запису (детально в docs/BF2_UI_LAYOUT_FIX.md,
+#     docs/BF2_MISSIONSELECT_LAYOUT.md); шлях, що починається з `@globals`,
+#     записує в глобальну змінну Lua, а не в поле віджета. Пояснення причини й
+#     механізму кожного класу виправлень — у docs/BF2_UI_LAYOUT_FIX.md і
+#     docs/BF2_MISSIONSELECT_LAYOUT.md.
 # EN: Format: screen<TAB>dot.separated.path<TAB>field=number;field=number (no
 #     spaces). Values are in the AUTHORED 800x600 scale; at build time the tool
 #     multiplies every numeric field by player_resolution / 800x600, except
 #     fields that aren't meant to scale (ScreenRelativeX/Y, ZPos, alpha,
-#     ColorR/G/B). If the path's first segment starts with `@post:`,
-#     `@initlist:`, or `@hook:`, the row uses one of the additional write
-#     mechanisms (see docs/BF2_UI_LAYOUT_FIX.md, docs/BF2_MISSIONSELECT_LAYOUT.md
-#     for details); a path starting with `@globals` writes to a Lua global
-#     variable rather than a widget field. The reason and mechanism behind each
-#     class of fix are explained in docs/BF2_UI_LAYOUT_FIX.md and
-#     docs/BF2_MISSIONSELECT_LAYOUT.md.
+#     ColorR/G/B). A field's value may be a quoted string (e.g.
+#     halign="hcenter") only in an ordinary pre-build row — the other write
+#     mechanisms (@post, @hook, @globals, @screen, @initlist) accept numbers
+#     only. A path segment of the form "#N" (N an integer) is a numeric Lua
+#     table key (t[N]), not a string one (t["N"]); used for elements stored
+#     under a numeric index (e.g. radio-button groups). If the path's first
+#     segment starts with `@post:`, `@initlist:`, or `@hook:`, the row uses one
+#     of the additional write mechanisms (see docs/BF2_UI_LAYOUT_FIX.md,
+#     docs/BF2_MISSIONSELECT_LAYOUT.md for details); a path starting with
+#     `@globals` writes to a Lua global variable rather than a widget field.
+#     The reason and mechanism behind each class of fix are explained in
+#     docs/BF2_UI_LAYOUT_FIX.md and docs/BF2_MISSIONSELECT_LAYOUT.md.
 ifs_careerstats	_Tabs	y=31
+ifs_careerstats	_Tabs	x=-11.5
 ifs_careerstats	_Tabs1	y=31
+ifs_careerstats	_Tabs1	x=-13.65
 ifs_freeform_fleet	_Tabs	y=31
 ifs_freeform_pickscenario	_Tabs	y=31
+ifs_freeform_pickscenario	_Tabs	x=-13.65
 ifs_instant_options	_Tabs	y=31
+ifs_instant_options	_Tabs	x=-11.5
 ifs_instant_options	_Tabs1	y=31
+ifs_instant_options	_Tabs1	x=-11.5
 ifs_instant_options	_Tabs2	y=31
+ifs_instant_options	_Tabs2	x=-13.65
 ifs_login	_Tabs	y=31
+ifs_login	_Tabs	x=-11.5
 ifs_login	_Tabs1	y=31
+ifs_login	_Tabs1	x=-11.5
 ifs_missionselect	_Tabs	y=31
+ifs_missionselect	_Tabs	x=-11.5
 ifs_missionselect	_Tabs1	y=31
+ifs_missionselect	_Tabs1	x=-13.65
 ifs_mp_sessionlist	_Tabs	y=31
+ifs_mp_sessionlist	_Tabs	x=-11.5
 ifs_mp_sessionlist	_Tabs1	y=31
+ifs_mp_sessionlist	_Tabs1	x=-11.5
 ifs_mpgs_friends	_Tabs	y=31
+ifs_mpgs_friends	_Tabs	x=-11.5
 ifs_mpgs_friends	_Tabs1	y=31
+ifs_mpgs_friends	_Tabs1	x=-11.5
 ifs_mpgs_login	_Tabs	y=31
+ifs_mpgs_login	_Tabs	x=-11.5
 ifs_mpgs_login	_Tabs1	y=31
+ifs_mpgs_login	_Tabs1	x=-11.5
 ifs_opt_general	_Tabs	y=31
+ifs_opt_general	_Tabs	x=-11.5
 ifs_opt_general	_Tabs1	y=31
+ifs_opt_general	_Tabs1	x=-11.5
+ifs_opt_general	resetbutton.label	textw=310;bg_width=310;x=-155;fHotspotW=310
 ifs_opt_mp	_Tabs	y=31
+ifs_opt_mp	_Tabs	x=-11.5
 ifs_opt_mp	_Tabs1	y=31
+ifs_opt_mp	_Tabs1	x=-11.5
 ifs_opt_mp	_Tabs2	y=31
+ifs_opt_mp	_Tabs2	x=-11.5
+ifs_opt_mp	resetbutton.label	textw=310;bg_width=310;x=-155;fHotspotW=310
 ifs_opt_pccontrols	_Tabs	y=31
+ifs_opt_pccontrols	_Tabs	x=-11.5
 ifs_opt_pccontrols	_Tabs1	y=31
+ifs_opt_pccontrols	_Tabs1	x=-11.5
 ifs_opt_pccontrols	_Tabs2	y=31
+ifs_opt_pccontrols	_Tabs2	x=-11.5
 ifs_opt_pcvideo	_Tabs	y=31
+ifs_opt_pcvideo	_Tabs	x=-11.5
 ifs_opt_pcvideo	_Tabs1	y=31
+ifs_opt_pcvideo	_Tabs1	x=-11.5
 ifs_opt_sound	_Tabs	y=31
+ifs_opt_sound	_Tabs	x=-11.5
 ifs_opt_sound	_Tabs1	y=31
+ifs_opt_sound	_Tabs1	x=-11.5
 ifs_sp_briefing	_Tabs	y=31
+ifs_sp_briefing	_Tabs	x=-13.65
+ifs_sp_briefing	@post:buttons.rise.label	textw=310;textw2=38;posx=-30
 ifs_sp_campaign	_Tabs	y=31
+ifs_sp_campaign	_Tabs	x=-11.5
 ifs_sp_campaign	_Tabs1	y=31
+ifs_sp_campaign	_Tabs1	x=-13.65
 ifs_sp_gc_main	_Tabs	y=31
+ifs_sp_gc_main	_Tabs	x=-11.5
 ifs_sp_gc_main	_Tabs1	y=31
+ifs_sp_gc_main	_Tabs1	x=-13.65
+ifs_sp_gc_main	@post:buttons.2.label	textw=430;textw2=38;posx=-65
+ifs_sp_gc_main	@post:buttons.4.label	textw=430;textw2=38;posx=-65
+ifs_sp_gc_main	@post:buttons.1.label	textw=430;textw2=38;posx=-65
+ifs_sp_gc_main	@post:buttons.3.label	textw=430;textw2=38;posx=-65
 ifs_freeform_result	enemy_result	ScreenRelativeX=0.5;ScreenRelativeY=0.9;x=0;y=-120
 ifs_login	NewBox	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=0;y=-80
-ifs_login	ProfileBox.titleBarElement	bgexpandy=20;bg_width=352;bgoffsetx=-17;bgoffsety=8
+ifs_login	ProfileBox.titleBarElement	bgexpandy=3;bgoffsety=1.5;bgoffsetx=-8;x=-200.5
 ifs_login	diff_button	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=3;y=20
 ifs_login	diff_listbox	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=0;y=60
 ifs_login	listbox	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=0;y=-10
-ifs_login	profile_button	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=3;y=-80
+ifs_login	profile_button	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=-2.5;y=-80
 ifs_login	select_diff	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=-140;y=-10
 ifs_login	select_profile	ScreenRelativeX=0.5;ScreenRelativeY=0.5;x=-140;y=-110
 ifs_opt_pcvideo	formcontainergeneral	ScreenRelativeY=0.28;y=0
 ifs_opt_pcvideo	formcontainercustom	ScreenRelativeY=0.28;y=0
+ifs_opt_pcvideo	autodetectbutton.label	textw=310;bg_width=310;x=-155;fHotspotW=310
 ifs_opt_sound	buttonlabels	ScreenRelativeY=0.23;y=0
 ifs_opt_sound	buttons	ScreenRelativeY=0.23;y=0
 ifs_opt_sound	radiobuttons	ScreenRelativeY=0.23;y=0
@@ -72,6 +124,8 @@ ifs_opt_sound	res_dropdown_btn	ScreenRelativeX=0.533;ScreenRelativeY=0.235
 ifs_opt_sound	modelist_listbox	ScreenRelativeX=0.533;ScreenRelativeY=0.235
 ifs_opt_sound	mixer_dropdown_btn	ScreenRelativeX=0.533;ScreenRelativeY=0.235
 ifs_opt_sound	mixerlist_listbox	ScreenRelativeX=0.533;ScreenRelativeY=0.235
+ifs_opt_sound	resetbutton.label	textw=310;bg_width=310;x=-155;fHotspotW=310
+ifs_opt_sound	logoInfos.envmorphing	textw=360
 ifs_opt_pccontrols	formcontainer	y=91
 ifs_opt_pccontrols	bindTitle	y=235
 ifs_opt_pccontrols	buttonlabels	y=20
@@ -80,6 +134,7 @@ ifs_opt_pccontrols	sliders	y=20
 ifs_opt_pccontrols	radiobuttons	y=20
 ifs_opt_pccontrols	Info	y=20
 ifs_opt_pccontrols	RInfo	y=20
+ifs_opt_pccontrols	resetbutton.label	textw=310;bg_width=310;x=-155;fHotspotW=310
 ifs_campaign_battle	info.skin	localpos_l=-836.8;localpos_r=836.8
 ifs_campaign_battle	info.caption	x=-820.6;textw=1641.6
 ifs_campaign_battle	info.subcaption	x=-820.6;textw=1641.6
@@ -132,28 +187,28 @@ ifs_freeform_summary	info.skin	localpos_l=-836.8;localpos_r=836.8
 ifs_freeform_summary	info.caption	x=-820.6;textw=1641.6
 ifs_freeform_summary	info.subcaption	x=-820.6;textw=1641.6
 ifs_freeform_summary	info.text	x=-820.6;textw=1641.6
-ifs_mp_sessionlist	listbox.titleBarElement	bgexpandy=10;bgoffsety=88;alpha=1.0
-ifs_mp_sessionlist	serverinfo.titleBarElement	bgexpandy=10
-ifs_mp_sessionlist	playerlist.titleBarElement	bgexpandy=10
+ifs_mp_sessionlist	listbox.titleBarElement	bgexpandy=10;bgoffsety=88;alpha=1.0;bgoffsetx=-5
+ifs_mp_sessionlist	serverinfo.titleBarElement	bgexpandy=10;bgoffsetx=-10;bgoffsety=1.5;x=-449.5
+ifs_mp_sessionlist	playerlist.titleBarElement	bgexpandy=10;bgoffsetx=-10;bgoffsety=1.5;x=-439.5
 ifs_mp_sessionlist	@post:serverinfo	posy=675
 ifs_mp_sessionlist	@post:playerlist	posy=675
 ifs_mp_sessionlist	@post:ResortButtons	posy=91
 ifs_mp_sessionlist	@post:LoginAsText1	posy=922
 ifs_mp_sessionlist	@post:LoginAsText2	posy=944
 ifs_mp_sessionlist	@post:listbox.skin	bordersize=1839;bordersize2=360;posy=78
-ifs_campaign_battle	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_campaign_battle_card	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_campaign_summary	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_battle	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_battle_card	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_battle_mode	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_fleet	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_focus	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_main	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_purchase_tech	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_purchase_unit	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_result	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
-ifs_freeform_summary	title.text	bgexpandy=12;bgoffsetx=-9;bgoffsety=6
+ifs_campaign_battle	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_campaign_battle_card	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_campaign_summary	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_battle	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_battle_card	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_battle_mode	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_fleet	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_focus	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_main	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_purchase_tech	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_purchase_unit	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_result	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
+ifs_freeform_summary	title.text	bgexpandy=8;bgoffsetx=-12;bgoffsety=3
 ifs_campaign_battle	player.icon	localpos_l=-13;localpos_r=13
 ifs_campaign_battle_card	player.icon	localpos_l=-13;localpos_r=13
 ifs_campaign_summary	player.icon	localpos_l=-13;localpos_r=13
@@ -181,58 +236,58 @@ ifs_freeform_purchase_unit	player	y=116
 ifs_freeform_result	player	y=116
 ifs_freeform_summary	player	y=116
 ifs_freeform_purchase_unit	@globals	ifs_purchase_tech_use_y=3.45
-ifs_campaign_battle	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle_card	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_campaign_summary	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_card	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_mode	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_fleet	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_focus	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_main	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_tech	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_unit	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_result	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_freeform_summary	action.misc.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle_card	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_campaign_summary	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_card	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_mode	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_fleet	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_focus	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_main	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_tech	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_unit	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_result	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_freeform_summary	action.accept.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle	action.back.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle_card	action.back.label	textw=180;bg_width=180;x=-90
-ifs_campaign_summary	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_card	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_mode	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_fleet	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_focus	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_main	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_tech	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_unit	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_result	action.back.label	textw=180;bg_width=180;x=-90
-ifs_freeform_summary	action.back.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle	action.help.label	textw=180;bg_width=180;x=-90
-ifs_campaign_battle_card	action.help.label	textw=180;bg_width=180;x=-90
-ifs_campaign_summary	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_card	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_battle_mode	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_fleet	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_focus	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_main	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_tech	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_purchase_unit	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_result	action.help.label	textw=180;bg_width=180;x=-90
-ifs_freeform_summary	action.help.label	textw=180;bg_width=180;x=-90
+ifs_campaign_battle	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle_card	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_campaign_summary	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_card	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_mode	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_fleet	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_focus	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_main	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_tech	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_unit	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_result	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_freeform_summary	action.misc.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle_card	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_campaign_summary	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_card	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_mode	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_fleet	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_focus	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_main	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_tech	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_unit	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_result	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_freeform_summary	action.accept.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle	action.back.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle_card	action.back.label	textw=220;bg_width=220;x=-110
+ifs_campaign_summary	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_card	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_mode	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_fleet	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_focus	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_main	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_tech	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_unit	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_result	action.back.label	textw=220;bg_width=220;x=-110
+ifs_freeform_summary	action.back.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle	action.help.label	textw=220;bg_width=220;x=-110
+ifs_campaign_battle_card	action.help.label	textw=220;bg_width=220;x=-110
+ifs_campaign_summary	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_card	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_battle_mode	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_fleet	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_focus	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_main	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_tech	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_purchase_unit	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_result	action.help.label	textw=220;bg_width=220;x=-110
+ifs_freeform_summary	action.help.label	textw=220;bg_width=220;x=-110
 ifs_campaign_battle	@post:@Popup_Tutorial.title	leading=5
 ifs_campaign_battle_card	@post:@Popup_Tutorial.title	leading=5
 ifs_campaign_summary	@post:@Popup_Tutorial.title	leading=5
@@ -242,6 +297,9 @@ ifs_freeform_battle_mode	@post:@Popup_Tutorial.title	leading=5
 ifs_freeform_fleet	@post:@Popup_Tutorial.title	leading=5
 ifs_freeform_focus	@post:@Popup_Tutorial.title	leading=5
 ifs_freeform_main	@post:@Popup_Tutorial.title	leading=5
+ifs_freeform_main	@post:@Popup_LoadSave2.buttons.C.label	textw=400;textw2=30;posx=-54
+ifs_freeform_main	@post:@Popup_LoadSave2.buttons.A.label	textw=400;textw2=30;posx=-54
+ifs_freeform_main	@post:@Popup_LoadSave2.buttons.B.label	textw=400;textw2=30;posx=-54
 ifs_freeform_purchase_tech	@post:@Popup_Tutorial.title	leading=5
 ifs_freeform_purchase_unit	@post:@Popup_Tutorial.title	leading=5
 ifs_freeform_result	@post:@Popup_Tutorial.title	leading=5
@@ -300,10 +358,10 @@ ifs_missionselect_pcMulti	@post:ModeListbox	winsize=437;winsize2=230
 ifs_missionselect_pcMulti	@post:EraListbox	winsize=437;winsize2=350
 ifs_missionselect_pcMulti	@post:MapListbox	winsize=371;winsize2=600
 ifs_missionselect_pcMulti	@post:PlayListbox	winsize=471;winsize2=600
-ifs_missionselect	ModeListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect	EraListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect	MapListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect	PlayListbox.titleBarElement	bgexpandy=20;bgoffsety=8
+ifs_missionselect	ModeListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect	EraListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect	MapListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect	PlayListbox.titleBarElement	bgexpandy=3;bgoffsety=2
 ifs_missionselect	@post:ModeListbox.titleBarElement	posy=9
 ifs_missionselect	@post:EraListbox.titleBarElement	posy=-59
 ifs_missionselect	@post:MapListbox.titleBarElement	posy=-94
@@ -311,10 +369,10 @@ ifs_missionselect	@post:PlayListbox.titleBarElement	posy=-95
 ifs_missionselect	@post:EraListbox	winsize=437;winsize2=314;posy=674
 ifs_missionselect	@post:MapListbox	winsize=371;winsize2=640;posy=511
 ifs_missionselect	@post:PlayListbox	winsize=471;winsize2=640;posy=511
-ifs_missionselect_pcMulti	ModeListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect_pcMulti	EraListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect_pcMulti	MapListbox.titleBarElement	bgexpandy=20;bgoffsety=8
-ifs_missionselect_pcMulti	PlayListbox.titleBarElement	bgexpandy=20;bgoffsety=8
+ifs_missionselect_pcMulti	ModeListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect_pcMulti	EraListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect_pcMulti	MapListbox.titleBarElement	bgexpandy=3;bgoffsety=2
+ifs_missionselect_pcMulti	PlayListbox.titleBarElement	bgexpandy=3;bgoffsety=2
 ifs_missionselect_pcMulti	@post:ModeListbox.titleBarElement	posy=9
 ifs_missionselect_pcMulti	@post:EraListbox.titleBarElement	posy=-59
 ifs_missionselect_pcMulti	@post:MapListbox.titleBarElement	posy=-94
@@ -481,26 +539,58 @@ ifs_missionselect_pcMulti	@post:EraListbox.titleBarElement	posx=-104.2
 ifs_missionselect_pcMulti	@post:MapListbox.titleBarElement	posx=-89.1
 ifs_missionselect_pcMulti	@post:PlayListbox.titleBarElement	posx=-114.3
 ifs_missionselect	ModeListbox.titleBarElement	bg_width=347.2
+ifs_missionselect	ModeListbox.titleBarElement	bgoffsetx=-5
 ifs_missionselect	EraListbox.titleBarElement	bg_width=347.2
+ifs_missionselect	EraListbox.titleBarElement	bgoffsetx=-4.5
 ifs_missionselect	MapListbox.titleBarElement	bg_width=295.5
+ifs_missionselect	MapListbox.titleBarElement	bgoffsetx=-5.5
 ifs_missionselect	PlayListbox.titleBarElement	bg_width=377.6
+ifs_missionselect	PlayListbox.titleBarElement	bgoffsetx=-5.5
 ifs_missionselect	@post:ModeListbox.titleBarElement	posx=-117.5
+ifs_missionselect	@post:ModeListbox.titleBarElement	posx=-100
 ifs_missionselect	@post:EraListbox.titleBarElement	posx=-117.5
+ifs_missionselect	@post:EraListbox.titleBarElement	posx=-100.5
 ifs_missionselect	@post:MapListbox.titleBarElement	posx=-102.0
+ifs_missionselect	@post:MapListbox.titleBarElement	posx=-85.5
 ifs_missionselect	@post:PlayListbox.titleBarElement	posx=-127.0
+ifs_missionselect	@post:PlayListbox.titleBarElement	posx=-110.5
 ifs_missionselect_pcMulti	ModeListbox.titleBarElement	bg_width=347.2
+ifs_missionselect_pcMulti	ModeListbox.titleBarElement	bgoffsetx=-5
 ifs_missionselect_pcMulti	EraListbox.titleBarElement	bg_width=347.2
+ifs_missionselect_pcMulti	EraListbox.titleBarElement	bgoffsetx=-4.5
 ifs_missionselect_pcMulti	MapListbox.titleBarElement	bg_width=295.5
+ifs_missionselect_pcMulti	MapListbox.titleBarElement	bgoffsetx=-5.5
 ifs_missionselect_pcMulti	PlayListbox.titleBarElement	bg_width=377.6
+ifs_missionselect_pcMulti	PlayListbox.titleBarElement	bgoffsetx=-5.5
 ifs_missionselect_pcMulti	@post:ModeListbox.titleBarElement	posx=-117.5
+ifs_missionselect_pcMulti	@post:ModeListbox.titleBarElement	posx=-100
 ifs_missionselect_pcMulti	@post:EraListbox.titleBarElement	posx=-117.5
+ifs_missionselect_pcMulti	@post:EraListbox.titleBarElement	posx=-100.5
 ifs_missionselect_pcMulti	@post:MapListbox.titleBarElement	posx=-102.0
+ifs_missionselect_pcMulti	@post:MapListbox.titleBarElement	posx=-85.5
 ifs_missionselect_pcMulti	@post:PlayListbox.titleBarElement	posx=-127.0
+ifs_missionselect_pcMulti	@post:PlayListbox.titleBarElement	posx=-110.5
 ifs_missionselect_pcMulti	_Tabs	y=31
+ifs_missionselect_pcMulti	_Tabs	x=-11.5
 ifs_missionselect_pcMulti	_Tabs1	y=31
+ifs_missionselect_pcMulti	_Tabs1	x=-11.5
 ifs_missionselect	@post:option_buttons.setting	posx=-100;posy=-15
 ifs_missionselect_pcMulti	@post:option_buttons.setting	posx=-100;posy=-15
 ifs_instant_options	@post:option_buttons.setting	posx=-100;posy=-15
-ifs_missionselect	@post:InfoboxBot	posy=960
-ifs_missionselect_pcMulti	@post:InfoboxBot	posy=960
+ifs_instant_options	screens.global.form.radiobuttons.playlistorder.#1.radiotext	textw=128
+ifs_instant_options	screens.global.form.radiobuttons.playlistorder.#2.radiotext	textw=200
+ifs_instant_options	InfoboxBot.Text	x=-865;halign="hcenter"
+ifs_missionselect	@post:InfoboxBot	posy=948
+ifs_missionselect_pcMulti	@post:InfoboxBot	posy=948
+ifs_missionselect_pcMulti	Era_G_box.Text_Era	textw=300
+ifs_missionselect_pcMulti	@post:InfoboxBot.InfoListbox	winsize=598;winsize2=78;posy=31.5
+ifs_missionselect_pcMulti	Era_C_box.Text_Era	textw=300
 ifs_missionselect	@postscreen	movieW=125;movieH=125
+ifs_missionselect	Era_G_box.Text_Era	textw=300
+ifs_missionselect	@post:InfoboxBot.InfoListbox	winsize=598;winsize2=78;posy=31.5
+ifs_missionselect	Era_C_box.Text_Era	textw=300
+
+ifs_pausemenu	@post:buttons.restart.label	textw=320;textw2=38;posx=-30
+ifs_campaign_load	listbox.titleBarElement	bgoffsetx=-9;bgoffsety=1.5;x=-777.6
+ifs_freeform_load	listbox.titleBarElement	bgoffsetx=-9;bgoffsety=1.5;x=-777.6
+ifs_mp_lobby	Helptext_Misc.label	textw=240;bg_width=240;x=-120;fHotspotW=240
