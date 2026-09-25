@@ -524,6 +524,10 @@ List<MenuCategory> BuildCategories() =>
                 "★ КАНДИДАТ: записати shell_freeform_descfont.lvl — ЗБІЛЬШИТИ шрифт опису в інформаційній панелі екранів Галактичного завоювання з gamefont_tiny на gamefont_small (спільна функція — виправляє десятки екранів одразу; НЕ ПІДТВЕРДЖЕНО у грі)",
                 "★ CANDIDATE: write shell_freeform_descfont.lvl — ENLARGE the description font in the Galactic Conquest screens' info panel from gamefont_tiny to gamefont_small (shared function — fixes dozens of screens at once; NOT YET CONFIRMED in-game)",
                 RunGenerateFreeformInfoDescriptionFontFix),
+            new MenuItem(
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_listoffset.lvl — опускає перелік класів на екрані вибору бійця на 30 px, щоб зрівняти відступи зверху й знизу (вхід — reference-files\BF2-UA-rem\...\ingame.lvl; крок сітки, розміри комірок і шрифт НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_listoffset.lvl — moves the class list on the unit-selection screen down by 30 px to equalize the top/bottom gaps (input — reference-files\BF2-UA-rem\...\ingame.lvl; the grid pitch, cell sizes and font are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                RunGenerateSpawnSelectListTopOffsetFix),
         ]),
 
     new MenuCategory(
@@ -2298,6 +2302,63 @@ async Task RunGenerateSpawnSelectUnitCountGapFix()
     report.Log();
 
     GenerateSpawnSelectUnitCountGapFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_gapfix.lvl");
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
+// UA: ВИПРАВЛЕННЯ, ПІДТВЕРДЖЕНЕ РЕАЛЬНИМ ТЕСТОМ У ГРІ. Вхід — уже
+//     локалізований ingame.lvl із reference-files\BF2-UA-rem (той самий,
+//     що бере RunGenerateSpawnSelectUnitCountGapFix); якщо його немає —
+//     вибір файлу. Цей файл уже містить гачок розкладки та підтверджений
+//     фікс "Кількість бійців", тож вихідний файл = увесь вхідний файл +
+//     лише цей зсув, без втрати інших патчів. Ванільний
+//     reference-files\BF2\...\ingame.lvl як вхід НЕ використовується: він
+//     відрізняється від файлу гри не лише скриптами, а й чанками моделей
+//     (modl) та анімацій (zaf_). Механізм, точна інструкція й повний доказ
+//     безпечності — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs
+//     і docs/BF2_SPAWNSELECT_GAP_FIX.md.
+// EN: FIX, CONFIRMED BY A REAL IN-GAME TEST. Input — the already localized
+//     ingame.lvl from reference-files\BF2-UA-rem (the same one
+//     RunGenerateSpawnSelectUnitCountGapFix uses); if missing — a file
+//     picker. That file already carries the layout hook and the confirmed
+//     "Кількість бійців" fix, so the output = the whole input file + only
+//     this shift, with no other patches lost. The vanilla
+//     reference-files\BF2\...\ingame.lvl is NOT used as input: it differs
+//     from the game's file not only in scripts but also in model (modl)
+//     and animation (zaf_) chunks. Mechanism, exact instruction and full
+//     safety proof — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs
+//     and docs/BF2_SPAWNSELECT_GAP_FIX.md.
+async Task RunGenerateSpawnSelectListTopOffsetFix()
+{
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var uaRefDir = Path.Combine(refRoot, "BF2-UA-rem");
+    var ingamePath = FindGameFile(uaRefDir, "ingame.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-spawnselect-listoffset");
+
+    var report = new DiagnosticReport("GenerateSpawnSelectListTopOffsetFix");
+    report.Log("UA: ПІДТВЕРДЖЕНО РЕАЛЬНИМ ТЕСТОМ У ГРІ — докладно в docs/BF2_SPAWNSELECT_GAP_FIX.md.");
+    report.Log("EN: CONFIRMED BY A REAL IN-GAME TEST — details in docs/BF2_SPAWNSELECT_GAP_FIX.md.");
+    report.Log();
+
+    if (ingamePath is null)
+    {
+        report.Log($"UA: ingame.lvl не знайдено під \"{uaRefDir}\" — оберіть локалізований ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{uaRefDir}\" — pick the localized ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        if (ingamePath is null)
+        {
+            report.Log("UA: Файл не вибрано. / EN: No file selected.");
+            report.Save();
+            return;
+        }
+    }
+
+    report.Log($"UA: Вхідний (локалізований) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (localized) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log();
+
+    GenerateSpawnSelectListTopOffsetFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_listoffset.lvl");
 
     report.Save();
     await Task.CompletedTask;

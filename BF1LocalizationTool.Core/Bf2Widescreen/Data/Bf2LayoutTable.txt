@@ -594,3 +594,6 @@ ifs_pausemenu	@post:buttons.restart.label	textw=320;textw2=38;posx=-30
 ifs_campaign_load	listbox.titleBarElement	bgoffsetx=-9;bgoffsety=1.5;x=-777.6
 ifs_freeform_load	listbox.titleBarElement	bgoffsetx=-9;bgoffsety=1.5;x=-777.6
 ifs_mp_lobby	Helptext_Misc.label	textw=240;bg_width=240;x=-120;fHotspotW=240
+ifs_instant_options	@post:screens.hero.form.buttons.hero_unlock_2_timer.label	textw=100;textw2=26
+ifs_instant_options	@post:screens.hero.form.buttons.hero_unlock_2_points.label	textw=100;textw2=26
+ifs_instant_options	@post:screens.hero.form.buttons.hero_respawn_val.label	textw=100;textw2=26

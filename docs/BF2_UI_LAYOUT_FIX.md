@@ -442,6 +442,24 @@ pseudo-path): `ifs_purchase_tech_use_y=3.45`.
 Lua, а не таблиця екрана — так виправлено підпис у спливному вікні
 довідки (наступний розділ): `@post:@Popup_Tutorial.title leading=5`.
 
+Приклад — `ifs_instant_options`, вкладка «Герой» Миттєвого бою: значення
+повзунків («Завжди»/«Ніколи») — мітки кнопок `NewRoundIFButton`, які PC
+будує через `Form_CreateVertical`/`AddVerticalButtons` ДО виклику
+`AddIFScreen` з `textw=btnw=62.5` (`ifelem_form`/`ifelem_button` у
+`common.lvl`). За метриками `gamefont_tiny` «Завжди» — 61px, поле 62.5 не
+вміщує рядок разом із міжлітерним інтервалом. Три рядки `@post:`
+піднімають `textw` до 100 для трьох повзунків вкладки:
+
+```
+@post:screens.hero.form.buttons.hero_unlock_2_timer.label   textw=100;textw2=26
+@post:screens.hero.form.buttons.hero_unlock_2_points.label  textw=100;textw2=26
+@post:screens.hero.form.buttons.hero_respawn_val.label      textw=100;textw2=26
+```
+
+`textw2=26` зберігає висоту поля (висота шрифту 20 + `gButtonHeightPad` 6);
+мітка вирівняна ліворуч (`LeftJustify=1`), праворуч від неї елементів
+немає.
+
 **EN:**
 
 **The problem.** Some fields are read by the engine BEFORE the patch can
@@ -485,6 +503,25 @@ content because the background was stretched vertically):
 If the path's first segment starts with `@`, the root is a Lua GLOBAL
 table rather than the screen table — this is how the label in the help
 popup was fixed (next section): `@post:@Popup_Tutorial.title leading=5`.
+
+Example — `ifs_instant_options`, the Instant Action «Герой» tab: the
+slider values («Завжди»/«Ніколи») are `NewRoundIFButton` button labels,
+which the PC build constructs via
+`Form_CreateVertical`/`AddVerticalButtons` BEFORE the `AddIFScreen` call,
+with `textw=btnw=62.5` (`ifelem_form`/`ifelem_button` in `common.lvl`).
+By the `gamefont_tiny` metrics, «Завжди» is 61px wide — the 62.5 field
+does not fit the string together with the rendered letter spacing. Three
+`@post:` rows raise `textw` to 100 for the tab's three sliders:
+
+```
+@post:screens.hero.form.buttons.hero_unlock_2_timer.label   textw=100;textw2=26
+@post:screens.hero.form.buttons.hero_unlock_2_points.label  textw=100;textw2=26
+@post:screens.hero.form.buttons.hero_respawn_val.label      textw=100;textw2=26
+```
+
+`textw2=26` keeps the field's height (font height 20 + `gButtonHeightPad`
+6) unchanged; the label is left-aligned (`LeftJustify=1`) and nothing
+sits to its right.
 
 ## 9. Вкладки затуляють ім'я профілю та версію гри / Tabs covering the profile name and game version
 

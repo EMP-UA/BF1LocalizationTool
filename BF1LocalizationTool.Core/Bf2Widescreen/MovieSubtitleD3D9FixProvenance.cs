@@ -108,7 +108,7 @@ public static class MovieSubtitleD3D9FixProvenance
     ///     otherwise GenerateD3D9FixProvenanceReportCommand will correctly
     ///     report a mismatch.
     /// </summary>
-    public const string RecordedDllSha256 = "1c83f1ba0bf8788bf1dba4dd8ff60d2549bdff52c55ec7b10fa51e2260b34954";
+    public const string RecordedDllSha256 = "406e618f8bd47c86cb66d48826b358a8b8e7e5ebedd6b6827bcd1398b17fb8b4";
 
     public static byte[] GetBundledDllBytes() => ReadResource(DllResourceName);
 

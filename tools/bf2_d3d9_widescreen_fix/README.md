@@ -255,14 +255,18 @@ file fully removes the fix.
 
 **UA:** DLL завжди (без «тихого» варіанта збирання) пише лог
 `bf2_widescreen_fix.log` у тій самій теці, де лежить сама DLL (поряд із
-`BattlefrontII.exe`), у режимі додавання (append) — дані попередніх
-запусків не стираються. Це єдиний спосіб діагностувати поведінку на
+`BattlefrontII.exe`). Журнал належить одному запуску гри: перший запис
+після завантаження DLL стирає вміст попереднього запуску, далі рядки
+дописуються; файл лишається на диску до наступного запуску. Кожен рядок
+починається з локального часу користувача у форматі "ЧЧ:ММ:СС.ммм"
+(`GetLocalTime`). Це єдиний спосіб діагностувати поведінку на
 нестандартному апаратному забезпеченні користувача, тому вимкнути запис
 не можна.
 
-Розмір обмежено 25 МБ (`LOG_SIZE_LIMIT_BYTES`): по досягненні межі
-записується один підсумковий рядок, і подальший запис у цьому сеансі
-призупиняється. Обґрунтування межі: формат логування зі стисненням за
+Розмір обмежено 25 МБ (`LOG_SIZE_LIMIT_BYTES`) на один запуск: по
+досягненні межі записується один підсумковий рядок, і подальший запис до
+кінця запуску призупиняється; оскільки кожен запуск починає файл заново,
+файл не перевищує межу за будь-якої кількості запусків. Обґрунтування межі: формат логування зі стисненням за
 сигнатурою пише по рядку на кожну зміну елемента HUD; кілька хвилин
 реального запуску дали 5,5 МБ, а найбільший зафіксований запуск усієї
 кампанії — 5,49 МБ, тож 25 МБ лишає запас приблизно в 4,5 рази.
@@ -280,13 +284,17 @@ DLL не встановлює жодних мережевих з'єднань �
 
 **EN:** The DLL always writes a `bf2_widescreen_fix.log` log (there is
 no "quiet" build variant) in the same folder as the DLL itself (next to
-`BattlefrontII.exe`), in append mode — earlier runs' data is not
-erased. This is the only way to diagnose behaviour on a user's
-non-standard hardware, so logging cannot be turned off.
+`BattlefrontII.exe`). The log belongs to one game launch: the first write
+after the DLL loads erases the previous launch's contents, later lines are
+appended; the file stays on disk until the next launch. Every line starts
+with the user's local time as "HH:MM:SS.mmm" (`GetLocalTime`). This is
+the only way to diagnose behaviour on a user's non-standard hardware, so
+logging cannot be turned off.
 
-Size is capped at 25 MB (`LOG_SIZE_LIMIT_BYTES`): once the cap is
-reached, one final summary line is written and further logging is
-suppressed for that session. Rationale for the cap: the
+Size is capped at 25 MB (`LOG_SIZE_LIMIT_BYTES`) per launch: once the cap
+is reached, one final summary line is written and further logging is
+suppressed for the rest of the launch; since every launch starts the file
+afresh, the file never exceeds the cap however many launches happen. Rationale for the cap: the
 signature-compressed log format writes one line per HUD-element
 change; a few minutes of a real run produced 5.5 MB, and the largest
 recorded full-campaign run was 5.49 MB, so 25 MB leaves roughly a

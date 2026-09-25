@@ -115,11 +115,7 @@
 //     САМЕ ЦЕЙ конкретний механізм, не займаючи жодного байта .exe.
 //
 //     ПОТОЧНА УМОВА КОРЕКЦІЇ. CorrectCanvasIfNeeded виправляє полотно, коли
-//     scaleY ≈ 480/(висота робочого столу) АБО коли текстура слоту 0
-//     стиснена форматом D3DFMT_DXT3 (друге — емпіричне правило, що
-//     розрізняє субтитри роликів від бойової панелі інформації про зброю,
-//     яка використовує той самий регістровий "підпис" виклику, але НЕ
-//     повинна коригуватись).
+//     scaleY ≈ 480/(висота робочого столу) — єдина умова корекції.
 //
 //     ПІДТВЕРДЖЕНО В ГРІ. Перевірено реальною грою на 1920x1080: підпис
 //     ролика присутній і читається, бойова панель інформації про зброю
@@ -242,11 +238,8 @@
 //     SPECIFIC mechanism without touching a single byte of the .exe.
 //
 //     THE CURRENT CORRECTION CONDITION. CorrectCanvasIfNeeded corrects the
-//     canvas when scaleY ≈ 480/(desktop height) OR texture slot 0 is
-//     compressed with the D3DFMT_DXT3 format (the latter is an empirical
-//     rule that tells movie-subtitle canvases apart from the in-combat
-//     weapon-info HUD panel, which uses the same call "signature" but must
-//     NOT be corrected).
+//     canvas when scaleY ≈ 480/(desktop height) — the only correction
+//     condition.
 //
 //     CONFIRMED IN-GAME. Verified with a real game session at 1920x1080:
 //     the movie caption is present and legible, and the in-combat
@@ -270,7 +263,7 @@
 //     file (without loading or executing it), so THIS d3d9.dll can be told
 //     apart from any third-party one (for example, manually via a hex
 //     viewer or `strings`). Bumped whenever the correction logic changes.
-static const char kVersionMarker[] = "BF2WIDESCREENFIX_MARKER_V4_EMPUA";
+static const char kVersionMarker[] = "BF2WIDESCREENFIX_MARKER_V5_EMPUA";
 
 // ----------------------------------------------------------------------------
 // UA: Індекси методів у VTABLE — підтверджені дизасемблюванням і живим
@@ -312,59 +305,68 @@ static const int VTBL_SIZE_IDirect3D9 = 32;
 //     користувача, тож окремий "тихий" варіант збірки без нього визнано
 //     непотрібним.
 //
-//     Межа розміру файлу — LOG_SIZE_LIMIT_BYTES (25 МБ). Причина
-//     самого ліміту: стиснення за сигнатурою пише рядок на КОЖНУ зміну
+//     Журнал належить ОДНОМУ запуску гри: перший запис після завантаження
+//     DLL відкриває файл у режимі "w" (попередній вміст стирається), усі
+//     наступні — на дозапис ("a"). Файл лишається на диску до наступного
+//     запуску гри, тож його можна переглянути після виходу з гри.
+//
+//     Межа розміру — LOG_SIZE_LIMIT_BYTES (25 МБ) на один запуск.
+//     Причина межі: стиснення за сигнатурою пише рядок на КОЖНУ зміну
 //     елемента, а в бою кілька елементів HUD чергуються щокадру — реальний
-//     прогін у кілька хвилин дав 5,5 МБ, тож довга сесія без межі могла б
-//     зайняти сотні мегабайт. 25 МБ обрано як ~4.5x запас понад
-//     найбільший реально зафіксований прогін (5,49 МБ, повний проходження
-//     кампанії) — цього вистачає на кілька повних діагностичних сесій
-//     поспіль, залишаючись у 4 рази нижче попередньої межі. Файл до того ж
-//     відкривається на дозапис ("a") і росте від запуску до запуску. Тому
-//     при першому записі за сесію береться ПОТОЧНИЙ розмір файлу, далі
-//     рахуються записані байти; щойно межу досягнуто, пишеться один
-//     завершальний рядок, і до кінця сесії лог мовчить. На саму корекцію
+//     прогін у кілька хвилин дав 5,5 МБ, найбільший зафіксований (повне
+//     проходження кампанії) — 5,49 МБ; 25 МБ — ~4.5x запас. Щойно межу
+//     досягнуто, пишеться один завершальний рядок, і до кінця запуску лог
+//     мовчить. Оскільки кожен запуск починає файл заново, розмір файлу не
+//     перевищує межу незалежно від кількості запусків. На саму корекцію
 //     полотна це не впливає.
 // EN: Writing to bf2_widescreen_fix.log — always on: this exact log is the
 //     only way to diagnose a defect on a user's non-standard hardware, so a
 //     separate "quiet" build without it was judged unnecessary.
 //
-//     File size cap — LOG_SIZE_LIMIT_BYTES (25 MB). Reason for
-//     the cap itself: signature compression writes a line on EVERY element
-//     change, and in combat several HUD elements alternate every frame — a
-//     real run of a few minutes produced 5.5 MB, so a long session with no
-//     cap could take hundreds of megabytes. 25 MB was chosen as a ~4.5x
-//     margin over the largest run actually recorded so far (5.49 MB, a full
-//     campaign playthrough) — enough headroom for several full diagnostic
-//     sessions in a row, while staying 4x below the previous cap. The file
-//     is also opened for appending ("a") and grows from launch to launch.
-//     So on the first write of a session the file's CURRENT size is read,
-//     then written bytes are counted; once the cap is reached, one final
-//     line is written and the log stays silent for the rest of the
-//     session. The canvas correction itself is not affected.
+//     The log belongs to ONE game launch: the first write after the DLL
+//     loads opens the file in "w" mode (previous contents are erased), every
+//     later write appends ("a"). The file stays on disk until the next game
+//     launch, so it can be inspected after quitting the game.
+//
+//     Size cap — LOG_SIZE_LIMIT_BYTES (25 MB) per launch. Reason for the
+//     cap: signature compression writes a line on EVERY element change, and
+//     in combat several HUD elements alternate every frame — a real run of a
+//     few minutes produced 5.5 MB, the largest recorded (a full campaign
+//     playthrough) 5.49 MB; 25 MB is a ~4.5x margin. Once the cap is
+//     reached, one final line is written and the log stays silent for the
+//     rest of the launch. Since every launch starts the file afresh, the
+//     file never exceeds the cap regardless of how many launches happen.
+//     The canvas correction itself is not affected.
 // ----------------------------------------------------------------------------
 static const long LOG_SIZE_LIMIT_BYTES = 25L * 1024L * 1024L;
-static long g_logBytes = -1;          // -1 = розмір ще не зчитано / size not read yet
+static long g_logBytes = 0;            // байтів записано за цей запуск / bytes written this launch
+static bool g_logStarted = false;      // файл уже почато в цьому запуску / file already started this launch
 static bool g_logLimitReached = false;
+
+// UA: Префікс рядка журналу "ЧЧ:ММ:СС.ммм " з локального часу користувача
+//     (GetLocalTime — на відміну від time(), дає мілісекунди). Пише РІВНО
+//     13 символів у буфер розміром 16 — переповнення буфера неможливе.
+// EN: The log line's "HH:MM:SS.mmm " prefix, from the user's local time
+//     (GetLocalTime — unlike time(), has millisecond resolution). Writes
+//     EXACTLY 13 characters into a 16-byte buffer — a buffer overflow here
+//     is not possible.
+static void FormatLogTimestamp(char* buf, size_t bufSize)
+{
+    SYSTEMTIME t;
+    GetLocalTime(&t);
+    snprintf(buf, bufSize, "%02u:%02u:%02u.%03u ", t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
+}
 
 static void WriteLog(const char* line)
 {
     if (g_logLimitReached)
         return;
 
-    FILE* f = fopen("bf2_widescreen_fix.log", "a");
+    // UA: перший запис за запуск стирає журнал попереднього запуску
+    // EN: the first write of a launch erases the previous launch's log
+    FILE* f = fopen("bf2_widescreen_fix.log", g_logStarted ? "a" : "w");
     if (!f) return;
-
-    if (g_logBytes < 0)
-    {
-        // UA: Лише один раз за сесію — поточний розмір файлу (з попередніх
-        //     запусків).
-        // EN: Only once per session — the file's current size (from
-        //     previous launches).
-        fseek(f, 0, SEEK_END);
-        long existing = ftell(f);
-        g_logBytes = existing > 0 ? existing : 0;
-    }
+    g_logStarted = true;
 
     if (g_logBytes >= LOG_SIZE_LIMIT_BYTES)
     {
@@ -375,8 +377,12 @@ static void WriteLog(const char* line)
         return;
     }
 
-    fprintf(f, "%s\n", line);
-    g_logBytes += static_cast<long>(strlen(line)) + 2; // + "\r\n" у текстовому режимі / in text mode
+    // UA: локальний час користувача першим у рядку / EN: user's local time first on the line
+    char ts[16];
+    FormatLogTimestamp(ts, sizeof(ts));
+
+    fprintf(f, "%s%s\n", ts, line);
+    g_logBytes += static_cast<long>(strlen(ts)) + static_cast<long>(strlen(line)) + 2; // + "\r\n" у текстовому режимі / in text mode
     fclose(f);
 }
 
@@ -795,39 +801,23 @@ static void CorrectCanvasIfNeeded(IDirect3DDevice9* self)
     fixedData[C17 + 3] *= ratio;    // якір (c17.w) масштабується тим самим коефіцієнтом,
                                      // щоб позиція лишилась узгодженою
 
-    // UA: Виправляємо, якщо виконується БУДЬ-ЯКА з умов:
-    //     (а) scaleY ≈ 480/(висота робочого столу) — сам баг (полотно
-    //         пораховане як 4:3). Це значення мають усі елементи поза боєм
-    //         (crawl, текст екрана завантаження, субтитр відео), і НІ ОДИН
-    //         елемент бойового HUD (там 0.296296 і 0.395062).
-    //     (б) текстура 0 стиснена DXT3 — ЕМПІРИЧНЕ правило: на екранах, де
-    //         вона є (вибір бійця на межі відео й бою, дрібні елементи в
-    //         бою), корекція за цим правилом проблем не викликає. Чому саме
-    //         DXT3 — не з'ясовано; як окремий критерій СУБТИТРУ (без умови
-    //         (а)) це правило недостатнє — на нього не можна покладатися
-    //         самостійно.
-    //     Разом це відтворює стани, підтверджені як коректні реальною грою:
-    //     до бою полотно виправляється, бойовий HUD — ні (див.
+    // UA: Виправляємо, коли scaleY ≈ 480/(висота робочого столу) — сам баг
+    //     (полотно пораховане як 4:3). Це значення мають усі елементи поза
+    //     боєм (crawl, текст екрана завантаження, субтитр відео), і НІ ОДИН
+    //     елемент бойового HUD (там 0.296296 і 0.395062). Це відтворює
+    //     стани, підтверджені як коректні реальною грою: до бою полотно
+    //     виправляється, бойовий HUD — ні (див.
     //     docs/BF2_MOVIE_SUBTITLE_FIX.md).
-    // EN: Correct if ANY of these holds:
-    //     (a) scaleY ≈ 480/(desktop height) — the bug itself (the canvas
-    //         computed as 4:3). Every element outside combat (the crawl, the
-    //         loading-screen text, the video subtitle) has exactly this
-    //         value, and NOT ONE combat-HUD element does (those are
-    //         0.296296 and 0.395062).
-    //     (b) texture 0 is DXT3-compressed — an EMPIRICAL rule: on the
-    //         screens where it appears (unit selection between the video and
-    //         combat, small elements in combat), correcting on this rule
-    //         causes no problems. Why DXT3 specifically is unknown; as a
-    //         standalone SUBTITLE criterion (without condition (a)) this rule
-    //         is not sufficient on its own.
-    //     Together this reproduces the states confirmed correct by a real
-    //     game session: the canvas is corrected before combat, and the
+    // EN: Correct when scaleY ≈ 480/(desktop height) — the bug itself (the
+    //     canvas computed as 4:3). Every element outside combat (the crawl,
+    //     the loading-screen text, the video subtitle) has exactly this
+    //     value, and NOT ONE combat-HUD element does (those are 0.296296
+    //     and 0.395062). This reproduces the states confirmed correct by a
+    //     real game session: the canvas is corrected before combat, and the
     //     combat HUD is not (see docs/BF2_MOVIE_SUBTITLE_FIX.md).
     const bool isAspectBug = g_expectedBuggyScaleY > 0.0f &&
         fabsf(scaleY - g_expectedBuggyScaleY) <= g_expectedBuggyScaleY * 0.01f;
-    const bool isDxt3 = haveTex0 && texFmt == D3DFMT_DXT3;
-    const bool applyFix = isAspectBug || isDxt3;
+    const bool applyFix = isAspectBug;
 
     LogFixDiagnostics(self, scaleX, scaleY, scaleX, ratio, buf[C17 + 3], fixedData[C17 + 3],
         haveTex0, texW, texH, texFmt, applyFix);

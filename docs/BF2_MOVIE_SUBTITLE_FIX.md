@@ -64,10 +64,8 @@ strip.
 `::DrawIndexedPrimitive`. Перед кожним із цих двох викликів проксі читає
 поточні константи вертексного шейдера, що відповідають масштабу полотна
 (`StartRegister=12, Vector4fCount=9`), і якщо виявлена асиметрія
-відповідає або самому багу (`scaleY ≈ 480 / висота_екрана`), або
-окремому випадку екрана вибору бійця (текстура в першому слоті — формат
-DXT3), виправляє `scaleY`, підганяючи його під
-`scaleX = 640 / ширина_екрана`.
+відповідає самому багу (`scaleY ≈ 480 / висота_екрана`), виправляє
+`scaleY`, підганяючи його під `scaleX = 640 / ширина_екрана`.
 
 Перехоплення саме цих двох методів рендеру, а не сеттера константи
 шейдера напряму, — принципове рішення: гра встановлює цю константу не
@@ -87,10 +85,9 @@ system library, and passes every call through unchanged except
 `IDirect3DDevice9::DrawPrimitive` and `::DrawIndexedPrimitive`. Before
 each of those two calls, the proxy reads the current vertex-shader
 constants that hold the canvas scale (`StartRegister=12,
-Vector4fCount=9`), and if the asymmetry it finds matches either the bug
-itself (`scaleY ≈ 480 / screen_height`) or the separate unit-selection
-screen case (the texture in slot 0 is DXT3-format), it corrects
-`scaleY` to match `scaleX = 640 / screen_width`.
+Vector4fCount=9`), and if the asymmetry it finds matches the bug itself
+(`scaleY ≈ 480 / screen_height`), it corrects `scaleY` to match
+`scaleX = 640 / screen_width`.
 
 Intercepting exactly these two render calls, rather than the shader
 constant setter directly, is the key design choice: the game sets that
@@ -118,3 +115,17 @@ resolution). Four screenshots from one session confirm: loading-screen
 text is in place, the movie caption is present and legible, the
 unit-selection screen isn't distorted, and the combat weapon HUD (weapon,
 ammo, health, stamina, compass) shows no shift or compression.
+## 5. Видалена умова: текстура DXT3 / A removed condition: the DXT3 texture
+
+**UA:** Попередня версія корегувала полотно за двома умовами:
+`scaleY ≈ 480 / висота_екрана`, або текстура в слоті 0 — формат DXT3. На
+екрані вибору бійця друга умова зсуває початок затемнення тла до y≈67
+замість y=0 (верх екрана). Другу умову видалено; лишилась одна умова:
+`scaleY ≈ 480 / висота_екрана`. Маркер піднято `V4` → `V5`.
+
+**EN:** The previous version corrected the canvas on two conditions:
+`scaleY ≈ 480 / screen_height`, or the texture in slot 0 being
+DXT3-format. On the unit-selection screen, the second condition shifted
+the dimming backdrop's top edge to y≈67 instead of y=0 (the top of the
+screen). The second condition was removed; one condition remains:
+`scaleY ≈ 480 / screen_height`. The marker was bumped `V4` → `V5`.

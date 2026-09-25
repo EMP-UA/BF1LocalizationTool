@@ -96,3 +96,50 @@ screen — other screens are unaffected.
 "Кількість бійців: N" label renders with a clean, visible gap above the
 "Відродження" button — the enlarged Cyrillic font does not cover the
 button.
+## 5. Перелік класів притиснутий до верху екрана / The class list sits flush against the top of the screen
+
+**UA:** На тому самому екрані (`ifs_pc_spawnselect`, `ingame.lvl`) перелік
+класів для найму за повного складу (7 і більше комірок) має значно менший
+відступ зверху, ніж знизу. `ifs_pc_SpawnSelect_fnBuildScreen` обчислює
+позицію комірки `i` як `y_i = R24 + i·(R9 + R27 + R23 + 2.0)`, де
+`R24 = 15.0 + R23` (константа `15.0` — базовий відступ зверху, R23 —
+висота шрифту заголовка + 3.0). Вимір на реальному знімку з повним
+переліком: верх першої комірки y≈22px, низ сьомої y≈999px (відступ знизу
+81px). Δ=(81−22)/2=29.5, округлено до 30.
+
+Виправлення — та сама техніка точкового патчу константи, що й у розділі
+3: константа `15.0` (pc65, ADD R24 := K(15.0) + R23) замінена на `45.0`
+(+30px). Крок сітки, розміри комірок і шрифт не змінюються. `BuildPlan`
+перевіряє, що ця константа використовується в прототипі РІВНО один раз,
+перш ніж дозволити патч. Загальна таблиця розкладки (`Bf2LayoutTable.txt`)
+тут не застосовна: екран реєструється через `NewIFShellScreen`, не прямим
+`AddIFScreen`, а контейнер `Info` разом із сіткою несе й бічні значки
+(`SideModel0`/`SideModel1`), яких зсув через `posy` торкнувся б зайво.
+Відступи зверху/знизу після зсуву за повного (7-комірковим) переліку:
+≈52px / ≈50px (були 22px / 81px).
+
+Реалізація — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs,
+BF1LocalizationTool.Diagnostic/GenerateSpawnSelectListTopOffsetFixCommand.cs.
+
+**EN:** On the same screen (`ifs_pc_spawnselect`, `ingame.lvl`), the class
+list to recruit from, with a full roster (7+ slots), has a much smaller
+top gap than bottom gap. `ifs_pc_SpawnSelect_fnBuildScreen` computes slot
+`i`'s position as `y_i = R24 + i·(R9 + R27 + R23 + 2.0)`, where
+`R24 = 15.0 + R23` (the `15.0` constant is the base top offset, R23 is the
+title font's height + 3.0). Measured on a real screenshot with a full
+list: first slot's top at y≈22px, seventh slot's bottom at y≈999px (81px
+bottom gap). Δ=(81−22)/2=29.5, rounded to 30.
+
+The fix uses the same targeted constant-patch technique as section 3: the
+`15.0` constant (pc65, ADD R24 := K(15.0) + R23) is replaced with `45.0`
+(+30px). The grid pitch, cell sizes and font are unchanged. `BuildPlan`
+verifies this constant is used EXACTLY once in the prototype before
+allowing the patch. The generic layout table (`Bf2LayoutTable.txt`) does
+not apply here: the screen is registered via `NewIFShellScreen`, not a
+direct `AddIFScreen`, and the `Info` container that holds the grid also
+carries the side icons (`SideModel0`/`SideModel1`), which a `posy` shift
+would needlessly move too. Post-shift top/bottom gaps with a full
+(7-slot) list: ≈52px / ≈50px (were 22px / 81px).
+
+Implementation — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs,
+BF1LocalizationTool.Diagnostic/GenerateSpawnSelectListTopOffsetFixCommand.cs.

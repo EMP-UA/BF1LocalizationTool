@@ -6,7 +6,7 @@
 // =============================================================================
 // UA: Механізм застосування таблиці виправлень розкладки BF2.
 //
-//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 563 рядки на 34
+//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 566 рядків на 34
 //     екрани. Кожен рядок додається лише після виміру на реальному знімку
 //     гри; сама таблиця не зберігає статус перевірки по рядках — це формат
 //     числових значень, а не журнал підтверджень.
@@ -37,7 +37,7 @@
 //
 // EN: Mechanism for applying the BF2 layout correction table.
 //
-//     The correction table (Data/Bf2LayoutTable.txt) holds 563 rows across
+//     The correction table (Data/Bf2LayoutTable.txt) holds 566 rows across
 //     34 screens. Each row is added only after measuring a real in-game
 //     screenshot; the table itself does not store a per-row verification
 //     status — it is a format of numeric values, not a confirmation log.
