@@ -91,7 +91,7 @@ english.GameFilesNotFound=Game files not found in the selected folder (%1).%n%nA
 ; d3d9.dll виключено з загального шаблону й скопійовано окремим рядком нижче,
 ; щоб перед перезаписом можна було зберегти резервну копію чужого файла.
 Source: "GameData\*"; DestDir: "{app}\GameData"; Excludes: "d3d9.dll"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "GameData\d3d9.dll"; DestDir: "{app}\GameData"; Flags: ignoreversion; BeforeInstall: BackupExistingD3D9; Check: FileExists(ExpandConstant('{src}\GameData\d3d9.dll'))
+Source: "GameData\d3d9.dll"; DestDir: "{app}\GameData"; Flags: ignoreversion skipifsourcedoesntexist; BeforeInstall: BackupExistingD3D9
 Source: "Readme.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Registry]
