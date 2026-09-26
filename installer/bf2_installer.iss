@@ -55,6 +55,20 @@ ukrainian.LaunchGame=Запустити гру
 english.LaunchGame=Launch the game
 ukrainian.ViewReadme=Переглянути Readme
 english.ViewReadme=View Readme
+ukrainian.ResolutionPageCaption=Роздільність екрана
+english.ResolutionPageCaption=Screen resolution
+ukrainian.ResolutionPageSubCaption=Один параметр запуску Steam — і розкладка меню відображається правильно
+english.ResolutionPageSubCaption=One Steam launch parameter — and the menu layout displays correctly
+ukrainian.ResolutionWarningTitle=⚠ УВАГА
+english.ResolutionWarningTitle=⚠ WARNING
+ukrainian.ResolutionWarningText=Цю локалізацію розроблено й перевірено для роздільності 1920×1080. Щоб розкладка меню відображалась правильно, після встановлення відкрийте властивості гри в Steam (правою кнопкою на грі → Властивості → Загальне) і додайте в поле «Параметри запуску» рядок нижче:
+english.ResolutionWarningText=This localization is built and tested for 1920x1080. For the menu layout to display correctly, after installation open the game's properties in Steam (right-click the game -> Properties -> General) and add the line below to the "Launch Options" field:
+ukrainian.ResolutionCopyHint=Натисніть на поле, щоб скопіювати
+english.ResolutionCopyHint=Click the field to copy
+ukrainian.ResolutionCopiedHint=✓ Скопійовано в буфер обміну
+english.ResolutionCopiedHint=✓ Copied to clipboard
+ukrainian.ResolutionInGameReminder=Також у самій грі, в налаштуваннях відео, оберіть роздільність 1920×1080.
+english.ResolutionInGameReminder=Also select 1920x1080 in the game's own video settings.
 
 [Files]
 ; Тека GameData поруч із компілятором автоматично накладеться на теку з грою.
@@ -79,13 +93,40 @@ var
   GitHubLabel: TNewStaticText;
   ShellExecErrorCode: Integer;
   FinishedLinksCreated: Boolean;
+  ResolutionEdit: TNewEdit;
+  ResolutionCopyHintLabel: TNewStaticText;
 
 procedure GitHubLabelClick(Sender: TObject);
 begin
   ShellExec('open', 'https://github.com/EMP-UA/BF1LocalizationTool/tree/main/installer/bf2_installer.iss', '', '', SW_SHOWNORMAL, ewNoWait, ShellExecErrorCode);
 end;
 
+{ UA: Клік по полю з параметром запуску копіює його в буфер обміну й
+  одразу міняє підказку під полем на підтвердження копіювання.
+  TNewEdit у Inno Setup Pascal Script (на відміну від повного Delphi VCL)
+  не має власного методу копіювання в буфер, тож використано вбудований
+  у Windows clip.exe через приховане виконання команди — без зовнішніх
+  бібліотек і без ручних WinAPI-викликів для роботи з буфером.
+  EN: Clicking the launch-parameter field copies it to the clipboard and
+  immediately switches the hint below the field to a copy confirmation.
+  TNewEdit in Inno Setup's Pascal Script (unlike full Delphi VCL) has no
+  clipboard method of its own, so this uses Windows' built-in clip.exe
+  via a hidden command run — no external libraries and no manual WinAPI
+  clipboard calls. }
+procedure ResolutionEditClick(Sender: TObject);
+var
+  ResultCode: Integer;
+begin
+  ResolutionEdit.SelectAll;
+  Exec(ExpandConstant('{cmd}'), '/C echo -resolution 1920 1080| clip', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  ResolutionCopyHintLabel.Caption := CustomMessage('ResolutionCopiedHint');
+end;
+
 procedure InitializeWizard();
+var
+  ResolutionPage: TWizardPage;
+  WarningTitle, WarningText, InGameReminder: TNewStaticText;
 begin
   GitHubLabel := TNewStaticText.Create(WizardForm);
   GitHubLabel.Top := WizardForm.ClientHeight - 28; // Лівий нижній кут
@@ -97,6 +138,75 @@ begin
   GitHubLabel.Cursor := crHand;
   GitHubLabel.OnClick := @GitHubLabelClick;
   GitHubLabel.Parent := WizardForm;
+
+  { UA: Окрема сторінка майстра, одразу після привітальної й до вибору
+    теки встановлення. Сторінка "Завершено" для цього не підходить:
+    користувачі часто закривають інсталятор одразу з неї, не читаючи
+    текст.
+    EN: A separate wizard page, right after the welcome page and before
+    choosing the install folder. The "Finished" page doesn't work for
+    this: users often close the installer straight from it without
+    reading the text. }
+  ResolutionPage := CreateCustomPage(wpWelcome,
+    CustomMessage('ResolutionPageCaption'), CustomMessage('ResolutionPageSubCaption'));
+
+  WarningTitle := TNewStaticText.Create(ResolutionPage);
+  WarningTitle.Parent := ResolutionPage.Surface;
+  WarningTitle.Left := 0;
+  WarningTitle.Top := 0;
+  WarningTitle.AutoSize := True;
+  WarningTitle.Font.Color := clRed;
+  WarningTitle.Font.Style := [fsBold];
+  WarningTitle.Font.Size := WarningTitle.Font.Size + 4;
+  WarningTitle.Caption := CustomMessage('ResolutionWarningTitle');
+
+  WarningText := TNewStaticText.Create(ResolutionPage);
+  WarningText.Parent := ResolutionPage.Surface;
+  WarningText.Left := 0;
+  WarningText.Top := WarningTitle.Top + WarningTitle.Height + 12;
+  // UA: Порядок важливий — ширину й перенос слів виставляємо ДО AutoSize,
+  //     а текст пишемо останнім: WordWrap+AutoSize=True тримає задану
+  //     ширину незмінною й підганяє під текст лише ВИСОТУ мітки; в
+  //     будь-якому іншому порядку висота лишається однорядковою і решта
+  //     тексту обрізається.
+  // EN: Order matters — width and word wrap are set BEFORE AutoSize, and
+  //     the text goes last: with WordWrap+AutoSize=True the label keeps
+  //     the given width fixed and adjusts only its HEIGHT to the text; in
+  //     any other order the height stays single-line and the rest of the
+  //     text gets clipped.
+  WarningText.Width := ResolutionPage.SurfaceWidth;
+  WarningText.WordWrap := True;
+  WarningText.AutoSize := True;
+  WarningText.Caption := CustomMessage('ResolutionWarningText');
+
+  ResolutionEdit := TNewEdit.Create(ResolutionPage);
+  ResolutionEdit.Parent := ResolutionPage.Surface;
+  ResolutionEdit.Left := 0;
+  ResolutionEdit.Top := WarningText.Top + WarningText.Height + 16;
+  ResolutionEdit.Width := ResolutionPage.SurfaceWidth;
+  ResolutionEdit.ReadOnly := True;
+  ResolutionEdit.Text := '-resolution 1920 1080';
+  ResolutionEdit.Font.Style := [fsBold];
+  ResolutionEdit.Cursor := crHand;
+  ResolutionEdit.OnClick := @ResolutionEditClick;
+
+  ResolutionCopyHintLabel := TNewStaticText.Create(ResolutionPage);
+  ResolutionCopyHintLabel.Parent := ResolutionPage.Surface;
+  ResolutionCopyHintLabel.Left := 0;
+  ResolutionCopyHintLabel.Top := ResolutionEdit.Top + ResolutionEdit.Height + 6;
+  ResolutionCopyHintLabel.Font.Color := clGrayText;
+  ResolutionCopyHintLabel.Caption := CustomMessage('ResolutionCopyHint');
+
+  InGameReminder := TNewStaticText.Create(ResolutionPage);
+  InGameReminder.Parent := ResolutionPage.Surface;
+  InGameReminder.Left := 0;
+  InGameReminder.Top := ResolutionCopyHintLabel.Top + ResolutionCopyHintLabel.Height + 20;
+  // UA: Той самий порядок, що й у WarningText вище (див. коментар там).
+  // EN: Same order as WarningText above (see the comment there).
+  InGameReminder.Width := ResolutionPage.SurfaceWidth;
+  InGameReminder.WordWrap := True;
+  InGameReminder.AutoSize := True;
+  InGameReminder.Caption := CustomMessage('ResolutionInGameReminder');
 end;
 
 { UA: Блок посилань автора на сторінці "Завершено": сайт (розділ проєктів),
