@@ -55,6 +55,22 @@ ukrainian.LaunchGame=Запустити гру
 english.LaunchGame=Launch the game
 ukrainian.ViewReadme=Переглянути Readme
 english.ViewReadme=View Readme
+ukrainian.GitHubSourceLabel=🛠 Вихідний код інсталятора (GitHub)
+english.GitHubSourceLabel=🛠 Installer source code (GitHub)
+ukrainian.FinishedSiteLink=🌐 emp-ua.com/localizations — проєкти автора
+english.FinishedSiteLink=🌐 emp-ua.com/localizations — author's projects
+ukrainian.FinishedDiscussionServers= — сервери для обговорень
+english.FinishedDiscussionServers= — discussion servers
+ukrainian.FinishedUkrainianGameplay= — українізований ігролад
+english.FinishedUkrainianGameplay= — Ukrainian-localized gameplay
+ukrainian.FinishedNexusModsLink=🟠 NexusMods — слідкуйте за оновленнями локалізацій
+english.FinishedNexusModsLink=🟠 NexusMods — follow localizations updates
+ukrainian.ReinstallConfirm=Українізатор версії %1 вже встановлено. Бажаєте перевстановити його?
+english.ReinstallConfirm=Version %1 of the localization is already installed. Would you like to reinstall it?
+ukrainian.OlderVersionFound=Знайдено попередню версію: %1%nБуде встановлено версію: %2
+english.OlderVersionFound=Previous version found: %1%nVersion %2 will be installed.
+ukrainian.GameFilesNotFound=У вказаній папці не знайдено файлів гри (%1).%n%nВи впевнені, що хочете встановити файли сюди?
+english.GameFilesNotFound=Game files not found in the selected folder (%1).%n%nAre you sure you want to install the files here?
 
 [Files]
 ; Тека GameData поруч із компілятором автоматично накладеться на теку з грою
@@ -88,7 +104,7 @@ begin
   GitHubLabel.Top := WizardForm.ClientHeight - 28; // Лівий нижній кут
   GitHubLabel.Left := 20;
   GitHubLabel.Anchors := [akLeft, akBottom];
-  GitHubLabel.Caption := '🛠 Вихідний код інсталятора (GitHub)';
+  GitHubLabel.Caption := CustomMessage('GitHubSourceLabel');
   GitHubLabel.Font.Color := clHotLight;
   GitHubLabel.Font.Style := [fsUnderline];
   GitHubLabel.Cursor := crHand;
@@ -190,7 +206,7 @@ begin
 
   { UA: Рядок 1 — сайт (сторінка проєктів автора).
     EN: Line 1 — website (the author's projects page). }
-  SiteLink := MakeFinishedLink(BaseTop, LineLeft, '🌐 emp-ua.com/localizations — проєкти автора');
+  SiteLink := MakeFinishedLink(BaseTop, LineLeft, CustomMessage('FinishedSiteLink'));
   SiteLink.OnClick := @SiteLinkClick;
 
   { UA: Рядок 2 — Telegram і Discord (сервери для обговорень).
@@ -200,7 +216,7 @@ begin
   Sep1 := MakeFinishedText(BaseTop + 22, TelegramLink.Left + TelegramLink.Width, ' · ');
   DiscordLink := MakeFinishedLink(BaseTop + 22, Sep1.Left + Sep1.Width, '🟣 Discord');
   DiscordLink.OnClick := @DiscordLinkClick;
-  Desc1 := MakeFinishedText(BaseTop + 22, DiscordLink.Left + DiscordLink.Width, ' — сервери для обговорень');
+  Desc1 := MakeFinishedText(BaseTop + 22, DiscordLink.Left + DiscordLink.Width, CustomMessage('FinishedDiscussionServers'));
 
   { UA: Рядок 3 — YouTube і Twitch (українізований ігролад).
     EN: Line 3 — YouTube and Twitch (Ukrainianized gameplay). }
@@ -209,11 +225,11 @@ begin
   Sep2 := MakeFinishedText(BaseTop + 44, YouTubeLink.Left + YouTubeLink.Width, ' · ');
   TwitchLink := MakeFinishedLink(BaseTop + 44, Sep2.Left + Sep2.Width, '🟢 Twitch');
   TwitchLink.OnClick := @TwitchLinkClick;
-  Desc2 := MakeFinishedText(BaseTop + 44, TwitchLink.Left + TwitchLink.Width, ' — українізований ігролад');
+  Desc2 := MakeFinishedText(BaseTop + 44, TwitchLink.Left + TwitchLink.Width, CustomMessage('FinishedUkrainianGameplay'));
 
   { UA: Рядок 4 — сторінка локалізацій на NexusMods.
     EN: Line 4 — the NexusMods localization page. }
-  NexusModsLink := MakeFinishedLink(BaseTop + 66, LineLeft, '🟠 NexusMods — слідкуйте за оновленнями локалізації');
+  NexusModsLink := MakeFinishedLink(BaseTop + 66, LineLeft, CustomMessage('FinishedNexusModsLink'));
   NexusModsLink.OnClick := @NexusModsLinkClick;
 end;
 
@@ -320,11 +336,11 @@ begin
   begin
     if OldVersion = '{#AppVersion}' then
     begin
-      if MsgBox('Українізатор версії ' + OldVersion + ' вже встановлено. Бажаєте перевстановити його?', mbConfirmation, MB_YESNO) = IDNO then
+      if MsgBox(FmtMessage(CustomMessage('ReinstallConfirm'), [OldVersion]), mbConfirmation, MB_YESNO) = IDNO then
         Result := False;
     end
     else
-      MsgBox('Знайдено попередню версію: ' + OldVersion + #13#10 + 'Буде встановлено версію: {#AppVersion}', mbInformation, MB_OK);
+      MsgBox(FmtMessage(CustomMessage('OlderVersionFound'), [OldVersion, '{#AppVersion}']), mbInformation, MB_OK);
   end;
 end;
 
@@ -335,8 +351,7 @@ begin
   begin
     if not FileExists(ExpandConstant('{app}\GameData\Battlefront.exe')) then
     begin
-      if MsgBox('У вказаній папці не знайдено файлів гри (Battlefront.exe).' #13#10#13#10 +
-                'Ви впевнені, що хочете встановити файли сюди?', mbConfirmation, MB_YESNO) = IDNO then
+      if MsgBox(FmtMessage(CustomMessage('GameFilesNotFound'), ['Battlefront.exe']), mbConfirmation, MB_YESNO) = IDNO then
         Result := False;
     end;
   end;
