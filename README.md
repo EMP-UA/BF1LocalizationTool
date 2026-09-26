@@ -260,8 +260,8 @@ BF1LocalizationTool/
 ## Документація / Documentation
 
 **UA:** Технічні деталі виправлень локалізації — по одному файлу на
-тему в `docs/`. Усі шість — нові файли (жоден не замінює наявний
-документ, кожен покриває свою, окрему частину):
+тему в `docs/`. Кожен покриває свою, окрему частину, жоден не замінює
+інший:
 
 - [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) — верстка
   меню під ширші роздільності: прив'язки елементів, обрізаний фон,
@@ -279,16 +279,19 @@ BF1LocalizationTool/
   роздільності, відмінній від 4:3/5:4 (підтверджений баг оригінальної
   гри, відтворюється і на ванільних файлах).
 - [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
-  — зазор між написом "Кількість бійців" і кнопкою "Відродження" на
-  екрані вибору бійця (`ingame.lvl`), потрібен через збільшений
-  кириличний шрифт.
+  — зазор між написом "Кількість бійців" і кнопкою "Відродження" та
+  відступ зверху переліку класів для найму, обидва на екрані вибору
+  бійця (`ingame.lvl`), потрібні через збільшений кириличний шрифт.
 - [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
   — локалізація офіційного аддону Tat3 для BF1: власний `core.lvl`
   аддону та переведення назви карти на звичайний механізм `Locl`.
+- [`docs/BF2_FINAL_FILES_GENERATION.md`](docs/BF2_FINAL_FILES_GENERATION.md)
+  — як зі всіх фіксів вище складаються чотири готові файли гри
+  (`d3d9.dll`, `core.lvl`, `ingame.lvl`, `shell.lvl`).
 
 **EN:** Technical detail on the localization fixes — one file per
-topic under `docs/`. All six are new files (none replaces an existing
-document, each covers its own separate part):
+topic under `docs/`. Each covers its own separate part; none replaces
+another:
 
 - [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) — menu
   layout for wider resolutions: element anchors, the clipped
@@ -306,13 +309,16 @@ document, each covers its own separate part):
   other than 4:3/5:4 (a confirmed vanilla-game bug, reproducible on
   unmodified files too).
 - [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
-  — the gap between the "Кількість бійців" label and the
-  "Відродження" button on the unit-selection screen (`ingame.lvl`),
-  needed because of the enlarged Cyrillic font.
+  — the gap between the "Unit Count" label and the "Spawn" button, and
+  the class list's top offset, both on the unit-selection screen
+  (`ingame.lvl`), needed because of the enlarged Cyrillic font.
 - [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
   — localizing the official Tat3 add-on for BF1: its own separate
   `core.lvl` and switching the map name to the ordinary `Locl`
   mechanism.
+- [`docs/BF2_FINAL_FILES_GENERATION.md`](docs/BF2_FINAL_FILES_GENERATION.md)
+  — how the fixes above come together into the four finished game files
+  (`d3d9.dll`, `core.lvl`, `ingame.lvl`, `shell.lvl`).
 
 ---
 
@@ -453,8 +459,9 @@ self-contained `.exe`.
     з головного меню, і в бою —
     [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) §14), а
     також зазор між написом "Кількість бійців" і кнопкою "Відродження"
-    на екрані вибору бійця, щоб збільшений кириличний шрифт не
-    перекривав кнопку —
+    та відступ зверху переліку класів для найму на екрані вибору бійця,
+    щоб збільшений кириличний шрифт не перекривав кнопку, а елементи
+    списку не тулились до верху екрана —
     [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
 - **Новий файл:** `d3d9.dll` — ставиться в теку гри поряд із
   `BattlefrontII.exe` (стандартний порядок пошуку DLL у Windows: тека
@@ -462,10 +469,12 @@ self-contained `.exe`.
   субтитрів відеороликів на будь-якій роздільності, відмінній від
   4:3/5:4 — деталі й підтвердження в реальній грі —
   [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
-  Перед перезаписом чужого файла з такою назвою робиться резервна копія
-  (`d3d9.dll.bf1backup`); під час роботи пише лог
-  `bf2_widescreen_fix.log` у тій самій теці — без жодних мережевих
-  з'єднань; про вміст і призначення логу —
+  Перед перезаписом чужого файла з такою назвою інсталятор
+  (`installer/bf2_installer.iss`) зберігає резервну копію
+  (`d3d9.dll.bf1backup`) і відновлює її під час деінсталяції; сам
+  d3d9.dll під час роботи гри пише лог `bf2_widescreen_fix.log` у тій
+  самій теці — без жодних мережевих з'єднань; про вміст і призначення
+  логу —
   [`tools/bf2_d3d9_widescreen_fix/README.md`](tools/bf2_d3d9_widescreen_fix/README.md).
 
 **EN:**
@@ -509,10 +518,11 @@ self-contained `.exe`.
   - `Data\_lvl_pc\ingame.lvl` — the same options-menu, pause-menu, and
     multiplayer-lobby layout as `shell.lvl` (these screens open both
     from the main menu and during battle —
-    [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) §14), plus
-    a gap between the "Кількість бійців" label and the "Відродження"
-    button on the unit-selection screen, so the enlarged Cyrillic font
-    doesn't cover the button —
+    [`docs/BF2_UI_LAYOUT_FIX.md`](docs/BF2_UI_LAYOUT_FIX.md) §14), plus a
+    gap between the "Unit Count" label and the "Spawn" button, and a top
+    offset for the class list, both on the unit-selection screen — so
+    the enlarged Cyrillic font doesn't cover the button and the list
+    isn't flush against the top of the screen —
     [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md).
 - **New file:** `d3d9.dll` — placed in the game folder next to
   `BattlefrontII.exe` (the standard Windows DLL search order: the
@@ -520,10 +530,12 @@ self-contained `.exe`.
   disappearing at any resolution other than 4:3/5:4 — details and
   in-game confirmation in
   [`docs/BF2_MOVIE_SUBTITLE_FIX.md`](docs/BF2_MOVIE_SUBTITLE_FIX.md).
-  Before overwriting an existing file of the same name, a backup is made
-  (`d3d9.dll.bf1backup`); at runtime it writes a `bf2_widescreen_fix.log`
-  log file in the same folder — with no network connections of any
-  kind; for the log's contents and purpose, see
+  Before overwriting an existing file of the same name, the installer
+  (`installer/bf2_installer.iss`) saves a backup (`d3d9.dll.bf1backup`)
+  and restores it on uninstall; d3d9.dll itself writes a
+  `bf2_widescreen_fix.log` log file in the same folder at runtime — with
+  no network connections of any kind; for the log's contents and
+  purpose, see
   [`tools/bf2_d3d9_widescreen_fix/README.md`](tools/bf2_d3d9_widescreen_fix/README.md).
 
 ---

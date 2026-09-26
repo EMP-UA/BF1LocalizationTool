@@ -739,8 +739,8 @@ instead (the same row also applies to `ifs_missionselect_pcMulti` and
 **EN:** On the unit-selection screen (`ifs_pc_spawnselect`, in `ingame.lvl`), the
 same `gamefont_large` font — whose height (the `HEAD` field) this tool
 enlarged from 22 to 33px (+50%, see `BF2_FONT_SCALING.md`) for Cyrillic
-readability — exposes a zero gap between the "Кількість бійців" label and
-the "Відродження" button that was hidden in vanilla: both elements meet
+readability — exposes a zero gap between the "Unit Count" label and
+the "Spawn" button that was hidden in vanilla: both elements meet
 at the same coordinate by construction of the layout formula, regardless
 of font height. This is a separate, specifically fixed defect: the full
 formula breakdown, the exact bytecode instruction, and confirmation by a

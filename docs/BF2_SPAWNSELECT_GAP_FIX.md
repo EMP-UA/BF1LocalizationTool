@@ -1,4 +1,4 @@
-# BF2: зазор між написом "Кількість бійців" і кнопкою "Відродження" (`ingame.lvl`) / BF2: gap between the "Кількість бійців" label and the "Відродження" button (`ingame.lvl`)
+# BF2: зазор між написом "Кількість бійців" і кнопкою "Відродження" (`ingame.lvl`) / BF2: gap between the "Unit Count" label and the "Spawn" button (`ingame.lvl`)
 
 ## 1. Дефект / The bug
 
@@ -9,7 +9,7 @@
 хоча в оригіналі, з дрібнішим латинським шрифтом, вони не стикались.
 
 **EN:** On the unit-selection screen (`ifs_pc_spawnselect`, `ingame.lvl`), the
-"Кількість бійців: N" label touches or is covered by the "Відродження"
+"Unit Count: N" label touches or is covered by the "Spawn"
 button. The cause is the enlarged Cyrillic font (see
 `BF2_FONT_SCALING.md`): the text's bottom edge reaches the button's top
 edge, whereas in the original, with a smaller Latin font, they didn't
@@ -70,7 +70,7 @@ identical to the one already executed at pc154, so it changes nothing).
 The `BODY` chunk's size, the whole file's size, and the pc numbers of
 every instruction after this window (including the `JMP`/`FORLOOP`
 targets at pc172/242/244/259) all stay byte-for-byte unchanged. The
-"Відродження" button (0.9×H) and the text's own geometry (`height`/
+"Spawn" button (0.9×H) and the text's own geometry (`height`/
 `texth` = 0.20×H) are not changed — only the label's position moves, up
 by 0.03×H.
 
@@ -93,8 +93,8 @@ screen — other screens are unaffected.
 "Відродження" — збільшений кириличний шрифт кнопку не перекриває.
 
 **EN:** Verified with a real game session: on the unit-selection screen, the
-"Кількість бійців: N" label renders with a clean, visible gap above the
-"Відродження" button — the enlarged Cyrillic font does not cover the
+"Unit Count: N" label renders with a clean, visible gap above the
+"Spawn" button — the enlarged Cyrillic font does not cover the
 button.
 ## 5. Перелік класів притиснутий до верху екрана / The class list sits flush against the top of the screen
 
