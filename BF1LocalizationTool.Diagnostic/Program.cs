@@ -551,6 +551,32 @@ List<MenuCategory> BuildCategories() =>
                 "★ HEAD FIX: correct the stale font height (HEAD[3]) in the finished core.lvl from reference-files\\BF2-UA-rem → font-output-headfix\\BF2\\core.lvl (1 byte per font, atlas untouched)",
                 RunGenerateFontHeadHeightFixCore),
         ]),
+
+    new MenuCategory(
+        "★★★ ФІНАЛЬНА ЗБІРКА: 4 файли для GameData, підтверджені кроки поспіль",
+        "★★★ FINAL ASSEMBLY: the 4 GameData files, confirmed steps in sequence",
+        [
+            new MenuItem(
+                "core.lvl: кирилиця + фікс HEAD (без перекладу — переклад через GUI ПІСЛЯ) → final-assembly-output\\GameData\\data\\_lvl_pc\\core.lvl",
+                "core.lvl: Cyrillic + HEAD fix (no translation — translate via the GUI AFTER) → final-assembly-output\\GameData\\data\\_lvl_pc\\core.lvl",
+                RunFinalAssemblyCore),
+            new MenuItem(
+                "shell.lvl: фікс розкладки (переклад не потрібен — немає чанків Locl) → final-assembly-output\\GameData\\data\\_lvl_pc\\shell.lvl",
+                "shell.lvl: layout fix (no translation needed — no Locl chunks) → final-assembly-output\\GameData\\data\\_lvl_pc\\shell.lvl",
+                RunFinalAssemblyShell),
+            new MenuItem(
+                "ingame.lvl: розкладка в бою + зазор «Кількість бійців» + зсув переліку класів поспіль → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                "ingame.lvl: in-battle layout + \"Unit Count\" gap + class-list offset in sequence → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                RunFinalAssemblyIngame),
+            new MenuItem(
+                "d3d9.dll: збірка Zig-ом з вбудованого джерела → final-assembly-output\\GameData\\d3d9.dll",
+                "d3d9.dll: built with Zig from the bundled source → final-assembly-output\\GameData\\d3d9.dll",
+                RunFinalAssemblyD3D9),
+            new MenuItem(
+                "★ УСІ ЧОТИРИ ФАЙЛИ ПОСПІЛЬ (виконує 4 пункти вище один за одним; переклад core.lvl лишається ручним, ПІСЛЯ цього — shell.lvl та ingame.lvl перекладу не потребують)",
+                "★ ALL FOUR FILES IN SEQUENCE (runs the 4 items above one after another; core.lvl translation stays manual, AFTER this — shell.lvl and ingame.lvl need no translation)",
+                RunFinalAssemblyAll),
+        ]),
 ];
 
 async Task AnalyzeSingleGame(string label, string commandSlug)
@@ -2910,7 +2936,12 @@ async Task RunGenerateNoDonorCyrillicCore()
     }
     if (choice is "2" or "3")
     {
-        var bf2Vanilla = Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2", "core.lvl");
+        // UA: FindGameFile — ванільний core.lvl лежить під reference-files\BF2\
+        //     у вкладеній структурі GameData\data\_lvl_pc\, не напряму в корені.
+        // EN: FindGameFile — the vanilla core.lvl sits under reference-files\BF2\
+        //     inside a nested GameData\data\_lvl_pc\ structure, not the folder's root.
+        var bf2Vanilla = FindGameFile(Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2"), "core.lvl")
+            ?? Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2", "core.lvl");
 
         report.Log($"UA: [BF2] Крок 1/2 — збільшення ВАНІЛЬНОГО шрифту ×{bf2EnlargeScale} (BF2 не підтримує 1080p нативно, ще без кирилиці). / " +
                    $"EN: [BF2] Step 1/2 — enlarging the VANILLA font ×{bf2EnlargeScale} (BF2 doesn't support 1080p natively, still no Cyrillic).");
@@ -3016,7 +3047,12 @@ async Task RunGenerateEnlargedFontCore()
     //     Питання розміру для BF1 лишається відкритим.
     // EN: BF2 only — this is where the font needs enlarging (menu+game).
     //     The size question for BF1 stays open.
-    var corePath = Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2", "core.lvl");
+    // UA: FindGameFile — ванільний core.lvl лежить під reference-files\BF2\
+    //     у вкладеній структурі GameData\data\_lvl_pc\, не напряму в корені.
+    // EN: FindGameFile — the vanilla core.lvl sits under reference-files\BF2\
+    //     inside a nested GameData\data\_lvl_pc\ structure, not the folder's root.
+    var corePath = FindGameFile(Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2"), "core.lvl")
+        ?? Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2", "core.lvl");
     var outputDir = Path.Combine(AppContext.BaseDirectory, "font-output-enlarged", "BF2");
     var outputPath = GenerateEnlargedFontCoreCommand.Run(report, corePath, outputDir, scale);
     if (outputPath is not null)
@@ -3361,6 +3397,274 @@ string? PickDefaultOrDialogCoreLvl(string gameLabel, string defaultSubfolder)
     }
 
     return NativeFileDialog.ShowOpenDialog($"Виберіть core.lvl для {gameLabel} / Select core.lvl for {gameLabel}");
+}
+
+// ===========================================================================
+// UA: ФІНАЛЬНА ЗБІРКА — по одному пункту меню на кожен із чотирьох файлів, що
+//     складаються з кількох підтверджених кроків. Кожен пункт лише викликає
+//     ТІ САМІ *Command.Run(...) / статичні методи, що й окремі пункти
+//     категорій 7/9/10/11 вище (жодна логіка перевірки чи запису не
+//     дублюється й не змінюється) — різниця лише в тому, що вихід одного
+//     кроку автоматично передається як вхід наступного, без ручного
+//     копіювання файлу в reference-files між кроками. Переклад рядків (GUI
+//     Translator або автоматизований переклад) сюди не входить — жоден із
+//     чотирьох пунктів його не виконує.
+// EN: FINAL ASSEMBLY — one menu item per each of the four files that are
+//     built from several confirmed steps. Each item only calls the SAME
+//     *Command.Run(...) / static methods used by the separate items in
+//     categories 7/9/10/11 above (no check or write logic is duplicated or
+//     changed) — the only difference is that one step's output is
+//     automatically fed as the next step's input, without manually
+//     copying the file into reference-files between steps. String
+//     translation (the GUI Translator or automated translation) is not
+//     part of this — none of the four items performs it.
+// ===========================================================================
+
+async Task RunFinalAssemblyCore()
+{
+    const float bf2EnlargeScale = 1.5f;
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "final-assembly-output", "GameData", "data", "_lvl_pc");
+
+    var report = new DiagnosticReport("FinalAssemblyCore");
+    report.Log("UA: core.lvl (BF2) — крок 1: кирилиця, крок 2: фікс HEAD. Переклад — ОКРЕМО, через GUI, ПІСЛЯ цього кроку.");
+    report.Log("EN: core.lvl (BF2) — step 1: Cyrillic glyphs, step 2: HEAD fix. Translation — SEPARATELY, via the GUI, AFTER this step.");
+    report.Log();
+
+    var bf2Vanilla = FindGameFile(Path.Combine(refRoot, "BF2"), "core.lvl")
+        ?? Path.Combine(refRoot, "BF2", "core.lvl");
+    if (!File.Exists(bf2Vanilla))
+    {
+        report.Log($"UA: Ванільний core.lvl не знайдено: \"{bf2Vanilla}\".");
+        report.Log($"EN: Vanilla core.lvl not found: \"{bf2Vanilla}\".");
+        report.Save();
+        return;
+    }
+
+    report.Log($"UA: Крок 1/3 — збільшення ВАНІЛЬНОГО шрифту ×{bf2EnlargeScale}.");
+    report.Log($"EN: Step 1/3 — enlarging the VANILLA font ×{bf2EnlargeScale}.");
+    var enlargeTempDir = Path.Combine(AppContext.BaseDirectory, "_final-assembly-enlarge-tmp");
+    var enlargedVanillaPath = GenerateEnlargedFontCoreCommand.Run(report, bf2Vanilla, enlargeTempDir, bf2EnlargeScale);
+    if (enlargedVanillaPath is null)
+    {
+        report.Log("UA: Крок 1/3 провалився — зупинено. / EN: Step 1/3 failed — stopped.");
+        report.Save();
+        return;
+    }
+
+    report.Log();
+    report.Log("UA: Крок 2/3 — рендер кирилиці напряму у вже збільшений атлас.");
+    report.Log("EN: Step 2/3 — Cyrillic render directly into the already-enlarged atlas.");
+    var cyrillicPath = await GenerateNoDonorCyrillicCoreCommand.Run(report, enlargedVanillaPath, "BF2");
+    try { Directory.Delete(enlargeTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+    if (cyrillicPath is null)
+    {
+        report.Log("UA: Крок 2/3 провалився — зупинено. / EN: Step 2/3 failed — stopped.");
+        report.Save();
+        return;
+    }
+
+    report.Log();
+    report.Log("UA: Крок 3/3 — фікс HEAD (звірка проти ванільного core.lvl).");
+    report.Log("EN: Step 3/3 — HEAD fix (cross-checked against the vanilla core.lvl).");
+    var finalPath = GenerateFontHeadHeightFixCoreCommand.Run(report, cyrillicPath, bf2Vanilla, outputDir, "core.lvl");
+
+    report.Log();
+    if (finalPath is not null)
+    {
+        report.Log($"UA: ГОТОВО — шаблон для перекладу (кирилиця + фікс HEAD, ще англійський текст): {finalPath}");
+        report.Log($"EN: DONE — translation-ready template (Cyrillic glyphs + HEAD fix, text still English): {finalPath}");
+        report.Log("UA: Далі: відкрити цей файл у GUI Translator і перекласти рядки — GUI змінює лише текст, шрифт і HEAD не чіпає.");
+        report.Log("EN: Next: open this file in the GUI Translator and translate the strings — the GUI changes only text, it does not touch the font or HEAD.");
+    }
+    else
+    {
+        report.Log("UA: Крок 3/3 провалився. / EN: Step 3/3 failed.");
+    }
+
+    report.Save();
+}
+
+async Task RunFinalAssemblyShell()
+{
+    var bf2RefDir = Path.Combine(AppContext.BaseDirectory, "reference-files", "BF2");
+    var shellPath = FindGameFile(bf2RefDir, "shell.lvl") ?? Path.Combine(bf2RefDir, "shell.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "final-assembly-output", "GameData", "data", "_lvl_pc");
+
+    var report = new DiagnosticReport("FinalAssemblyShell");
+    report.Log("UA: shell.lvl — фікс розкладки (лише підтверджені знімком екрани). У shell.lvl немає чанків Locl (перевірено байт-пошуком) — текстових рядків для перекладу тут немає, файл готовий одразу.");
+    report.Log("EN: shell.lvl — layout fix (screenshot-confirmed screens only). shell.lvl has no Locl chunks (verified by a byte search) — there are no text strings to translate here, the file is ready right away.");
+    report.Log($"UA: Вхідний (vanilla) shell.lvl: \"{shellPath}\".");
+    report.Log($"EN: Input (vanilla) shell.lvl: \"{shellPath}\".");
+    report.Log();
+
+    var finalPath = GenerateAnchorFixShellCommand.Run(report, shellPath, outputDir, "shell.lvl", scale: 1.0f);
+
+    report.Log();
+    if (finalPath is not null)
+    {
+        report.Log($"UA: ГОТОВО: {finalPath}");
+        report.Log($"EN: DONE: {finalPath}");
+        report.Log("UA: Далі: скопіювати на місце GameData\\data\\_lvl_pc\\shell.lvl — переклад не потрібен (немає чанків Locl).");
+        report.Log("EN: Next: copy over GameData\\data\\_lvl_pc\\shell.lvl — no translation needed (no Locl chunks).");
+    }
+    else
+    {
+        report.Log("UA: Крок провалився. / EN: Step failed.");
+    }
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
+// UA: Крок 2/3 (зазор "Кількість бійців") тут отримує на вхід результат
+//     кроку 1/3 (розкладка в бою) того самого запуску, а не ванільний
+//     ingame.lvl окремо, як це робить самостійний пункт меню того самого
+//     фіксу (категорія 10, "записати ingame_spawnselect_gapfix.lvl") —
+//     той самостійний пункт лишається без змін і читає ванільний файл.
+// EN: Step 2/3 (the "Unit Count" gap) takes as input this run's own
+//     step 1/3 result (in-battle layout), not a vanilla ingame.lvl on its
+//     own, as the standalone menu item for the same fix does (category 10,
+//     "write ingame_spawnselect_gapfix.lvl") — that standalone item is
+//     left unchanged and reads the vanilla file.
+async Task RunFinalAssemblyIngame()
+{
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var bf2VanillaDir = Path.Combine(refRoot, "BF2");
+    var finalOutputDir = Path.Combine(AppContext.BaseDirectory, "final-assembly-output", "GameData", "data", "_lvl_pc");
+    // UA: ПОЗА final-assembly-output — тека final-assembly-output має
+    //     містити ЛИШЕ фінальні файли гри (GameData\...), а не проміжні
+    //     кроки збірки ingame.lvl. Видаляється нижче одразу після того,
+    //     як крок 3/3 прочитав з неї останній проміжний файл — так само,
+    //     як enlargeTempDir у RunFinalAssemblyCore і workDir у
+    //     GenerateD3D9FixBuildCommand.
+    // EN: OUTSIDE final-assembly-output — that folder must contain ONLY
+    //     the final game files (GameData\...), not ingame.lvl's
+    //     intermediate build steps. Deleted below right after step 3/3
+    //     has read the last intermediate file from it — the same
+    //     pattern as enlargeTempDir in RunFinalAssemblyCore and workDir
+    //     in GenerateD3D9FixBuildCommand.
+    var stepsTempDir = Path.Combine(AppContext.BaseDirectory, "_final-assembly-ingame-steps-tmp");
+
+    var report = new DiagnosticReport("FinalAssemblyIngame");
+    report.Log("UA: ingame.lvl — розкладка в бою → зазор «Кількість бійців» → зсув переліку класів, поспіль, від ВАНІЛЬНОГО файлу. У ingame.lvl немає чанків Locl (перевірено байт-пошуком) — переклад тут не потрібен.");
+    report.Log("EN: ingame.lvl — in-battle layout -> \"Unit Count\" gap -> class-list offset, in sequence, from the VANILLA file. ingame.lvl has no Locl chunks (verified by a byte search) — no translation needed here.");
+    report.Log();
+
+    var ingamePath = FindGameFile(bf2VanillaDir, "ingame.lvl") ?? Path.Combine(bf2VanillaDir, "ingame.lvl");
+    if (!File.Exists(ingamePath))
+    {
+        report.Log($"UA: ванільний ingame.lvl не знайдено під \"{bf2VanillaDir}\" — оберіть вручну.");
+        report.Log($"EN: vanilla ingame.lvl not found under \"{bf2VanillaDir}\" — pick manually.");
+        var picked = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
+        if (picked is null)
+        {
+            report.Log("UA: Файл не вибрано. / EN: No file selected.");
+            report.Save();
+            return;
+        }
+        ingamePath = picked;
+    }
+    report.Log($"UA: Вхідний (ванільний) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log();
+
+    report.Log("UA: Крок 1/3 — розкладка в бою.");
+    report.Log("EN: Step 1/3 — in-battle layout.");
+    var layoutPath = GenerateAnchorFixIngameCommand.Run(report, ingamePath, stepsTempDir, "ingame_step1_layout.lvl");
+    if (layoutPath is null)
+    {
+        report.Log("UA: Крок 1/3 провалився — зупинено. / EN: Step 1/3 failed — stopped.");
+        try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+        report.Save();
+        return;
+    }
+
+    report.Log();
+    report.Log("UA: Крок 2/3 — зазор «Кількість бійців» (SpawnSelectUnitCountGapPatchBuilder).");
+    report.Log("EN: Step 2/3 — \"Unit Count\" gap (SpawnSelectUnitCountGapPatchBuilder).");
+    var gapPath = GenerateSpawnSelectUnitCountGapFixCommand.Run(report, layoutPath, stepsTempDir, "ingame_step2_gapfix.lvl");
+    if (gapPath is null)
+    {
+        report.Log("UA: Крок 2/3 провалився — зупинено. / EN: Step 2/3 failed — stopped.");
+        try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+        report.Save();
+        return;
+    }
+
+    report.Log();
+    report.Log("UA: Крок 3/3 — зсув переліку класів (SpawnSelectListTopOffsetPatchBuilder).");
+    report.Log("EN: Step 3/3 — class-list offset (SpawnSelectListTopOffsetPatchBuilder).");
+    var finalPath = GenerateSpawnSelectListTopOffsetFixCommand.Run(report, gapPath, finalOutputDir, "ingame.lvl");
+
+    // UA: Проміжна тека кроків 1-2 більше не потрібна — крок 3/3 щойно
+    //     прочитав з неї свій вхід (gapPath) і записав готовий результат
+    //     напряму у finalOutputDir. Видаляється тут незалежно від того,
+    //     вдався крок 3/3 чи ні.
+    // EN: The steps 1-2 temp folder is no longer needed — step 3/3 just
+    //     read its input (gapPath) from it and wrote the finished result
+    //     directly into finalOutputDir. Deleted here regardless of whether
+    //     step 3/3 succeeded.
+    try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+
+    report.Log();
+    if (finalPath is not null)
+    {
+        report.Log($"UA: ГОТОВО: {finalPath}");
+        report.Log($"EN: DONE: {finalPath}");
+        report.Log("UA: Далі: скопіювати на місце GameData\\data\\_lvl_pc\\ingame.lvl — переклад не потрібен (немає чанків Locl).");
+        report.Log("EN: Next: copy over GameData\\data\\_lvl_pc\\ingame.lvl — no translation needed (no Locl chunks).");
+    }
+    else
+    {
+        report.Log("UA: Крок 3/3 провалився. / EN: Step 3/3 failed.");
+    }
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
+async Task RunFinalAssemblyD3D9()
+{
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "final-assembly-output", "GameData");
+
+    var report = new DiagnosticReport("FinalAssemblyD3D9");
+    report.Log("UA: d3d9.dll — збірка Zig-ом із того самого коду, вбудованого в цю програму, що звіряє пункт 9→6, напряму у файл d3d9.dll.");
+    report.Log("EN: d3d9.dll — built with Zig from the same source embedded in this application that item 9->6 compares, directly into a d3d9.dll file.");
+    report.Log();
+
+    var finalPath = await GenerateD3D9FixBuildCommand.RunAsync(report, outputDir);
+
+    report.Log();
+    if (finalPath is not null)
+    {
+        report.Log($"UA: ГОТОВО: {finalPath}");
+        report.Log($"EN: DONE: {finalPath}");
+    }
+
+    report.Save();
+}
+
+// UA: Просто викликає чотири пункти вище один за одним — кожен пише
+//     власний файл у diagnostic-output зі своїми деталями. Нічого
+//     спільного між ними не рахується заново.
+// EN: Simply calls the four items above one after another — each writes
+//     its own file to diagnostic-output with its own details. Nothing
+//     shared between them is recomputed.
+async Task RunFinalAssemblyAll()
+{
+    Console.WriteLine("UA: === Складання всіх чотирьох фінальних файлів поспіль ===");
+    Console.WriteLine("EN: === Assembling all four final files in sequence ===");
+    Console.WriteLine();
+
+    await RunFinalAssemblyCore();
+    await RunFinalAssemblyShell();
+    await RunFinalAssemblyIngame();
+    await RunFinalAssemblyD3D9();
+
+    Console.WriteLine();
+    Console.WriteLine("UA: Усі чотири кроки завершено — перевірте окремі звіти в diagnostic-output на помилки кожного кроку.");
+    Console.WriteLine("EN: All four steps finished — check the individual diagnostic-output reports for each step's errors.");
 }
 
 string? PickBf1CoreLvl() => PickDefaultOrDialogCoreLvl("BF1 (Classic 2004)", "BF1");
