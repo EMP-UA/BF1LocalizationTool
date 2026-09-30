@@ -108,7 +108,6 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -129,7 +128,7 @@
                 </StackPanel>
 
                 <!-- UA: Дії / EN: Actions -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <WrapPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnOpenOriginal" Style="{StaticResource EmpButton}"
                             Content="📂 UA: Оригінал / EN: Original"
                             ToolTip="UA: Файл-оригінал — READ-ONLY, ніколи не перезаписується, дає колонку 'Оригінал' / EN: Original file — READ-ONLY, never overwritten, provides the 'Original' column"
@@ -164,10 +163,10 @@
                             Content="⇄ UA: BF1↔BF2 / EN: BF1↔BF2"
                             ToolTip="UA: Перенести переклад з іншої гри (напр. BF1 → BF2) за англійським оригіналом (без урахування регістру; регістр перекладу підлаштовується під рядок поточної гри) — питає ДВА файли донора (спершу ванільний, потім перекладений), не чіпає ВИЧИТАНІ (ReviewStatus) рядки, решту (в т.ч. вже перекладені Gemini) може перезаписати. Структура й шрифти завжди з поточного файлу / EN: Transfer translation from another game (e.g. BF1 → BF2) by matching English original (case-insensitive; the translation's case is adapted to the current game's row) — asks for TWO donor files (vanilla first, then translated), leaves REVIEWED (ReviewStatus) rows untouched, may overwrite the rest (including rows already translated by Gemini). Structure and fonts always stay from the current file"
                             Click="BtnTransferFromOtherGame_Click" Margin="6,0,0,0" IsEnabled="False"/>
-                </StackPanel>
+                </WrapPanel>
 
                 <!-- UA: Права панель — тема, шрифт / EN: Right panel — theme, font -->
-                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnTheme" Style="{StaticResource EmpButtonSmall}"
                             Content="☾ UA: Темна / EN: Dark"
                             Click="BtnTheme_Click" Margin="0,0,6,0"/>
@@ -247,6 +246,11 @@
                                  Content="⚠ UA: Проблемні / EN: Issues"
                                  Foreground="{StaticResource WarningBrush}"
                                  Checked="FilterChanged"/>
+                    <RadioButton x:Name="RbReviewed"
+                                 Content="UA: Вичитано / EN: Reviewed"
+                                 Foreground="{DynamicResource TextSecondaryBrush}"
+                                 ToolTip="UA: Рядки із завершеною вичиткою — позначка &quot;+&quot; або &quot;+/-&quot; у колонці Вичитка / EN: Rows with review complete — a &quot;+&quot; or &quot;+/-&quot; mark in the Review column"
+                                 Checked="FilterChanged"/>
                 </StackPanel>
 
                 <TextBlock Grid.Column="3" x:Name="TxtFilterCount"
@@ -261,6 +265,8 @@
                   CanUserAddRows="False" CanUserDeleteRows="False"
                   RowHeaderWidth="0"
                   IsReadOnly="False"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
                   RowStyle="{StaticResource RowStyle}"
                   CellEditEnding="GridEntries_CellEditEnding"
                   SelectionChanged="GridEntries_SelectionChanged"
@@ -281,6 +287,25 @@
                     <Separator/>
                     <MenuItem Header="UA: Копіювати хеш / EN: Copy hash"
                               Click="CtxCopyHash_Click"/>
+                    <Separator/>
+                    <!-- UA: Масове проставлення позначки вичитки — діє на ВСІ
+                         виділені рядки одразу (звичайне багаторядкове виділення
+                         DataGrid: клік + Ctrl/Shift; GridEntries_PreviewMouseRight
+                         ButtonDown у коді зберігає таке виділення при правому
+                         кліку). Tag кожного пункту несе саме значення позначки.
+                         EN: Bulk review-mark assignment — applies to ALL selected
+                         rows at once (ordinary DataGrid multi-row selection:
+                         click + Ctrl/Shift; GridEntries_PreviewMouseRightButtonDown
+                         in code-behind preserves that selection on right-click).
+                         Each item's Tag carries the mark value itself. -->
+                    <MenuItem Header="UA: Вичитка для виділених / EN: Review for selected">
+                        <MenuItem Header="+"   Tag="+"   Click="CtxReviewSetForSelected_Click"/>
+                        <MenuItem Header="-"   Tag="-"   Click="CtxReviewSetForSelected_Click"/>
+                        <MenuItem Header="+/-" Tag="+/-" Click="CtxReviewSetForSelected_Click"/>
+                        <MenuItem Header="✎ UA: Власний текст… / EN: Custom text…" Click="CtxReviewCustomForSelected_Click"/>
+                        <Separator/>
+                        <MenuItem Header="UA: Очистити / EN: Clear" Tag="" Click="CtxReviewSetForSelected_Click"/>
+                    </MenuItem>
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
@@ -312,9 +337,21 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <!-- Оригінал -->
+                <!-- Оригінал: прив'язка до OriginalDisplay (не Original!) — та сама
+                     властивість вставляє видимий маркер "↵" перед справжніми
+                     переносами рядка з даних, щоб відрізнити їх від переносу
+                     через word-wrap; SortMemberPath повертає сортування до
+                     сирого значення (без маркера), той самий принцип що й
+                     у колонці Translation нижче.
+                     EN: Original: bound to OriginalDisplay (not Original!) —
+                     that property inserts a visible "↵" marker before real
+                     line breaks from the data, to tell them apart from a
+                     word-wrap break; SortMemberPath keeps sorting on the raw
+                     (marker-free) value, same principle as the Translation
+                     column below. -->
                 <DataGridTextColumn Header="UA: Оригінал / EN: Original (read-only)"
-                                    Binding="{Binding Original}" Width="2*" IsReadOnly="True">
+                                    Binding="{Binding OriginalDisplay}" SortMemberPath="Original"
+                                    Width="2*" IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
@@ -392,11 +429,33 @@
                     </DataGridTemplateColumn.CellTemplate>
                     <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
+                            <!-- UA: AcceptsReturn=True + TextWrapping=Wrap — оригінал часто МІСТИТЬ
+                                 справжній символ переносу рядка напряму в даних (LoclChunkParser
+                                 читає рядок як є, без розекранування escape-послідовностей —
+                                 підтверджено на ванільному core.lvl BF2: 332 записи з реальним
+                                 CRLF). Без цього перекладу з переносом рядка неможливо було
+                                 набрати вручну — лише копіюванням оригіналу. Звичайний Enter БЕЗ
+                                 модифікатора й далі підтверджує клітинку та переходить на
+                                 наступний рядок (див. TxtTranslationEdit_PreviewKeyDown) — щоб не
+                                 ламати звичний робочий процес для однорядкових записів (переважна
+                                 більшість). Shift+Enter або Ctrl+Enter вставляють реальний перенос.
+                                 EN: AcceptsReturn=True + TextWrapping=Wrap — the original often
+                                 CONTAINS a real line-break character directly in the data
+                                 (LoclChunkParser reads the string as-is, no escape-sequence
+                                 unescaping — confirmed on vanilla BF2 core.lvl: 332 entries with a
+                                 real CRLF. Without this, a translation with a line break couldn't
+                                 be typed manually — only copied from the original. Plain Enter
+                                 WITHOUT a modifier still commits the cell and moves to the next row
+                                 (see TxtTranslationEdit_PreviewKeyDown) — so the familiar workflow
+                                 for single-line entries (the vast majority) isn't broken.
+                                 Shift+Enter or Ctrl+Enter insert a real line break. -->
                             <TextBox Text="{Binding Translation, UpdateSourceTrigger=PropertyChanged}"
                                      Background="{DynamicResource BgRowAltBrush}"
                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                      BorderThickness="0" Padding="4,2"
-                                     AcceptsReturn="False"/>
+                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     PreviewKeyDown="TxtTranslationEdit_PreviewKeyDown"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>

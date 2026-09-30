@@ -3,7 +3,7 @@
 Формат базується на [Keep a Changelog](https://keepachangelog.com/uk/1.1.0/).
 Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.0] — 2026-09-30
 
 ### UA: Додано
 - Перенесення перекладу між іграми (BF1 ↔ BF2) за збігом англійського
@@ -22,6 +22,30 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   перекладеними Gemini) можуть бути перезаписані донором
 - Вікно вирішення конфліктів (`TranslationConflictWindow`) для рядків, де
   донор має кілька різних перекладів одного англійського оригіналу
+- Виділення кількох рядків таблиці (Ctrl/Shift + клік); правий клік по
+  вже виділеному рядку зберігає виділення
+- Контекстне меню «Вичитка для виділених»: позначки «+», «-», «+/-»,
+  власний текст (`ReviewMarkPromptWindow`) і очищення — для всіх
+  виділених рядків одразу
+- Фільтр «Вичитано» (рядки з позначкою «+» або «+/-») і лічильник таких
+  рядків
+- Багаторядкове редагування перекладу: Shift+Enter / Ctrl+Enter вставляють
+  перенос рядка, Enter підтверджує клітинку
+- Маркер «↵» перед справжніми переносами рядка в колонках «Оригінал» і
+  «Переклад»
+
+### UA: Виправлено
+- `ValidationService` порівнює кількість кожного маркера в обидва боки:
+  маркер, якого в оригіналі немає, а в перекладі є, також позначається
+  як проблема; переноси рядка (справжні та `\n`) враховуються
+- Перевіряються: формат (`%s`, `%d` …), підстановки `{…}`, назви клавіш у
+  квадратних дужках (`[E]`, `[SPACE]`, `[F1]` …), кнопка в круглих дужках,
+  не приліплена до слова, екранування `\n`; решта дужок (`[locked]`,
+  `Map(s)`) — звичайний текст
+- Автозбереження читає рядки таблиці через `Dispatcher` (доступ до
+  колекції з потоку таймера не кидає `InvalidOperationException`)
+- Багаторядкове виділення працює в режимі `SelectionMode="Extended"`
+  (спільний стиль `DataGrid` задає `Single`, тому режим заданий локально)
 
 ---
 
@@ -44,6 +68,31 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Conflict-resolution window (`TranslationConflictWindow`) for strings
   where the donor has several different translations of the same
   English original
+- Multi-row selection in the table (Ctrl/Shift + click); a right click on
+  an already selected row keeps the selection
+- "Review for selected" context menu: marks "+", "-", "+/-", custom text
+  (`ReviewMarkPromptWindow`) and clear — applied to all selected rows at
+  once
+- "Reviewed" filter (rows marked "+" or "+/-") and a counter of such rows
+- Multi-line translation editing: Shift+Enter / Ctrl+Enter insert a line
+  break, Enter commits the cell
+- A "↵" marker before real line breaks in the "Original" and
+  "Translation" columns
+
+### EN: Fixed
+- `ValidationService` compares the count of each marker in both
+  directions: a marker absent from the original but present in the
+  translation is also flagged as an issue; line breaks (real and `\n`)
+  are counted
+- Checked: format specifiers (`%s`, `%d` …), `{…}` substitutions, key
+  names in square brackets (`[E]`, `[SPACE]`, `[F1]` …), a button in round
+  brackets not glued to a word, `\n` escapes; other brackets (`[locked]`,
+  `Map(s)`) are ordinary text
+- Autosave reads the table rows through `Dispatcher` (accessing the
+  collection from the timer thread does not throw
+  `InvalidOperationException`)
+- Multi-row selection works with `SelectionMode="Extended"` (the shared
+  `DataGrid` style sets `Single`, so the mode is set locally)
 
 ## [1.0.0] — 2026-08-04
 

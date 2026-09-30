@@ -655,7 +655,33 @@ public partial class MainWindow : Window
                     $"EN: Translation taken from {dlg.FileName} ({merged} strings), structure and fonts — from the original{codecNote}");
             });
 
-            _autoSave.Start(BuildCsvContent);
+            // UA: НЕ передаємо BuildCsvContent напряму — AutoSaveService
+            //     викликає його з System.Timers.Timer.Elapsed, а той спрацьовує
+            //     на ThreadPool-потоці, НЕ на UI-потоці. BuildCsvContent читає
+            //     _allRows (ObservableCollection<EntryRow>) — ту саму
+            //     колекцію, яку GridEntries живо відображає й яку UI-потік
+            //     постійно змінює (правка комірки, RefreshGrid тощо). Читання
+            //     ObservableCollection/CollectionView з чужого потоку —
+            //     непідтримуваний WPF сценарій: саме це найімовірніша причина
+            //     "підвисань після тривалої роботи" (спрацьовує раз на 5 хв,
+            //     тому й непомітно на коротких сесіях) — гонитва потоків
+            //     навколо _allRows під час автозбереження. Dispatcher.Invoke
+            //     примусово виконує BuildCsvContent на UI-потоці, як і решту
+            //     звернень до _allRows у файлі.
+            // EN: Do NOT pass BuildCsvContent directly — AutoSaveService
+            //     invokes it from System.Timers.Timer.Elapsed, which fires on
+            //     a ThreadPool thread, NOT the UI thread. BuildCsvContent
+            //     reads _allRows (ObservableCollection<EntryRow>) — the very
+            //     collection GridEntries live-displays and the UI thread keeps
+            //     mutating (cell edits, RefreshGrid, etc). Reading an
+            //     ObservableCollection/CollectionView from a foreign thread is
+            //     an unsupported WPF scenario — most likely explanation for
+            //     "freezes after working a while" (fires every 5 min, so it's
+            //     invisible in short sessions) — a thread race around
+            //     _allRows during autosave. Dispatcher.Invoke forces
+            //     BuildCsvContent to run on the UI thread, same as every
+            //     other access to _allRows in this file.
+            _autoSave.Start(() => Dispatcher.Invoke(BuildCsvContent));
             SimpleLogger.Info($"Working file loaded OK: {dlg.FileName}");
         }
         catch (Exception ex)
@@ -1610,6 +1636,7 @@ public partial class MainWindow : Window
         if (RbTranslated.IsChecked   == true && (!row.IsTranslated || row.IsTechnical)) return false;
         if (RbTechnical.IsChecked    == true && !row.IsTechnical)    return false;
         if (RbInvalid.IsChecked      == true && row.IsValid)         return false;
+        if (RbReviewed.IsChecked     == true && !row.IsReviewCompleted) return false;
 
         var search = TxtSearch.Text?.Trim();
         if (string.IsNullOrEmpty(search)) return true;
@@ -1850,6 +1877,70 @@ public partial class MainWindow : Window
         UpdateProgressDisplay();
     }
 
+
+    // UA: TextBox редагування перекладу має AcceptsReturn="True" (див. коментар
+    //     у XAML над CellEditingTemplate) — тому звичайний Enter БЕЗ модифікатора
+    //     типово вставив би перенос рядка замість підтвердження клітинки, як було
+    //     ДО цієї зміни (AcceptsReturn="False"). Тут повертаємо звичну поведінку
+    //     для переважної більшості однорядкових записів: голий Enter підтверджує
+    //     редагування й переходить на наступний рядок, а Shift+Enter/Ctrl+Enter
+    //     вставляють РЕАЛЬНИЙ символ переносу рядка вручну в позицію курсора —
+    //     потрібно, бо оригінал часто містить такий перенос напряму в даних
+    //     (LoclChunkParser читає рядок без розекранування "\n" як тексту;
+    //     підтверджено на ванільному core.lvl BF2: 332 записи з реальним CRLF).
+    // EN: The translation-editing TextBox has AcceptsReturn="True" (see the XAML
+    //     comment above CellEditingTemplate) — so a plain Enter WITHOUT a modifier
+    //     would by default insert a line break instead of committing the cell, as
+    //     it did BEFORE this change (AcceptsReturn="False"). This restores the
+    //     familiar behavior for the vast majority of single-line entries: a bare
+    //     Enter commits the edit and moves to the next row, while Shift+Enter/
+    //     Ctrl+Enter insert a REAL line-break character manually at the caret
+    //     position — needed because the original often contains such a break
+    //     directly in the data (LoclChunkParser reads the string with no
+    //     unescaping of "\n" as text; confirmed on vanilla BF2 core.lvl: 332
+    //     entries with a real CRLF).
+    private void TxtTranslationEdit_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != System.Windows.Input.Key.Enter) return;
+        if (sender is not TextBox tb) return;
+
+        var modifiers = System.Windows.Input.Keyboard.Modifiers;
+        if ((modifiers & (System.Windows.Input.ModifierKeys.Shift | System.Windows.Input.ModifierKeys.Control)) != 0)
+        {
+            // UA: Shift+Enter або Ctrl+Enter — вставляємо реальний перенос рядка
+            //     вручну (замінюючи виділений текст, якщо є), курсор ставимо
+            //     одразу ПІСЛЯ вставленого переносу.
+            // EN: Shift+Enter or Ctrl+Enter — insert a real line break manually
+            //     (replacing the selection, if any), place the caret right AFTER
+            //     the inserted break.
+            var caret  = tb.CaretIndex;
+            var selLen = tb.SelectionLength;
+            tb.Text = tb.Text.Remove(caret, selLen).Insert(caret, "\r\n");
+            tb.CaretIndex = caret + 2;
+            e.Handled = true;
+            return;
+        }
+
+        // UA: Голий Enter НЕ вставляє перенос рядка (типова поведінка
+        //     AcceptsReturn="True" зробила б саме це): редагування рядка
+        //     підтверджується, курсор переходить на наступний рядок — як у
+        //     DataGrid без AcceptsReturn.
+        // EN: Bare Enter does NOT insert a line break (the default
+        //     AcceptsReturn="True" behavior would do exactly that): the row
+        //     edit is committed and the cursor moves to the next row — as in
+        //     a DataGrid without AcceptsReturn.
+        e.Handled = true;
+        GridEntries.CommitEdit(DataGridEditingUnit.Row, true);
+
+        var currentIndex = GridEntries.Items.IndexOf(GridEntries.CurrentItem);
+        if (currentIndex >= 0 && currentIndex < GridEntries.Items.Count - 1)
+        {
+            GridEntries.SelectedIndex = currentIndex + 1;
+            GridEntries.CurrentCell = new DataGridCellInfo(GridEntries.Items[currentIndex + 1], ColTranslation);
+            GridEntries.BeginEdit();
+        }
+    }
+
     private void GridEntries_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var hasSelection = GridEntries.SelectedItem is EntryRow;
@@ -1867,11 +1958,14 @@ public partial class MainWindow : Window
         System.Windows.Input.MouseButtonEventArgs e)
     {
         var row = FindVisualParent<DataGridRow>((DependencyObject)e.OriginalSource);
-        if (row?.Item is EntryRow)
+        if (row?.Item is not EntryRow entry) return;
+
+        if (!row.IsSelected)
         {
+            GridEntries.SelectedItems.Clear();
             row.IsSelected = true;
-            GridEntries.CurrentItem = row.Item;
         }
+        GridEntries.CurrentItem = entry;
     }
 
     private void CtxCopyOriginal_Click(object sender, RoutedEventArgs e)
@@ -1936,6 +2030,85 @@ public partial class MainWindow : Window
     {
         if (GridEntries.SelectedItem is EntryRow row)
             Clipboard.SetText(row.HashDisplay);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // UA: МАСОВЕ ПРОСТАВЛЕННЯ ВИЧИТКИ / EN: BULK REVIEW MARKING
+    // ═════════════════════════════════════════════════════════════════════
+    // UA: На відміну від решти пунктів контекстного меню (вони працюють з
+    //     ОДНИМ GridEntries.SelectedItem), пункти "Вичитка для виділених"
+    //     застосовують позначку до ВСІХ рядків GridEntries.SelectedItems.
+    //     Множинне виділення (Ctrl/Shift+клік) вмикає SelectionMode="Extended"
+    //     на самій таблиці в MainWindow.xaml — спільний стиль DataGrid в
+    //     App.xaml задає Single для решти вікон.
+    // EN: Unlike the other context-menu items (which work off a SINGLE
+    //     GridEntries.SelectedItem), the "Review for selected" items apply the
+    //     mark to ALL rows in GridEntries.SelectedItems. Multi-selection
+    //     (Ctrl/Shift-click) is enabled by SelectionMode="Extended" on the
+    //     grid itself in MainWindow.xaml — the shared DataGrid style in
+    //     App.xaml sets Single for the other windows.
+
+    // UA: Готові позначки "+", "-", "+/-" і "Очистити" — значення несе Tag
+    //     відповідного MenuItem (порожній рядок для "Очистити").
+    // EN: The ready-made "+", "-", "+/-" marks and "Clear" — the value comes
+    //     through the clicked MenuItem's Tag (an empty string for "Clear").
+    private void CtxReviewSetForSelected_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem)
+            ApplyReviewStatusToSelection(menuItem.Tag as string ?? string.Empty);
+    }
+
+    // UA: Довільний текст вичитки через ReviewMarkPromptWindow. Якщо всі
+    //     виділені рядки мають однакову позначку, вона підставляється в поле
+    //     як стартове значення.
+    // EN: A free-form review text via ReviewMarkPromptWindow. If every
+    //     selected row carries the same mark, it is pre-filled as the
+    //     field's starting value.
+    private void CtxReviewCustomForSelected_Click(object sender, RoutedEventArgs e)
+    {
+        var rows = GridEntries.SelectedItems.OfType<EntryRow>().ToList();
+        if (rows.Count == 0)
+        {
+            SetStatus("UA: Немає виділених рядків / EN: No rows selected");
+            return;
+        }
+
+        var distinct = rows.Select(r => r.ReviewStatus ?? string.Empty).Distinct().ToList();
+        var initial = distinct.Count == 1 ? distinct[0] : string.Empty;
+
+        var dialog = new ReviewMarkPromptWindow(rows.Count, initial) { Owner = this };
+        if (dialog.ShowDialog() == true)
+            ApplyReviewStatusToSelection(dialog.ReviewText);
+    }
+
+    // UA: Спільна реалізація для всіх пунктів "Вичитка для виділених". Пише
+    //     через той самий сеттер EntryRow.ReviewStatus, що й редагування
+    //     клітинки одного рядка — тож IsReviewCompleted, лічильник
+    //     "Вичитано" і фільтри оновлюються так само. RefreshView() і
+    //     UpdateProgressDisplay() — по одному виклику на всю пачку.
+    // EN: Shared implementation for every "Review for selected" item. Writes
+    //     through the same EntryRow.ReviewStatus setter as single-row cell
+    //     editing — so IsReviewCompleted, the "Reviewed" counter and the
+    //     filters update the same way. RefreshView() and
+    //     UpdateProgressDisplay() run once for the whole batch.
+    private void ApplyReviewStatusToSelection(string status)
+    {
+        var rows = GridEntries.SelectedItems.OfType<EntryRow>().ToList();
+        if (rows.Count == 0)
+        {
+            SetStatus("UA: Немає виділених рядків / EN: No rows selected");
+            return;
+        }
+
+        foreach (var row in rows)
+            row.ReviewStatus = status;
+
+        RefreshView();
+        UpdateProgressDisplay();
+
+        var label = string.IsNullOrEmpty(status) ? "—" : status;
+        SetStatus($"UA: Позначку вичитки \"{label}\" встановлено для {rows.Count} рядків / " +
+                  $"EN: Review mark \"{label}\" set for {rows.Count} rows");
     }
 
     // UA: Знаходить батьківський елемент заданого типу у візуальному дереві
@@ -2243,11 +2416,13 @@ public partial class MainWindow : Window
         // UA: Лічильники у кнопках фільтрів — як в EaW
         // EN: Counts in filter buttons — like EaW
         var untranslated = _allRows.Count(r => !r.IsTranslated && !r.IsTechnical);
+        var reviewed     = _allRows.Count(r => r.IsReviewCompleted);
         RbAll.Content          = $"UA: Усі / EN: All · {total}";
         RbUntranslated.Content = $"UA: Без пер. / EN: Untranslated · {untranslated}";
         RbTranslated.Content   = $"UA: Перекл. / EN: Translated · {translated}";
         RbTechnical.Content    = $"⚙ UA: Техн. / EN: Technical · {technical}";
         RbInvalid.Content      = $"⚠ UA: Проблемні / EN: Issues · {warnings}";
+        RbReviewed.Content     = $"✓ UA: Вичитано / EN: Reviewed · {reviewed}";
 
         // UA: Основний лічильник у статус-барі
         // EN: Main counter in status bar
@@ -2310,6 +2485,23 @@ public class EntryRow : INotifyPropertyChanged
     public string HashDisplay => $"0x{Hash:x8}";
     public string Original    { get; init; } = string.Empty;
 
+    // UA: Текст оригіналу з видимим маркером переносу рядка ("↵")
+    //     перед КОЖНИМ справжнім CR/LF у даних — сирий Original лишається
+    //     повністю незмінним (використовується для фільтрації й пункту
+    //     меню "Копіювати оригінал"). Потрібно тому що WPF рендерить
+    //     реальний \r\n і перенос через word-wrap однаково — маркер
+    //     дозволяє відрізнити "це розрив із самих даних" від "просто не
+    //     влізло по ширині колонки".
+    // EN: Original text with a visible line-break marker ("↵")
+    //     inserted before EVERY real CR/LF in the data — the raw Original
+    //     stays completely untouched (used for filtering and the "Copy
+    //     original" context-menu item). Needed because WPF renders a real
+    //     \r\n and a word-wrap break identically — the marker lets you
+    //     tell "this break comes from the data itself" apart from "this
+    //     one just didn't fit the column width".
+    public string OriginalDisplay =>
+        ValidationService.LineBreakRegex.Replace(Original, "↵$0");
+
     private string? _translation;
     private string? _originalTranslation; // UA: значення при завантаженні / EN: value at load time
 
@@ -2337,7 +2529,7 @@ public class EntryRow : INotifyPropertyChanged
     public string TranslationDisplay =>
         IsTechnical
             ? "⚙ UA: Технічний — не перекладати! / EN: Technical — do not translate!"
-            : (Translation ?? string.Empty);
+            : ValidationService.LineBreakRegex.Replace(Translation ?? string.Empty, "↵$0");
 
     // UA: true якщо переклад змінився після завантаження
     // EN: true if translation changed since load
@@ -2381,10 +2573,25 @@ public class EntryRow : INotifyPropertyChanged
             _reviewStatus = value;
             OnPropertyChanged(nameof(ReviewStatus));
             OnPropertyChanged(nameof(WasReviewed));
+            OnPropertyChanged(nameof(IsReviewCompleted));
         }
     }
 
     public bool WasReviewed => !string.IsNullOrWhiteSpace(ReviewStatus);
+
+    // UA: "Вичитка ЗАВЕРШЕНА" — вузьке визначення для лічильника/фільтра
+    //     "Вичитано" вгорі: рахуються ЛИШЕ точні готові позначки "+" і
+    //     "+/-" (з ReviewPresets, MainWindow.xaml). "-" означає "перевірено,
+    //     є зауваження" і НЕ вважається завершенням, так само як і будь-який
+    //     довільний текстовий коментар у це поле — WasReviewed (будь-який
+    //     непорожній текст) для цього занадто широке.
+    // EN: Review IS COMPLETE — narrow definition for the "Reviewed"
+    //     counter/filter at the top: ONLY the exact ready-made "+" and
+    //     "+/-" marks (from ReviewPresets, MainWindow.xaml) count. "-"
+    //     means "checked, issue found" and does NOT count as complete,
+    //     and neither does an arbitrary free-form comment in this field —
+    //     WasReviewed (any non-empty text) is too broad for this.
+    public bool IsReviewCompleted => ReviewStatus.Trim() is "+" or "+/-";
 
     // UA: Механіка показу дублів (ідентичного оригіналу) — за зразком
     //     SWH.LocEditor (LocEntry.DuplicateGroupSize/IsDuplicateOriginal/

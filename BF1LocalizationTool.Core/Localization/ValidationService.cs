@@ -95,8 +95,42 @@ public static class ValidationService
     //     case is never changed when aligning a translation's case).
     internal const string MarkerPattern = @"%[sdifcux%]|\{[^}]+\}|\[[^\]]+\]|\(.\)|\\\w";
 
+    // UA: Маркери, які ПЕРЕВІРЯЄ валідація:
+    //       • формат (%s %d …) і підстановки у фігурних дужках ({OptionR},
+    //         {btna} …) — рушій підставляє їх сам;
+    //       • назви клавіш у квадратних дужках, які гравець має побачити
+    //         саме такими: 1-3 символи ([E], [1], [+], [TK]), F1-F12 і
+    //         відомі імена (SPACE, SPACEBAR, ENTER, ALT, SHIFT, CTRL, TAB,
+    //         ESC, CAPS LOCK, MOUSE BUTTON n, MOUSE WHEEL UP/DOWN);
+    //       • кнопка в круглих дужках, НЕ приліплена до слова ("press (X)");
+    //       • текстові екранування (\n).
+    //     Решта дужок у рядках BF1/BF2 — звичайний текст, який перекладають:
+    //     позначки ([locked]/[LOCKED], [Screen saver also on]), множина,
+    //     приліплена до слова (Map(s) → мапу(и)). Повний MarkerPattern
+    //     лишається для TranslationCaseAdapter — там він лише захищає ці
+    //     фрагменти від зміни регістру.
+    // EN: Markers VALIDATION checks:
+    //       • format specifiers (%s %d …) and curly-brace substitutions
+    //         ({OptionR}, {btna} …) — the engine substitutes them itself;
+    //       • key names in square brackets, which the player must see as-is:
+    //         1-3 characters ([E], [1], [+], [TK]), F1-F12 and known names
+    //         (SPACE, SPACEBAR, ENTER, ALT, SHIFT, CTRL, TAB, ESC, CAPS LOCK,
+    //         MOUSE BUTTON n, MOUSE WHEEL UP/DOWN);
+    //       • a button in round brackets NOT glued to a word ("press (X)");
+    //       • text escapes (\n).
+    //     Other brackets in BF1/BF2 strings are ordinary, translatable text:
+    //     labels ([locked]/[LOCKED], [Screen saver also on]), a plural glued
+    //     to a word (Map(s) → мапу(и)). The full MarkerPattern stays for
+    //     TranslationCaseAdapter — there it only shields these fragments
+    //     from case changes.
+    internal const string ValidationMarkerPattern =
+        @"%[sdifcux%]|\{[^}]+\}" +
+        @"|\[(?:[A-Z0-9+\-]{1,3}|F\d{1,2}|SPACE|SPACEBAR|ENTER|ALT|SHIFT|CTRL|TAB|ESC|CAPS LOCK" +
+        @"|MOUSE BUTTON \d|MOUSE WHEEL (?:UP|DOWN))\]" +
+        @"|(?<!\p{L})\(.\)|\\\w";
+
     private static readonly Regex MarkerRegex = new(
-        MarkerPattern,
+        ValidationMarkerPattern,
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static ValidationResult Validate(string original, string? translation)
@@ -109,35 +143,79 @@ public static class ValidationService
                 "UA: Літери ыэёъ відсутні в українському алфавіті (зіскочило в російську) / " +
                 "EN: Letters ыэёъ are not in the Ukrainian alphabet (slipped into Russian)");
 
-        var originalCounts = GetMarkerCounts(original);
-        if (originalCounts.Count == 0)
+        var originalCounts    = GetMarkerCounts(original);
+        var translationCounts = GetMarkerCounts(translation);
+        if (originalCounts.Count == 0 && translationCounts.Count == 0)
             return new ValidationResult(true, string.Empty);
 
-        var translationCounts = GetMarkerCounts(translation);
-
-        // UA: Порівнюємо КІЛЬКІСТЬ кожного маркера, не лише наявність.
-        // EN: Compare the COUNT of each marker, not just presence.
-        var problems = new List<string>();
-        foreach (var (marker, count) in originalCounts.OrderBy(kv => kv.Key))
+        // UA: Порівнюється КІЛЬКІСТЬ кожного маркера в обидва боки: за
+        //     об'єднанням ключів оригіналу й перекладу, тож маркер, якого
+        //     в оригіналі немає зовсім, теж потрапляє в порівняння.
+        // EN: The COUNT of each marker is compared in both directions, over
+        //     the union of the original's and the translation's keys, so a
+        //     marker absent from the original entirely is compared too.
+        var lost  = new List<string>();
+        var extra = new List<string>();
+        foreach (var marker in originalCounts.Keys.Union(translationCounts.Keys).OrderBy(k => k))
         {
+            var count           = originalCounts.GetValueOrDefault(marker);
             var translatedCount = translationCounts.GetValueOrDefault(marker);
             if (translatedCount < count)
-                problems.Add(count == 1 ? marker : $"{marker} (×{count}→×{translatedCount})");
+                lost.Add(count == 1 ? marker : $"{marker} (×{count}→×{translatedCount})");
+            else if (translatedCount > count)
+                extra.Add($"{marker} (×{count}→×{translatedCount})");
         }
 
-        if (problems.Count == 0)
+        if (lost.Count == 0 && extra.Count == 0)
             return new ValidationResult(true, string.Empty);
 
-        var msg = $"UA: Відсутні/втрачені маркери: {string.Join(", ", problems)} / " +
-                  $"EN: Missing/lost markers: {string.Join(", ", problems)}";
-        return new ValidationResult(false, msg);
+        var parts = new List<string>();
+        if (lost.Count > 0)
+            parts.Add($"UA: Відсутні/втрачені маркери: {string.Join(", ", lost)} / " +
+                      $"EN: Missing/lost markers: {string.Join(", ", lost)}");
+        if (extra.Count > 0)
+            parts.Add($"UA: Зайві маркери (у перекладі більше, ніж в оригіналі): {string.Join(", ", extra)} / " +
+                      $"EN: Extra markers (more in the translation than in the original): {string.Join(", ", extra)}");
+        return new ValidationResult(false, string.Join("; ", parts));
     }
+
+    // UA: Справжній перенос рядка В САМИХ ДАНИХ (не текстове екранування
+    //     на кшталт "\n" — те вже ловить \\w у ValidationMarkerPattern вище). LoclChunkParser
+    //     читає рядок як є (Encoding.Unicode.GetString), без жодного
+    //     розекранування — тому CRLF у ванільному core.lvl (BF2) це СПРАВЖНІ
+    //     символи CR(0x0D)/LF(0x0A) у даних, підтверджено прямим розбором
+    //     ванільного english core.lvl (BF2): 332 записи містять реальний CRLF.
+    //     Без цього регексу втрата переносу рядка в перекладі проходила БЕЗ
+    //     жодної позначки "Проблема" — цей шаблон закриває саме цю прогалину.
+    // EN: A real line break IN THE DATA ITSELF (not text-escaped like "\n" —
+    //     \\w in ValidationMarkerPattern above already catches that). LoclChunkParser
+    //     reads the string as-is (Encoding.Unicode.GetString), with no
+    //     unescaping at all — so CRLF in vanilla core.lvl (BF2) is a REAL
+    //     CR(0x0D)/LF(0x0A) character in the data, confirmed by direct parsing
+    //     of the vanilla English core.lvl (BF2): 332 entries contain a real
+    //     CRLF. Without this regex, a translation dropping a line break passed
+    //     with NO "Issue" flag at all — this pattern closes exactly that gap.
+    public static readonly Regex LineBreakRegex = new(@"\r\n|\r|\n", RegexOptions.Compiled);
 
     private static Dictionary<string, int> GetMarkerCounts(string text)
     {
-        return MarkerRegex.Matches(text)
+        var counts = MarkerRegex.Matches(text)
             .Select(m => m.Value.ToLowerInvariant())
             .GroupBy(x => x)
             .ToDictionary(g => g.Key, g => g.Count());
+
+        // UA: Реальні переноси рядка рахуються ОКРЕМО й додаються під тим
+        //     самим ключем "\n", що й текстове екранування: у повідомленні
+        //     про втрачений маркер немає різниці між буквальним текстом "\n"
+        //     і справжнім символом у даних.
+        // EN: Real line breaks are counted SEPARATELY and merged under the
+        //     same "\n" key as the text escape: the missing-marker message
+        //     does not distinguish literal text "\n" from an actual
+        //     character in the data.
+        var lineBreakCount = LineBreakRegex.Matches(text).Count;
+        if (lineBreakCount > 0)
+            counts["\n"] = counts.GetValueOrDefault("\n") + lineBreakCount;
+
+        return counts;
     }
 }

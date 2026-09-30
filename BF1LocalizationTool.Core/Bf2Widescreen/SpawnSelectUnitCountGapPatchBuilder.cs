@@ -2,107 +2,95 @@
 // BF1LocalizationTool.Core — Bf2Widescreen/SpawnSelectUnitCountGapPatchBuilder.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
-// Тип / Type: ГЕНЕРАТОР (production, входить у фінальний патч) / GENERATOR (production, part of the final patch)
 // =============================================================================
-// UA: ВИПРАВЛЕННЯ, ПІДТВЕРДЖЕНЕ РЕАЛЬНИМ ТЕСТОМ У ГРІ — на вихідному стані
-//     напис "Кількість бійців" перекривався кнопкою "Відродження" на екрані
-//     вибору бійця. Детальний розбір, зі значеннями до/після — у
+// UA: Положення напису "Кількість бійців" на екрані вибору бійця
+//     (`ifs_pc_spawnselect`, прототип `fnBuildScreen`). Докладно —
 //     docs/BF2_SPAWNSELECT_GAP_FIX.md.
 //
-//     ЦЕЙ ПАТЧ НЕ ЧІПАЄ ШРИФТ (на відміну від фіксу висоти шрифту —
-//     FontHeadHeightFix.cs). Він зсуває
-//     ПОЗИЦІЮ напису "Кількість бійців" — кнопка "Ok"/"Відродження" лишається
-//     на своєму місці (0.9×H), а текст підіймається вище на 0.03×H, даючи
-//     реальний зазор між ними.
+//     ЯК РУШІЙ СТАВИТЬ НАПИС: NewIFText з `valign="bottom"`, `texth` = R16
+//     (0.20×H), `y` = R35. У ванільному коді `y = R31 - R16` (R31 — `y`
+//     кнопки "Спавн"), тож нижній край текстового блока збігається з `y`
+//     кнопки за будь-якої висоти шрифту. Над кнопку текст піднімають самі
+//     рядки Locl: оригінали "Unit Count: %d\r\n\r\n" і
+//     "Unit Count: %d  Max: %d\r\n\r\n" закінчуються двома порожніми
+//     рядками, які при вирівнюванні по низу стоять ПІД видимим текстом.
+//     Переклад зберігає ці переноси так само, як оригінал.
 //
-//     ЧОМУ ПРОСТА ЗМІНА ОДНІЄЇ КОНСТАНТИ НЕ ПРАЦЮЄ: нижній край
-//     текстового блока обчислюється як `(y_кнопки - висота_тексту) +
-//     висота_тексту = y_кнопки` — це АЛГЕБРАЇЧНА ТОТОЖНІСТЬ, що виконується
-//     для будь-якої висоти. Щоб створити зазор, потрібно відняти від `y`
-//     тексту БІЛЬШЕ, ніж сама висота блока (`R16` = 0.20×H) — а серед уже
-//     обчислених у цій функції регістрів немає жодного готового значення,
-//     більшого за `R16`.
+//     Два порожні рядки `gamefont_large` піднімають текст на ≈66 px над
+//     кнопкою на 1920×1080 (крок рядка 33 px виміряно на трирядковому
+//     написі на скріншоті гри). Патч опускає блок рівно на ОДИН рядок його
+//     ж шрифту:
+//         y = R31 - (R16 - R23),
+//     де R23 = ScriptCB_GetFontHeight(шрифт напису) + 3 (pc61-64). Видимий
+//     зазор між текстом і кнопкою дорівнює одному порожньому рядку мінус
+//     3 px — розрахунково ≈31 px на 1920×1080 (на скріншоті гри: низ тексту
+//     y≈891, верх підпису кнопки y≈923). Зазор масштабується разом зі шрифтом,
+//     бо R23 обчислюється з висоти того самого шрифту.
 //
-//     РІШЕННЯ: ОДНА нова інструкція (`ADD R36 := R16 + R9`, де `R9` = 0.03×H
-//     — уже обчислене значення, використане деінде як типовий "запас"), і
-//     перепризначення операнда C у наявній інструкції `SUB` (з `R16` на
-//     `R36`). Обидві інструкції поміщаються РІВНО в те саме місце, що й
-//     раніше займали 2 інструкції: сама ця `SUB` (pc152) і "мертвий",
-//     ДОВЕДЕНО зайвий дублікат `SETTABLE font:=R17` (pc159 — БУКВАЛЬНО
-//     ідентичний вже виконаному на pc154, отже нічого не змінює). Розмір
-//     BODY-чанка, розмір усього файлу, номери всіх інструкцій ПІСЛЯ цього
-//     вікна (включно з цілями JMP/FORLOOP на pc172/242/244/259) — УСЕ
-//     лишається БАЙТ-У-БАЙТ незмінним. Перевірено: (1) ручним симуляційним
-//     трасуванням формули на кожному кроці; (2) round-trip через
-//     Lua50BytecodeReader на реальному ingame.lvl — після патчу файл
-//     парситься без винятків, і вся решта функції (до pc152 і після pc159)
-//     побайтово ідентична оригіналу.
+//     РЕАЛІЗАЦІЯ: 8-словне вікно pc152-159 переписується на місці —
+//     слот 0: `SUB R36 := R16 - R23`; слот 1: `SUB R35 := R31 - R36`;
+//     слоти 2-7: інструкції pc153-158 без змін, зсунуті на одну позицію.
+//     pc159 — ДОВЕДЕНО мертвий дублікат pc154 (`SETTABLE font:=R17`,
+//     побітово ідентичний) і в нове вікно не копіюється. Розмір BODY-чанка,
+//     розмір файлу й номери всіх інструкцій після вікна (включно з цілями
+//     JMP/FORLOOP на pc172/242/244/259) не змінюються.
 //
-//     Реєстр R36 обрано як "мертвий" на момент pc152: востаннє записаний на
-//     pc149 (DIV), спожитий одразу на pc150 (SUB), і НЕ читається знову аж
-//     до pc173 (де він і так перезаписується заново, вже в тілі циклу нижче
-//     по функції) — це перевірено повним переглядом усіх появ R36 у
-//     дизасемблюванні. `maxstacksize` НЕ підвищується (36 < 41, реєстр уже
-//     в межах наявного стека).
+//     РЕГІСТРИ: R36 вільний на pc152 — востаннє записаний на pc149 (DIV),
+//     спожитий на pc150 (SUB), наступний запис — pc173 у тілі циклу. R23
+//     лише ЧИТАЄТЬСЯ: записаний на pc63-64, між pc65 і pc151 жодна
+//     інструкція не має A=23 (перевіряється в `BuildPlan`), далі
+//     читається в циклі сітки класів (pc186, pc212, pc220) — значення
+//     там те саме. `maxstacksize` не змінюється (36 < 41).
 //
-//     НАСЛІДОК: `height`/`texth` тексту (0.20×H) — НЕ змінюється, отже
-//     власна геометрія блока (перенесення рядків, vcenter тощо, якщо колись
-//     застосовується) лишається такою, як спроєктовано. Кнопка "Ok" також
-//     НЕ змінюється (окрема інструкція, окрема константа, не зачіпається).
+//     ЩО НЕ ЗМІНЮЄТЬСЯ: `texth`, шрифт напису, положення кнопки. Кнопку
+//     "Спавн" і модель бійця зсуває `SpawnSelectVerticalLayoutPatchBuilder`;
+//     напис рухається разом із кнопкою, бо його `y` рахується від R31.
 //
-//     РЕЗУЛЬТАТ: чистий зазор між написом і кнопкою — збільшений (ФІКС
-//     HEAD) кириличний шрифт кнопку не перекриває. Деталі —
-//     docs/BF2_SPAWNSELECT_GAP_FIX.md, розділ "Підтвердження".
+// EN: Position of the "Кількість бійців" label on the unit-selection
+//     screen (`ifs_pc_spawnselect`, prototype `fnBuildScreen`). Details —
+//     docs/BF2_SPAWNSELECT_GAP_FIX.md.
 //
-// EN: FIX, CONFIRMED BY A REAL IN-GAME TEST — in the unpatched state the
-//     "Кількість бійців" label was covered by the "Відродження" button on
-//     the unit-selection screen. Full breakdown, with before/after values —
-//     see docs/BF2_SPAWNSELECT_GAP_FIX.md.
+//     HOW THE ENGINE PLACES THE LABEL: a NewIFText with `valign="bottom"`,
+//     `texth` = R16 (0.20×H), `y` = R35. The vanilla code sets
+//     `y = R31 - R16` (R31 — the "Спавн" button's `y`), so the text block's
+//     bottom edge equals the button's `y` for any font height. The Locl
+//     strings themselves lift the text above the button: the originals
+//     "Unit Count: %d\r\n\r\n" and "Unit Count: %d  Max: %d\r\n\r\n" end
+//     with two empty lines, which sit BELOW the visible text under bottom
+//     alignment. The translation keeps these line breaks exactly as the
+//     original does.
 //
-//     THIS PATCH DOES NOT TOUCH THE FONT (unlike the font-height fix —
-//     FontHeadHeightFix.cs). It
-//     shifts the POSITION of the "Кількість бійців" label — the "Ok"/
-//     "Відродження" button stays exactly where it was (0.9×H), while the
-//     text is moved up by 0.03×H, creating a real gap between them.
+//     Two empty `gamefont_large` lines lift the text ≈66 px above the
+//     button at 1920×1080 (the 33 px line pitch is measured on the
+//     three-line label in an in-game screenshot). The patch lowers the block by exactly ONE
+//     line of its own font:
+//         y = R31 - (R16 - R23),
+//     where R23 = ScriptCB_GetFontHeight(the label's font) + 3 (pc61-64).
+//     The visible gap between text and button equals one empty line minus
+//     3 px — ≈31 px at 1920×1080 by calculation (in an in-game screenshot: text bottom
+//     y≈891, button label top y≈923). The gap scales with the font, because R23
+//     is computed from that same font's height.
 //
-//     WHY A SINGLE-CONSTANT EDIT DOES NOT WORK: the text block's
-//     bottom edge is computed as `(button_y - text_height) + text_height =
-//     button_y` — an ALGEBRAIC IDENTITY that holds for ANY height. To create
-//     a gap, something MORE than the block's own height (`R16` = 0.20×H)
-//     must be subtracted for the text's `y` — and none of the registers
-//     already computed in this function holds a value bigger than `R16`.
+//     IMPLEMENTATION: the 8-word window pc152-159 is rewritten in place —
+//     slot 0: `SUB R36 := R16 - R23`; slot 1: `SUB R35 := R31 - R36`;
+//     slots 2-7: instructions pc153-158 unchanged, shifted by one
+//     position. pc159 is a PROVEN dead duplicate of pc154 (`SETTABLE
+//     font:=R17`, bit-identical) and is not copied into the new window.
+//     The BODY chunk's size, the file size and the pc numbers of every
+//     instruction after the window (including the JMP/FORLOOP targets at
+//     pc172/242/244/259) are unchanged.
 //
-//     THE FIX: ONE new instruction (`ADD R36 := R16 + R9`, where `R9` =
-//     0.03×H — an already-computed value, used elsewhere as a typical
-//     "margin"), plus repointing the C operand of an existing `SUB`
-//     instruction (from `R16` to `R36`). Both instructions fit EXACTLY into
-//     the space previously occupied by 2 instructions: this same `SUB`
-//     (pc152) and a "dead", PROVEN-redundant duplicate `SETTABLE
-//     font:=R17` (pc159 — LITERALLY identical to the one already executed
-//     at pc154, so it changes nothing). The BODY chunk's size, the whole
-//     file's size, and the pc numbers of every instruction AFTER this
-//     window (including the JMP/FORLOOP targets at pc172/242/244/259) all
-//     stay BYTE-FOR-BYTE unchanged. Verified: (1) by manually tracing the
-//     formula step by step; (2) by a round-trip through
-//     Lua50BytecodeReader on the real ingame.lvl — after the patch the file
-//     parses with no exceptions, and every instruction before pc152 and
-//     after pc159 is byte-identical to the original.
+//     REGISTERS: R36 is free at pc152 — last written at pc149 (DIV),
+//     consumed at pc150 (SUB), next written at pc173 inside the loop. R23
+//     is only READ: written at pc63-64, no instruction between pc65 and
+//     pc151 has A=23 (checked in `BuildPlan`), and it is read later in the
+//     class-grid loop (pc186, pc212, pc220) — with the same value there.
+//     `maxstacksize` is unchanged (36 < 41).
 //
-//     Register R36 was chosen because it's dead at pc152: last written at
-//     pc149 (DIV), consumed immediately at pc150 (SUB), and not read again
-//     until pc173 (where it's overwritten fresh anyway, inside the loop
-//     further down the function) — verified by reviewing every appearance
-//     of R36 in the disassembly. `maxstacksize` is NOT raised (36 < 41, the
-//     register is already within the existing stack frame).
-//
-//     CONSEQUENCE: the text's `height`/`texth` (0.20×H) is NOT changed, so
-//     the block's own geometry (line wrapping, vcenter, etc., if ever used)
-//     stays exactly as designed. The "Ok" button is also NOT touched
-//     (a separate instruction, a separate constant, unaffected).
-//
-//     RESULT: a clean gap between the label and the button — the
-//     enlarged (HEAD FIX) Cyrillic font does not cover the button.
-//     Details — docs/BF2_SPAWNSELECT_GAP_FIX.md, "Confirmation" section.
+//     NOT CHANGED: `texth`, the label's font, the button's position. The
+//     "Спавн" button and the soldier model are moved by
+//     `SpawnSelectVerticalLayoutPatchBuilder`; the label moves together
+//     with the button, because its `y` is computed from R31.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Chunks;
@@ -123,14 +111,14 @@ public static class SpawnSelectUnitCountGapPatchBuilder
     public const int WindowStartPc = 152;
     public const int WindowLength = 8;
 
-    // UA: Реєстри, задіяні в патчі (див. коментар вище щодо доведеної
-    //     "мертвості" R36 на момент pc152).
-    // EN: Registers involved in the patch (see the comment above proving
-    //     R36 is "dead" at pc152).
+    // UA: Регістри, задіяні в патчі (див. коментар вище щодо вільного
+    //     R36 на pc152 і незмінного R23 між pc65 і pc151).
+    // EN: Registers involved in the patch (see the comment above on R36
+    //     being free at pc152 and R23 being unchanged between pc65 and pc151).
     public const int RegisterTextY = 35; // R35 — y тексту / the text's y
     public const int RegisterButtonY = 31; // R31 — y кнопки "Ok" / the "Ok" button's y
     public const int RegisterTextHeight = 16; // R16 — 0.20×H, texth
-    public const int RegisterMargin = 9; // R9 — 0.03×H, вже обчислений запас / already-computed margin
+    public const int RegisterLineHeight = 23; // R23 — висота рядка шрифту напису + 3 (pc61-64) / the label font's line height + 3 (pc61-64)
     public const int RegisterScratch = 36; // R36 — вільний на момент pc152 / dead at pc152
     public const int RegisterTextTable = 34; // R34 — таблиця NewIFText, що будується / the NewIFText table being built
 
@@ -170,6 +158,33 @@ public static class SpawnSelectUnitCountGapPatchBuilder
                 "the BODY format differs from the confirmed one.");
 
         var buildScreen = LocateBuildScreenPrototype(parsed.Root, ScreenName);
+
+        // UA: R23 має тримати висоту рядка шрифту напису: pc64 —
+        //     `ADD R23 := R23 + 3`, і між pc65 та початком вікна жодна
+        //     інструкція не пише в R23 (жодна не має A=23).
+        // EN: R23 must hold the label font's line height: pc64 is
+        //     `ADD R23 := R23 + 3`, and no instruction between pc65 and the
+        //     window's start writes R23 (none has A=23).
+        var lineHeightInstruction = buildScreen.Instructions.FirstOrDefault(ins => ins.Pc == 64);
+        if (lineHeightInstruction is null || lineHeightInstruction.Opcode != LuaOpcode.Add ||
+            lineHeightInstruction.A != RegisterLineHeight || lineHeightInstruction.B != RegisterLineHeight)
+            throw new InvalidDataException(
+                $"UA: '{ScreenName}'/{buildScreen.Path} pc=64: очікувалось ADD A={RegisterLineHeight} " +
+                $"B={RegisterLineHeight} (висота рядка + 3). Файл відрізняється від проаналізованого — патч НЕ " +
+                "застосовується. / " +
+                $"EN: '{ScreenName}'/{buildScreen.Path} pc=64: expected ADD A={RegisterLineHeight} " +
+                $"B={RegisterLineHeight} (line height + 3). The file differs from the one analyzed — the patch " +
+                "is NOT applied.");
+
+        var lineHeightWriters = buildScreen.Instructions
+            .Where(ins => ins.Pc > 64 && ins.Pc < WindowStartPc && ins.A == RegisterLineHeight)
+            .ToList();
+        if (lineHeightWriters.Count > 0)
+            throw new InvalidDataException(
+                $"UA: '{ScreenName}'/{buildScreen.Path}: R{RegisterLineHeight} змінюється між pc65 і " +
+                $"pc{WindowStartPc - 1} (напр. pc={lineHeightWriters[0].Pc}) — патч НЕ застосовується. / " +
+                $"EN: '{ScreenName}'/{buildScreen.Path}: R{RegisterLineHeight} is changed between pc65 and " +
+                $"pc{WindowStartPc - 1} (e.g. pc={lineHeightWriters[0].Pc}) — the patch is NOT applied.");
 
         var window = new LuaInstruction[WindowLength];
         for (var i = 0; i < WindowLength; i++)
@@ -227,20 +242,18 @@ public static class SpawnSelectUnitCountGapPatchBuilder
                 0, oldWindow, i * 4, 4);
 
         var newWindow = new byte[WindowLength * 4];
-        // UA: слот 0 (був SUB, pc152) -> нова інструкція ADD R36:=R16+R9.
-        // EN: slot 0 (was SUB, pc152) -> the new ADD R36:=R16+R9 instruction.
-        Array.Copy(EncodeAbc(LuaOpcode.Add, RegisterScratch, RegisterTextHeight, RegisterMargin), 0, newWindow, 0, 4);
-        // UA: слот 1 (був SETTABLE y:=R35, тепер стає "новим SUB") -> той
-        //     самий SUB, що був у слоті 0, але C змінено з R16 на R36.
-        // EN: slot 1 (was SETTABLE y:=R35, now becomes the "new SUB") -> the
-        //     same SUB that was in slot 0, but with C changed from R16 to R36.
+        // UA: слот 0 -> SUB R36 := R16 - R23 (висота блока мінус один рядок).
+        // EN: slot 0 -> SUB R36 := R16 - R23 (block height minus one line).
+        Array.Copy(EncodeAbc(LuaOpcode.Sub, RegisterScratch, RegisterTextHeight, RegisterLineHeight), 0, newWindow, 0, 4);
+        // UA: слот 1 -> SUB R35 := R31 - R36 (y тексту від y кнопки).
+        // EN: slot 1 -> SUB R35 := R31 - R36 (the text's y from the button's y).
         Array.Copy(EncodeAbc(LuaOpcode.Sub, RegisterTextY, RegisterButtonY, RegisterScratch), 0, newWindow, 4, 4);
-        // UA: слоти 2-7 -> старі слоти 1-6 (SETTABLE y, font, halign,
-        //     valign, textw, texth) — БЕЗ ЗМІН, просто зсунуті на 1 позицію.
-        //     Старий слот 7 (мертвий дублікат) НЕ копіюється нікуди.
-        // EN: slots 2-7 -> old slots 1-6 (SETTABLE y, font, halign, valign,
-        //     textw, texth) — UNCHANGED, just shifted by 1 position. The old
-        //     slot 7 (dead duplicate) is copied nowhere.
+        // UA: слоти 2-7 -> інструкції pc153-158 (SETTABLE y, font, halign,
+        //     valign, textw, texth) без змін, зсунуті на 1 позицію. pc159
+        //     (мертвий дублікат) не копіюється.
+        // EN: slots 2-7 -> instructions pc153-158 (SETTABLE y, font, halign,
+        //     valign, textw, texth) unchanged, shifted by 1 position. pc159
+        //     (the dead duplicate) is not copied.
         Array.Copy(oldWindow, 1 * 4, newWindow, 2 * 4, 6 * 4);
 
         var fileOffset = script.BodyChunk.FileDataOffset + window[0].WordOffset;
@@ -250,13 +263,13 @@ public static class SpawnSelectUnitCountGapPatchBuilder
 
     // -------------------------------------------------------------------------
     // UA: Перевірка ПІСЛЯ запису: заново знаходить прототип і повертає, що
-    //     саме зараз лежить на pc152/pc153 — щоб підтвердити ADD+SUB, а не
-    //     просто "запис не впав з винятком".
+    //     саме зараз лежить на pc152/pc153 — щоб підтвердити обидва SUB, а
+    //     не просто "запис не впав з винятком".
     // EN: POST-write verification: re-locates the prototype and returns
-    //     what is currently at pc152/pc153 — to confirm ADD+SUB, not merely
-    //     "the write didn't throw".
+    //     what is currently at pc152/pc153 — to confirm both SUBs, not
+    //     merely "the write didn't throw".
     // -------------------------------------------------------------------------
-    public static (LuaInstruction Add, LuaInstruction Sub) ReadCurrentPatch(UcfbChunk ingameLvlRoot)
+    public static (LuaInstruction Scratch, LuaInstruction TextY) ReadCurrentPatch(UcfbChunk ingameLvlRoot)
     {
         var script = ScriptChunkLocator.FindAll(ingameLvlRoot)
             .FirstOrDefault(s => s.Name == ScreenName);
@@ -268,16 +281,16 @@ public static class SpawnSelectUnitCountGapPatchBuilder
         var parsed = Lua50BytecodeReader.Parse(script.BodyChunk.RawData);
         var buildScreen = LocateBuildScreenPrototype(parsed.Root, ScreenName);
 
-        var add = buildScreen.Instructions.FirstOrDefault(i => i.Pc == WindowStartPc);
-        var sub = buildScreen.Instructions.FirstOrDefault(i => i.Pc == WindowStartPc + 1);
-        if (add is null || sub is null)
+        var scratch = buildScreen.Instructions.FirstOrDefault(i => i.Pc == WindowStartPc);
+        var textY = buildScreen.Instructions.FirstOrDefault(i => i.Pc == WindowStartPc + 1);
+        if (scratch is null || textY is null)
             throw new InvalidDataException(
                 $"UA: '{ScreenName}'/{buildScreen.Path}: pc={WindowStartPc}/{WindowStartPc + 1} не існують " +
                 "при повторній перевірці. / " +
                 $"EN: '{ScreenName}'/{buildScreen.Path}: pc={WindowStartPc}/{WindowStartPc + 1} do not exist " +
                 "on re-verification.");
 
-        return (add, sub);
+        return (scratch, textY);
     }
 
     // -------------------------------------------------------------------------

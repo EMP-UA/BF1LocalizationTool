@@ -1,0 +1,51 @@
+<Window x:Class="BF1LocalizationTool.GUI.ReviewMarkPromptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UA: Власний текст вичитки / EN: Custom review text"
+        Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource BgWindowBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=TxtReviewText}">
+
+    <!-- UA: Модальне вікно одного рядка тексту в темі програми (ті самі пензлі
+         й стиль кнопок EmpButton, що й TranslationConflictWindow). Потрібне
+         лише для масового проставлення ДОВІЛЬНОГО тексту вичитки кільком
+         виділеним рядкам одразу; готові позначки +/-/+/- обираються прямо в
+         контекстному меню, а для одного рядка зручніше редагувати клітинку
+         «Вичитка» напряму.
+         EN: A single-line modal window in the app's theme (the same brushes
+         and EmpButton style as TranslationConflictWindow). Needed only for
+         bulk-setting a FREE-FORM review text on several selected rows at
+         once; the ready-made +/-/+/- marks are picked straight from the
+         context menu, and for a single row editing the "Review" cell
+         directly is simpler. -->
+    <Border Background="{DynamicResource BgPanelBrush}" Padding="16" Margin="10">
+        <StackPanel>
+            <TextBlock Text="UA: Текст вичитки для всіх виділених рядків / EN: Review text for all selected rows"
+                       FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <TextBlock x:Name="TxtSelectionInfo" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"
+                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="UA: Будь-який коментар, не лише готові позначки. Завершеною вичитка вважається лише для «+» і «+/-». / EN: Any comment, not only the ready-made marks. Review counts as complete only for &quot;+&quot; and &quot;+/-&quot;."
+                       FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12"
+                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+
+            <TextBox x:Name="TxtReviewText" Height="26" Padding="4,2"
+                     VerticalContentAlignment="Center"
+                     Background="{DynamicResource BgRowAltBrush}"
+                     Foreground="{DynamicResource TextPrimaryBrush}"
+                     CaretBrush="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource AccentPurpleBrush}"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Style="{StaticResource EmpButton}" Margin="0,0,8,0"
+                        Content="UA: Скасувати / EN: Cancel"
+                        IsCancel="True" Click="BtnCancel_Click"/>
+                <Button Style="{StaticResource EmpButton}"
+                        Content="✓ UA: Застосувати / EN: Apply"
+                        IsDefault="True" Click="BtnApply_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

@@ -3,7 +3,7 @@
 > Інструмент для локалізації Star Wars: Battlefront (Classic 2004) та Battlefront II (2005)
 > Localization editor for Star Wars: Battlefront (Classic 2004) and Battlefront II (2005)
 
-[![Version](https://img.shields.io/badge/Version-1.0.0-8A46C1.svg)](https://github.com/EMP-UA/BF1LocalizationTool/releases)
+[![Version](https://img.shields.io/badge/Version-1.1.0-8A46C1.svg)](https://github.com/EMP-UA/BF1LocalizationTool/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-8A46C1.svg)](LICENSE)
 [![Platform: Windows 10 | 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-C989F3.svg)](https://github.com/EMP-UA/BF1LocalizationTool)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-8A46C1.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
@@ -279,9 +279,9 @@ BF1LocalizationTool/
   роздільності, відмінній від 4:3/5:4 (підтверджений баг оригінальної
   гри, відтворюється і на ванільних файлах).
 - [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
-  — зазор між написом "Кількість бійців" і кнопкою "Відродження" та
-  відступ зверху переліку класів для найму, обидва на екрані вибору
-  бійця (`ingame.lvl`), потрібні через збільшений кириличний шрифт.
+  — положення напису "Кількість бійців", кнопки "Спавн" і переліку
+  класів для найму на екрані вибору бійця (`ingame.lvl`), потрібні через
+  збільшений кириличний шрифт; також ванільні дефекти цього екрана.
 - [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
   — локалізація офіційного аддону Tat3 для BF1: власний `core.lvl`
   аддону та переведення назви карти на звичайний механізм `Locl`.
@@ -309,9 +309,9 @@ another:
   other than 4:3/5:4 (a confirmed vanilla-game bug, reproducible on
   unmodified files too).
 - [`docs/BF2_SPAWNSELECT_GAP_FIX.md`](docs/BF2_SPAWNSELECT_GAP_FIX.md)
-  — the gap between the "Unit Count" label and the "Spawn" button, and
-  the class list's top offset, both on the unit-selection screen
-  (`ingame.lvl`), needed because of the enlarged Cyrillic font.
+  — the position of the "Unit Count" label, the "Spawn" button and the
+  class list on the unit-selection screen (`ingame.lvl`), needed because
+  of the enlarged Cyrillic font; also the vanilla defects of that screen.
 - [`docs/BF1_TAT3_ADDON_LOCALIZATION.md`](docs/BF1_TAT3_ADDON_LOCALIZATION.md)
   — localizing the official Tat3 add-on for BF1: its own separate
   `core.lvl` and switching the map name to the ordinary `Locl`

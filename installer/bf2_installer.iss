@@ -10,7 +10,7 @@
 ; ==============================================================================
 
 #define AppName "Star Wars: Battlefront II (Classic, 2005) Українізатор"
-#define AppVersion "1.00"
+#define AppVersion "1.01"
 #define AppPublisher "EMP_UA"
 #define AppURL "https://emp-ua.com/"
 ; Унікальний ID проєкту (GUID має починатися з ДВОХ фігурних дужок)
@@ -352,17 +352,40 @@ begin
     CreateFinishedPageLinks();
 end;
 
-{ Перед перезаписом d3d9.dll (проксі для виправлення субтитрів роликів)
-  зберігає чужий наявний файл під іменем із суфіксом ".bf1backup". Якщо
-  резервна копія вже існує (наприклад, після попереднього встановлення),
-  її не перезаписує. }
+{ UA: Чи є файл нашим d3d9.dll-проксі — за рядком-маркером версії, який
+      проксі несе в собі (kVersionMarker у d3d9_proxy.cpp,
+      "BF2WIDESCREENFIX_MARKER_V<n>_EMPUA"). Перевіряється лише незмінний
+      префікс, тож будь-яка версія проксі розпізнається однаково.
+  EN: Whether the file is our own d3d9.dll proxy — by the version marker
+      string the proxy carries (kVersionMarker in d3d9_proxy.cpp,
+      "BF2WIDESCREENFIX_MARKER_V<n>_EMPUA"). Only the fixed prefix is
+      checked, so every proxy version is recognised the same way. }
+function IsOwnD3D9(const Path: String): Boolean;
+var
+  Content: AnsiString;
+begin
+  Result := False;
+  if FileExists(Path) and LoadStringFromFile(Path, Content) then
+    Result := Pos('BF2WIDESCREENFIX_MARKER_V', Content) > 0;
+end;
+
+{ UA: Перед перезаписом d3d9.dll (проксі для виправлення субтитрів роликів)
+      зберігає ЧУЖИЙ наявний файл під іменем із суфіксом ".bf1backup".
+      Наш власний проксі (попереднє встановлення або ручне копіювання) не
+      зберігається — інакше видалення українізатора відновило б його
+      замість того, щоб прибрати. Наявну резервну копію не перезаписує.
+  EN: Before overwriting d3d9.dll (the movie-subtitle proxy) saves a
+      FOREIGN existing file under a ".bf1backup" suffix. Our own proxy (a
+      previous install or a manual copy) is not saved — otherwise
+      uninstalling would restore it instead of removing it. An existing
+      backup is not overwritten. }
 procedure BackupExistingD3D9();
 var
   TargetPath, BackupPath: String;
 begin
   TargetPath := ExpandConstant('{app}\GameData\d3d9.dll');
   BackupPath := TargetPath + '.bf1backup';
-  if FileExists(TargetPath) and not FileExists(BackupPath) then
+  if FileExists(TargetPath) and not IsOwnD3D9(TargetPath) and not FileExists(BackupPath) then
     FileCopy(TargetPath, BackupPath, False);
 end;
 
@@ -490,17 +513,31 @@ var
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    { d3d9.dll — не заміна ванільного файла, а новий файл поряд з .exe:
-      "Перевірити цілісність файлів гри" у Steam його НЕ прибере, тому
-      резервну копію (якщо була) відновлюємо тут самостійно. }
+    { UA: d3d9.dll — не заміна ванільного файла, а новий файл поряд з .exe:
+          "Перевірити цілісність файлів гри" у Steam його НЕ прибере, тому
+          тут: резервна копія нашого ж проксі видаляється (це не чужий
+          файл); чужа резервна копія відновлюється; якщо чужої копії
+          немає — наш проксі видаляється, навіть якщо його скопійовано
+          вручну поза інсталятором.
+      EN: d3d9.dll is not a replacement of a vanilla file but a new file
+          next to the .exe: Steam's "Verify integrity of game files" will
+          NOT remove it, so here: a backup of our own proxy is deleted (it
+          is not a foreign file); a foreign backup is restored; with no
+          foreign backup, our proxy is deleted, even if it was copied
+          manually outside the installer. }
     D3D9Path := ExpandConstant('{app}\GameData\d3d9.dll');
     D3D9BackupPath := D3D9Path + '.bf1backup';
+    if FileExists(D3D9BackupPath) and IsOwnD3D9(D3D9BackupPath) then
+      DeleteFile(D3D9BackupPath);
+
     if FileExists(D3D9BackupPath) then
     begin
       if FileExists(D3D9Path) then
         DeleteFile(D3D9Path);
       RenameFile(D3D9BackupPath, D3D9Path);
-    end;
+    end
+    else if IsOwnD3D9(D3D9Path) then
+      DeleteFile(D3D9Path);
 
     if ActiveLanguage = 'ukrainian' then
       MsgBox('Українізатор успішно видалено.' #13#10#13#10 +

@@ -525,9 +525,13 @@ List<MenuCategory> BuildCategories() =>
                 "★ CANDIDATE: write shell_freeform_descfont.lvl — ENLARGE the description font in the Galactic Conquest screens' info panel from gamefont_tiny to gamefont_small (shared function — fixes dozens of screens at once; NOT YET CONFIRMED in-game)",
                 RunGenerateFreeformInfoDescriptionFontFix),
             new MenuItem(
-                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_listoffset.lvl — опускає перелік класів на екрані вибору бійця на 30 px, щоб зрівняти відступи зверху й знизу (вхід — reference-files\BF2-UA-rem\...\ingame.lvl; крок сітки, розміри комірок і шрифт НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
-                "★ CONFIRMED IN-GAME: write ingame_spawnselect_listoffset.lvl — moves the class list on the unit-selection screen down by 30 px to equalize the top/bottom gaps (input — reference-files\BF2-UA-rem\...\ingame.lvl; the grid pitch, cell sizes and font are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_listoffset.lvl — опускає перелік класів на екрані вибору бійця на 30 px, щоб зрівняти відступи зверху й знизу (вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl; крок сітки, розміри комірок і шрифт НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_listoffset.lvl — moves the class list on the unit-selection screen down by 30 px to equalize the top/bottom gaps (input — reference-files\\BF2-UA-rem\\...\\ingame.lvl; the grid pitch, cell sizes and font are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
                 RunGenerateSpawnSelectListTopOffsetFix),
+            new MenuItem(
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_buttonpos.lvl — опускає кнопку \"Спавн\" на екрані вибору бійця з 0.90 до 0.95 висоти безпечної області (вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl; один операнд у fnBuildScreen; положення 3D-моделі й розміри шрифту НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_buttonpos.lvl — moves the \"Спавн\" button on the unit-selection screen down from 0.90 to 0.95 of the safe-area height (input — reference-files\\BF2-UA-rem\\...\\ingame.lvl; a single operand in fnBuildScreen; the 3D model position and font sizes are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                RunGenerateSpawnSelectVerticalLayoutFix),
         ]),
 
     new MenuCategory(
@@ -565,8 +569,8 @@ List<MenuCategory> BuildCategories() =>
                 "shell.lvl: layout fix (no translation needed — no Locl chunks) → final-assembly-output\\GameData\\data\\_lvl_pc\\shell.lvl",
                 RunFinalAssemblyShell),
             new MenuItem(
-                "ingame.lvl: розкладка в бою + зазор «Кількість бійців» + зсув переліку класів поспіль → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
-                "ingame.lvl: in-battle layout + \"Unit Count\" gap + class-list offset in sequence → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                "ingame.lvl: розкладка в бою + зазор «Кількість бійців» + зсув переліку класів + кнопка «Спавн» поспіль → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                "ingame.lvl: in-battle layout + \"Unit Count\" gap + class-list offset + \"Спавн\" button in sequence → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
                 RunFinalAssemblyIngame),
             new MenuItem(
                 "d3d9.dll: збірка Zig-ом з вбудованого джерела → final-assembly-output\\GameData\\d3d9.dll",
@@ -2390,6 +2394,56 @@ async Task RunGenerateSpawnSelectListTopOffsetFix()
     await Task.CompletedTask;
 }
 
+// UA: Вхід — уже локалізований ingame.lvl із reference-files\BF2-UA-rem (той
+//     самий, що в RunGenerateSpawnSelectListTopOffsetFix); якщо його немає —
+//     вибір файлу. Вихід = увесь вхідний файл + лише зсув кнопки «Спавн»
+//     (SpawnSelectVerticalLayoutPatchBuilder): коефіцієнт нижнього відступу
+//     в fnBuildScreen 0.10 → 0.05 висоти безпечної області. Положення
+//     3D-моделі бійця визначає рушій, цей патч його не змінює. Механізм і
+//     доказ безпечності — Core/Bf2Widescreen/SpawnSelectVerticalLayoutPatchBuilder.cs.
+// EN: Input — the already localized ingame.lvl from reference-files\BF2-UA-rem
+//     (the same one used by RunGenerateSpawnSelectListTopOffsetFix); if
+//     missing — a file picker. Output = the whole input file + only the
+//     "Спавн" button shift (SpawnSelectVerticalLayoutPatchBuilder): the
+//     bottom-margin fraction in fnBuildScreen 0.10 → 0.05 of the safe-area
+//     height. The soldier's 3D model position is controlled by the engine;
+//     this patch does not change it. Mechanism and safety proof —
+//     Core/Bf2Widescreen/SpawnSelectVerticalLayoutPatchBuilder.cs.
+async Task RunGenerateSpawnSelectVerticalLayoutFix()
+{
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var uaRefDir = Path.Combine(refRoot, "BF2-UA-rem");
+    var ingamePath = FindGameFile(uaRefDir, "ingame.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-spawnselect-buttonpos");
+
+    var report = new DiagnosticReport("GenerateSpawnSelectVerticalLayoutFix");
+    report.Log("UA: ПІДТВЕРДЖЕНО РЕАЛЬНИМ ТЕСТОМ У ГРІ — докладно в docs/BF2_SPAWNSELECT_GAP_FIX.md.");
+    report.Log("EN: CONFIRMED BY A REAL IN-GAME TEST — details in docs/BF2_SPAWNSELECT_GAP_FIX.md.");
+    report.Log();
+
+    if (ingamePath is null)
+    {
+        report.Log($"UA: ingame.lvl не знайдено під \"{uaRefDir}\" — оберіть локалізований ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{uaRefDir}\" — pick the localized ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        if (ingamePath is null)
+        {
+            report.Log("UA: Файл не вибрано. / EN: No file selected.");
+            report.Save();
+            return;
+        }
+    }
+
+    report.Log($"UA: Вхідний (локалізований) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (localized) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log();
+
+    GenerateSpawnSelectVerticalLayoutFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_buttonpos.lvl");
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
 // UA: КАНДИДАТ (НЕ ПІДТВЕРДЖЕНО У ГРІ). Вхід — УЖЕ ЛОКАЛІЗОВАНИЙ shell.lvl
 //     (reference-files\BF2-UA-rem\shell.lvl; якщо його немає — вибір файлу
 //     вручну) — той самий принцип, що й ФІКС HEAD: патчимо ГОТОВИЙ файл,
@@ -2658,7 +2712,12 @@ async Task RunGenerateD3D9FixProvenanceReport()
 //     (GameData\data\_lvl_pc\…), і наперед невідомо, що саме де опиниться
 //     наступного разу — тому кожен пошук файлу/теки під reference-files\
 //     має йти саме так, а не за жорстко зашитим пласким шляхом.
-//     Повертає перший знайдений збіг (case-insensitive) або null.
+//     Серед кількох збігів перевага — файлу, чия безпосередня тека
+//     зветься "_lvl_pc" (справжні рівні гри); інакше — перший за
+//     алфавітом шлях. Причина: у дереві гри є однойменні файли іншого
+//     призначення — load\shell.lvl (8-байтовий файл екрана завантаження),
+//     sound\shell.lvl (звук меню); перший збіг без пріоритету потрапляв
+//     саме на load\shell.lvl. Повертає знайдений шлях або null.
 // EN: Finds a game file/folder by name under the given root — RECURSIVELY.
 //     The reference-files\<Game>\ layout is NOT fixed: some files (shell.lvl,
 //     core.lvl) have sat there flat since early in the project, others
@@ -2666,14 +2725,24 @@ async Task RunGenerateD3D9FixProvenanceReport()
 //     (GameData\data\_lvl_pc\…), and there is no telling in advance what
 //     lands where next time — so every lookup under reference-files\ should
 //     go this way, not through a hardcoded flat path.
-//     Returns the first match found (case-insensitive) or null.
+//     Among several matches, a file whose immediate folder is named
+//     "_lvl_pc" (the game's real levels) wins; otherwise the first path in
+//     alphabetical order. Reason: the game tree has same-named files with a
+//     different purpose — load\shell.lvl (an 8-byte loading-screen file),
+//     sound\shell.lvl (menu audio); an unprioritized first match landed on
+//     load\shell.lvl. Returns the found path or null.
 static string? FindGameFile(string rootDir, string fileName)
 {
     if (!Directory.Exists(rootDir))
         return null;
 
-    return Directory.EnumerateFiles(rootDir, fileName, SearchOption.AllDirectories)
-        .FirstOrDefault();
+    var matches = Directory.EnumerateFiles(rootDir, fileName, SearchOption.AllDirectories)
+        .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    return matches.FirstOrDefault(p =>
+               string.Equals(Path.GetFileName(Path.GetDirectoryName(p)), "_lvl_pc", StringComparison.OrdinalIgnoreCase))
+           ?? matches.FirstOrDefault();
 }
 
 // UA: Те саме, але для теки (наприклад "movies") — той самий принцип: не
@@ -3517,16 +3586,18 @@ async Task RunFinalAssemblyShell()
     await Task.CompletedTask;
 }
 
-// UA: Крок 2/3 (зазор "Кількість бійців") тут отримує на вхід результат
-//     кроку 1/3 (розкладка в бою) того самого запуску, а не ванільний
-//     ingame.lvl окремо, як це робить самостійний пункт меню того самого
-//     фіксу (категорія 10, "записати ingame_spawnselect_gapfix.lvl") —
-//     той самостійний пункт лишається без змін і читає ванільний файл.
-// EN: Step 2/3 (the "Unit Count" gap) takes as input this run's own
-//     step 1/3 result (in-battle layout), not a vanilla ingame.lvl on its
-//     own, as the standalone menu item for the same fix does (category 10,
-//     "write ingame_spawnselect_gapfix.lvl") — that standalone item is
-//     left unchanged and reads the vanilla file.
+// UA: Крок 2/4 (зазор "Кількість бійців") отримує на вхід результат
+//     кроку 1/4 (розкладка в бою) того самого запуску, а не ванільний
+//     ingame.lvl окремо; самостійний пункт меню того самого фіксу
+//     (категорія 10, "записати ingame_spawnselect_gapfix.lvl") читає
+//     ванільний файл. Кроки 3/4 і 4/4 (зсув переліку класів, кнопка
+//     «Спавн») отримують результат попереднього кроку.
+// EN: Step 2/4 (the "Unit Count" gap) takes as input this run's own
+//     step 1/4 result (in-battle layout), not a vanilla ingame.lvl on its
+//     own; the standalone menu item for the same fix (category 10,
+//     "write ingame_spawnselect_gapfix.lvl") reads the vanilla file.
+//     Steps 3/4 and 4/4 (class-list offset, "Спавн" button) take the
+//     previous step's result.
 async Task RunFinalAssemblyIngame()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
@@ -3535,20 +3606,20 @@ async Task RunFinalAssemblyIngame()
     // UA: ПОЗА final-assembly-output — тека final-assembly-output має
     //     містити ЛИШЕ фінальні файли гри (GameData\...), а не проміжні
     //     кроки збірки ingame.lvl. Видаляється нижче одразу після того,
-    //     як крок 3/3 прочитав з неї останній проміжний файл — так само,
+    //     як крок 4/4 прочитав з неї останній проміжний файл — так само,
     //     як enlargeTempDir у RunFinalAssemblyCore і workDir у
     //     GenerateD3D9FixBuildCommand.
     // EN: OUTSIDE final-assembly-output — that folder must contain ONLY
     //     the final game files (GameData\...), not ingame.lvl's
-    //     intermediate build steps. Deleted below right after step 3/3
+    //     intermediate build steps. Deleted below right after step 4/4
     //     has read the last intermediate file from it — the same
     //     pattern as enlargeTempDir in RunFinalAssemblyCore and workDir
     //     in GenerateD3D9FixBuildCommand.
     var stepsTempDir = Path.Combine(AppContext.BaseDirectory, "_final-assembly-ingame-steps-tmp");
 
     var report = new DiagnosticReport("FinalAssemblyIngame");
-    report.Log("UA: ingame.lvl — розкладка в бою → зазор «Кількість бійців» → зсув переліку класів, поспіль, від ВАНІЛЬНОГО файлу. У ingame.lvl немає чанків Locl (перевірено байт-пошуком) — переклад тут не потрібен.");
-    report.Log("EN: ingame.lvl — in-battle layout -> \"Unit Count\" gap -> class-list offset, in sequence, from the VANILLA file. ingame.lvl has no Locl chunks (verified by a byte search) — no translation needed here.");
+    report.Log("UA: ingame.lvl — розкладка в бою → зазор «Кількість бійців» → зсув переліку класів → кнопка «Спавн», поспіль, від ВАНІЛЬНОГО файлу. У ingame.lvl немає чанків Locl (перевірено байт-пошуком) — переклад тут не потрібен.");
+    report.Log("EN: ingame.lvl — in-battle layout -> \"Unit Count\" gap -> class-list offset -> \"Спавн\" button, in sequence, from the VANILLA file. ingame.lvl has no Locl chunks (verified by a byte search) — no translation needed here.");
     report.Log();
 
     var ingamePath = FindGameFile(bf2VanillaDir, "ingame.lvl") ?? Path.Combine(bf2VanillaDir, "ingame.lvl");
@@ -3569,42 +3640,54 @@ async Task RunFinalAssemblyIngame()
     report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
     report.Log();
 
-    report.Log("UA: Крок 1/3 — розкладка в бою.");
-    report.Log("EN: Step 1/3 — in-battle layout.");
+    report.Log("UA: Крок 1/4 — розкладка в бою.");
+    report.Log("EN: Step 1/4 — in-battle layout.");
     var layoutPath = GenerateAnchorFixIngameCommand.Run(report, ingamePath, stepsTempDir, "ingame_step1_layout.lvl");
     if (layoutPath is null)
     {
-        report.Log("UA: Крок 1/3 провалився — зупинено. / EN: Step 1/3 failed — stopped.");
+        report.Log("UA: Крок 1/4 провалився — зупинено. / EN: Step 1/4 failed — stopped.");
         try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
         report.Save();
         return;
     }
 
     report.Log();
-    report.Log("UA: Крок 2/3 — зазор «Кількість бійців» (SpawnSelectUnitCountGapPatchBuilder).");
-    report.Log("EN: Step 2/3 — \"Unit Count\" gap (SpawnSelectUnitCountGapPatchBuilder).");
+    report.Log("UA: Крок 2/4 — зазор «Кількість бійців» (SpawnSelectUnitCountGapPatchBuilder).");
+    report.Log("EN: Step 2/4 — \"Unit Count\" gap (SpawnSelectUnitCountGapPatchBuilder).");
     var gapPath = GenerateSpawnSelectUnitCountGapFixCommand.Run(report, layoutPath, stepsTempDir, "ingame_step2_gapfix.lvl");
     if (gapPath is null)
     {
-        report.Log("UA: Крок 2/3 провалився — зупинено. / EN: Step 2/3 failed — stopped.");
+        report.Log("UA: Крок 2/4 провалився — зупинено. / EN: Step 2/4 failed — stopped.");
         try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
         report.Save();
         return;
     }
 
     report.Log();
-    report.Log("UA: Крок 3/3 — зсув переліку класів (SpawnSelectListTopOffsetPatchBuilder).");
-    report.Log("EN: Step 3/3 — class-list offset (SpawnSelectListTopOffsetPatchBuilder).");
-    var finalPath = GenerateSpawnSelectListTopOffsetFixCommand.Run(report, gapPath, finalOutputDir, "ingame.lvl");
+    report.Log("UA: Крок 3/4 — зсув переліку класів (SpawnSelectListTopOffsetPatchBuilder).");
+    report.Log("EN: Step 3/4 — class-list offset (SpawnSelectListTopOffsetPatchBuilder).");
+    var listOffsetPath = GenerateSpawnSelectListTopOffsetFixCommand.Run(report, gapPath, stepsTempDir, "ingame_step3_listoffset.lvl");
+    if (listOffsetPath is null)
+    {
+        report.Log("UA: Крок 3/4 провалився — зупинено. / EN: Step 3/4 failed — stopped.");
+        try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+        report.Save();
+        return;
+    }
 
-    // UA: Проміжна тека кроків 1-2 більше не потрібна — крок 3/3 щойно
-    //     прочитав з неї свій вхід (gapPath) і записав готовий результат
-    //     напряму у finalOutputDir. Видаляється тут незалежно від того,
-    //     вдався крок 3/3 чи ні.
-    // EN: The steps 1-2 temp folder is no longer needed — step 3/3 just
-    //     read its input (gapPath) from it and wrote the finished result
-    //     directly into finalOutputDir. Deleted here regardless of whether
-    //     step 3/3 succeeded.
+    report.Log();
+    report.Log("UA: Крок 4/4 — кнопка «Спавн» (SpawnSelectVerticalLayoutPatchBuilder).");
+    report.Log("EN: Step 4/4 — \"Спавн\" button (SpawnSelectVerticalLayoutPatchBuilder).");
+    var finalPath = GenerateSpawnSelectVerticalLayoutFixCommand.Run(report, listOffsetPath, finalOutputDir, "ingame.lvl");
+
+    // UA: Проміжна тека кроків 1-3 більше не потрібна — крок 4/4 прочитав
+    //     з неї свій вхід (listOffsetPath) і записав готовий результат
+    //     напряму у finalOutputDir. Видаляється незалежно від того,
+    //     вдався крок 4/4 чи ні.
+    // EN: The steps 1-3 temp folder is no longer needed — step 4/4 read
+    //     its input (listOffsetPath) from it and wrote the finished result
+    //     directly into finalOutputDir. Deleted regardless of whether
+    //     step 4/4 succeeded.
     try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
 
     report.Log();
@@ -3617,7 +3700,7 @@ async Task RunFinalAssemblyIngame()
     }
     else
     {
-        report.Log("UA: Крок 3/3 провалився. / EN: Step 3/3 failed.");
+        report.Log("UA: Крок 4/4 провалився. / EN: Step 4/4 failed.");
     }
 
     report.Save();
