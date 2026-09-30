@@ -1,10 +1,28 @@
 # =============================================================================
-# UA: Автозбірка релізу при пуші тегу vX.Y.Z (наприклад v1.0.0).
-#     Публікує self-contained win-x64 білд GUI + консольний Diagnostic,
-#     пакує їх у один .zip і прикріплює до GitHub Release.
-# EN: Auto-builds a release when a vX.Y.Z tag is pushed (e.g. v1.0.0).
-#     Publishes a self-contained win-x64 build of the GUI + Diagnostic
-#     console tool, zips them together, and attaches to a GitHub Release.
+# UA: Автозбірка релізу. Запускається:
+#       - при пуші тегу vX.Y.Z (наприклад v1.1.0);
+#       - вручну (Actions -> Release -> Run workflow, або
+#         `gh workflow run release.yml -f tag=vX.Y.Z`) для вже наявного тегу.
+#     Збирає три варіанти GUI, кожен окремим зіпом:
+#       - generic  — потребує встановленого .NET 10 Desktop Runtime;
+#       - win-x64  — self-contained, один exe, Windows 64-bit;
+#       - win-x86  — self-contained, один exe, Windows 32-bit.
+#     Кожен зіп містить лише програму, README.md і LICENSE. Усі три зіпи
+#     прикріплюються до одного GitHub Release. Опис Release — розділ
+#     `## [X.Y.Z]` з CHANGELOG.md цього тегу; якщо розділу немає, збірка
+#     зупиняється.
+# EN: Auto-builds a release. Triggered:
+#       - by pushing a vX.Y.Z tag (e.g. v1.1.0);
+#       - manually (Actions -> Release -> Run workflow, or
+#         `gh workflow run release.yml -f tag=vX.Y.Z`) for an existing tag.
+#     Builds three GUI variants, each as its own zip:
+#       - generic  — requires the .NET 10 Desktop Runtime to be installed;
+#       - win-x64  — self-contained, single exe, Windows 64-bit;
+#       - win-x86  — self-contained, single exe, Windows 32-bit.
+#     Each zip contains only the application, README.md and LICENSE. All
+#     three zips are attached to a single GitHub Release. The Release
+#     description is the `## [X.Y.Z]` section of that tag's CHANGELOG.md;
+#     the build stops if the section is missing.
 # =============================================================================
 name: Release
 
@@ -12,16 +30,42 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish (vX.Y.Z) / Наявний тег (vX.Y.Z)"
+        required: true
+        type: string
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - variant: generic
+            publish_args: "--self-contained false"
+          - variant: win-x64
+            publish_args: "-r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true"
+          - variant: win-x86
+            publish_args: "-r win-x86 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true"
     steps:
+      - name: Validate tag / Перевірка тегу
+        shell: pwsh
+        run: |
+          if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { throw "Tag '$env:TAG' does not match vX.Y.Z" }
+
       - name: Checkout / Клонування
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
@@ -31,34 +75,65 @@ jobs:
       - name: Restore
         run: dotnet restore BF1LocalizationTool.sln
 
-      - name: Publish GUI (win-x64, self-contained)
+      - name: Publish GUI (${{ matrix.variant }})
+        shell: pwsh
         run: >
           dotnet publish BF1LocalizationTool.GUI/BF1LocalizationTool.GUI.csproj
-          -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -o publish/BF1LocalizationTool
+          -c Release ${{ matrix.publish_args }}
+          -o "publish/${{ matrix.variant }}"
 
-      - name: Publish Diagnostic (win-x64, self-contained)
-        run: >
-          dotnet publish BF1LocalizationTool.Diagnostic/BF1LocalizationTool.Diagnostic.csproj
-          -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -o publish/BF1LocalizationTool
-
-      - name: Copy README / LICENSE into publish folder
+      - name: Add README / LICENSE, drop debug symbols
         shell: pwsh
         run: |
-          Copy-Item README.md publish/BF1LocalizationTool/
-          Copy-Item LICENSE publish/BF1LocalizationTool/
+          Copy-Item README.md, LICENSE "publish/${{ matrix.variant }}"
+          Remove-Item "publish/${{ matrix.variant }}/*.pdb" -ErrorAction SilentlyContinue
 
       - name: Create ZIP
         shell: pwsh
         run: |
-          Compress-Archive -Path publish/BF1LocalizationTool/* `
-            -DestinationPath BF1LocalizationTool-${{ github.ref_name }}-win-x64.zip
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path "publish/${{ matrix.variant }}/*" `
+            -DestinationPath "dist/BF1LocalizationTool_$($env:TAG)_${{ matrix.variant }}.zip"
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-${{ matrix.variant }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout / Клонування
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          version="${TAG#v}"
+          awk -v h="## [${version}]" 'index($0, h) == 1 { found = 1; next }
+                                      found && /^## \[/ { exit }
+                                      found' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "CHANGELOG.md has no non-empty '## [${version}]' section" >&2
+            exit 1
+          fi
+
+      - name: Download all ZIP artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: zip-*
+          path: dist
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: BF1LocalizationTool-${{ github.ref_name }}-win-x64.zip
-          generate_release_notes: true
+          tag_name: ${{ env.TAG }}
+          body_path: release-notes.md
+          files: dist/*.zip
