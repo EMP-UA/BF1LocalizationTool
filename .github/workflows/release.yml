@@ -63,12 +63,12 @@ jobs:
           if ($env:TAG -notmatch '^v\d+\.\d+\.\d+$') { throw "Tag '$env:TAG' does not match vX.Y.Z" }
 
       - name: Checkout / Клонування
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
 
       - name: Setup .NET 10 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
@@ -96,7 +96,7 @@ jobs:
             -DestinationPath "dist/BF1LocalizationTool_$($env:TAG)_${{ matrix.variant }}.zip"
 
       - name: Upload ZIP artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: zip-${{ matrix.variant }}
           path: dist/*.zip
@@ -109,7 +109,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout / Клонування
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
 
@@ -125,14 +125,14 @@ jobs:
           fi
 
       - name: Download all ZIP artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: zip-*
           path: dist
           merge-multiple: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
           body_path: release-notes.md
