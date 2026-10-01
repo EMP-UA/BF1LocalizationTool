@@ -165,10 +165,8 @@ public static class GenerateSpawnSelectListTopOffsetFixCommand
         report.Log("UA: ЯК ПЕРЕВІРЯТИ / EN: HOW TO TEST");
         report.Log("UA: 1) Резервна копія поточного GameData\\data\\_lvl_pc\\ingame.lvl.");
         report.Log("UA: 2) Покласти цей файл замість нього (перейменувавши на ingame.lvl).");
-        report.Log("UA:    Вихідний файл = увесь вхідний файл + лише цей зсув: усі патчі, що вже є");
-        report.Log("UA:    у вхідному файлі (гачок розкладки, фікс \"Кількість бійців\"), зберігаються.");
-        report.Log("UA:    Вхідним має бути той самий ingame.lvl, що стоїть у грі, а не ванільний:");
-        report.Log("UA:    ванільний відрізняється ще й чанками моделей та анімацій.");
+        report.Log("UA:    Вихідний файл = увесь вхідний файл + лише цей зсув. Вхід — ванільний");
+        report.Log("UA:    ingame.lvl з reference-files\\BF2.");
         report.Log("UA: 3) Відкрити екран вибору бійця з повним переліком (7 і більше комірок,");
         report.Log("UA:    напр. коли стає доступний герой) і звірити, чи відступи зверху й");
         report.Log("UA:    знизу переліку тепер приблизно рівні.");
@@ -177,10 +175,8 @@ public static class GenerateSpawnSelectListTopOffsetFixCommand
         report.Log("UA: 5) Це стосується ЛИШЕ ifs_pc_spawnselect — інші екрани не зачіпаються.");
         report.Log("EN: 1) Back up the current GameData\\data\\_lvl_pc\\ingame.lvl.");
         report.Log("EN: 2) Put this file in its place (renamed to ingame.lvl).");
-        report.Log("EN:    The output = the whole input file + only this shift: every patch already");
-        report.Log("EN:    in the input (the layout hook, the \"Кількість бійців\" fix) is kept.");
-        report.Log("EN:    The input must be the same ingame.lvl the game uses, not the vanilla one:");
-        report.Log("EN:    the vanilla file also differs in model and animation chunks.");
+        report.Log("EN:    The output = the whole input file + only this shift. The input is the");
+        report.Log("EN:    vanilla ingame.lvl from reference-files\\BF2.");
         report.Log("EN: 3) Open the unit-selection screen with a full list (7+ slots, e.g.");
         report.Log("EN:    once the hero becomes available) and check whether the list's top");
         report.Log("EN:    and bottom gaps are now roughly equal.");

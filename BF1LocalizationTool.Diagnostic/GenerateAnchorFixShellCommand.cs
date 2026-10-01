@@ -55,15 +55,13 @@ public static class GenerateAnchorFixShellCommand
         report.Log("EN: Rationale — measurement: in vanilla, 1178 size values depend on the resolution (742 exactly xW/800, 373 exactly xH/600) while text does not scale. The patch restores the authored sizes.");
         report.Log("UA: НЕ чіпаються: ScriptCB_GetScreenInfo, ScriptCB_GetSafeScreenInfo.");
         report.Log("EN: NOT touched: ScriptCB_GetScreenInfo, ScriptCB_GetSafeScreenInfo.");
-        report.Log("UA: ТЕПЕР ФІКСУЄТЬСЯ фон (ifelem_shellscreen_fnAddBackground): ваніль розтягує контейнер фону");
-        report.Log("UA: до w×widescreen (≈33% ширше за екран, виміряно й підтверджено знімками на 8+ екранах з");
-        report.Log("UA: різними текстурами bg_texture); патч примусово повертає bg.localpos_r до РІВНО w. Це");
-        report.Log("UA: чиста геометрична правка — жодна конкретна текстура не хардкодиться.");
-        report.Log("EN: Background IS NOW FIXED (ifelem_shellscreen_fnAddBackground): vanilla stretches the");
-        report.Log("EN: background container to w x widescreen (~33% wider than the screen, measured and");
-        report.Log("EN: confirmed by screenshots on 8+ screens with different bg_texture values); the patch");
-        report.Log("EN: forces bg.localpos_r back to EXACTLY w. This is a pure geometry fix — no specific");
-        report.Log("EN: texture is hardcoded.");
+        report.Log("UA: Фон (ifelem_shellscreen_fnAddBackground): ваніль розтягує контейнер фону до");
+        report.Log("UA: w×widescreen (≈33% ширше за екран); патч повертає bg.localpos_r до РІВНО w.");
+        report.Log("UA: Це геометрична правка — жодна конкретна текстура не хардкодиться.");
+        report.Log("EN: Background (ifelem_shellscreen_fnAddBackground): vanilla stretches the background");
+        report.Log("EN: container to w x widescreen (~33% wider than the screen); the patch sets");
+        report.Log("EN: bg.localpos_r back to EXACTLY w. This is a geometry fix — no specific texture is");
+        report.Log("EN: hardcoded.");
         report.Log();
 
         var installerProto = AnchorInheritancePatchBuilder.BuildInstallerScript(

@@ -4,61 +4,39 @@
 // Ліцензія / License: MIT
 // Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
 // =============================================================================
-// UA: ПІДТВЕРДЖЕНИЙ ЗНІМКАМИ фікс, УВІМКНЕНИЙ У PRODUCTION
-//     (GenerateAnchorFixShellCommand -> shell_layout.lvl). Цей файл
-//     лишається окремим ІЗОЛЬОВАНИМ інструментом для точкового
-//     тестування нових екранів/текстур без перезбирання основного
-//     патча — записує окремий shell_bgfix.lvl, у якому обгорнуто
-//     глобальну ifelem_shellscreen_fnAddBackground так, щоб ПІСЛЯ
-//     виклику оригіналу примусово повернути bg.localpos_r до РІВНО
-//     ширини екрана (w), замість ванільного w × widescreen (≈2560 при
-//     1920, тобто на 33% ширше за екран — підтверджено діагностичним
-//     зондом, реальне widescreen = 1920/1080 / (800/600) ≈ 1.3333).
+// UA: Записує окремий shell_bgfix.lvl, у якому глобальну функцію
+//     ifelem_shellscreen_fnAddBackground обгорнуто так, що після виклику
+//     оригіналу bg.localpos_r дорівнює рівно ширині екрана (w) замість
+//     w × widescreen (≈2560 при 1920, тобто на 33% ширше за екран;
+//     widescreen = (1920/1080)/(800/600) ≈ 1.3333). Той самий фікс входить
+//     у production (GenerateAnchorFixShellCommand -> shell_layout.lvl);
+//     цей файл будує його ізольовано, без решти патча розкладки.
 //
-//     ЩО ПІДТВЕРДЖЕНО: пікселева звірка "до/після" показала, що
-//     контейнер справді на 33% ширший за екран і обрізає праву чверть
-//     фонової картинки (не "шви від тайлінгу", а обрізаний правий
-//     край — корінь і фікс ті самі). Питання висоти закрито аналізом:
-//     bg.localpos_b := h не має множника в жодному з перевірених
-//     випадків, симетричного бага немає.
+//     Контейнер фону оригіналу ширший за екран на 33% і обрізає праву
+//     чверть фонової картинки. Висота (bg.localpos_b := h) множника не має
+//     й не змінюється.
 //
-//     Функція ifelem_shellscreen_fnAddBackground СПІЛЬНА для 69 з 82
-//     екранів ifs_* — цей файл вмикає фікс ГЛОБАЛЬНО, так само як і
-//     production. З 7 реально знайдених значень bg_texture перевірено
-//     4 (iface_bgmeta_space, iface_bg_1, single_player_campaign,
-//     profile_manager — разом 16 з ~20 фактичних використань).
-//     Лишились неперевіреними: single_player_conquest (той самий код,
-//     що вже перевірений single_player_campaign), single_player_option,
-//     і одне динамічне значення в ifs_tutorials — саме для таких
-//     точкових перевірок і лишається ця окрема збірка.
-// EN: A fix CONFIRMED BY SCREENSHOTS, ENABLED IN PRODUCTION
-//     (GenerateAnchorFixShellCommand -> shell_layout.lvl). This file
-//     remains a separate ISOLATED tool for spot-testing new
-//     screens/textures without rebuilding the main patch — it writes a
-//     separate shell_bgfix.lvl in which the global
-//     ifelem_shellscreen_fnAddBackground is wrapped so that, AFTER the
-//     original runs, bg.localpos_r is forced back to EXACTLY the screen
-//     width (w), instead of the vanilla w x widescreen (~2560 at 1920, i.e.
-//     33% wider than the screen — confirmed by the diagnostic probe, real
-//     widescreen = 1920/1080 / (800/600) ~= 1.3333).
+//     Функція ifelem_shellscreen_fnAddBackground спільна для 69 з 82
+//     екранів ifs_*; фікс вмикається глобально, так само як у production.
+//     Механізм і дизасемблювання — у коментарі до BgFixFn в
+//     AnchorInheritancePatchBuilder.cs.
+// EN: Writes a separate shell_bgfix.lvl in which the global function
+//     ifelem_shellscreen_fnAddBackground is wrapped so that, after the
+//     original returns, bg.localpos_r equals exactly the screen width (w)
+//     instead of w x widescreen (~2560 at 1920, i.e. 33% wider than the
+//     screen; widescreen = (1920/1080)/(800/600) ~= 1.3333). The same fix
+//     is part of production (GenerateAnchorFixShellCommand ->
+//     shell_layout.lvl); this file builds it in isolation, without the rest
+//     of the layout patch.
 //
-//     WHAT WAS CONFIRMED: a before/after pixel comparison showed the
-//     container really is 33% wider than the screen and clips the right
-//     quarter of the background artwork (not "tiling seams", but a
-//     clipped right edge — same root cause and fix though). The height
-//     question is closed by analysis: bg.localpos_b := h has no
-//     multiplier in any checked case, so there is no symmetric bug
-//     there.
+//     The original's background container is 33% wider than the screen and
+//     clips the right quarter of the background picture. The height
+//     (bg.localpos_b := h) has no multiplier and is not changed.
 //
-//     ifelem_shellscreen_fnAddBackground is SHARED by 69 of 82 ifs_*
-//     screens — this file enables the fix GLOBALLY, same as production. Of
-//     7 actually-found bg_texture values, 4 are confirmed
-//     (iface_bgmeta_space, iface_bg_1, single_player_campaign,
-//     profile_manager — 16 of ~20 actual usages total). Still unverified:
-//     single_player_conquest (same code as the already-confirmed
-//     single_player_campaign), single_player_option, and one dynamic value
-//     in ifs_tutorials — this separate build remains exactly for spot-
-//     checking those.
+//     ifelem_shellscreen_fnAddBackground is shared by 69 of 82 ifs_*
+//     screens; the fix is enabled globally, as in production. Mechanism and
+//     disassembly — in the comment on BgFixFn in
+//     AnchorInheritancePatchBuilder.cs.
 // =============================================================================
 
 using BF1LocalizationTool.Core.Bf2Widescreen;

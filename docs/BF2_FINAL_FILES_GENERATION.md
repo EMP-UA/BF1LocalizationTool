@@ -1,4 +1,4 @@
-# BF2-UA-rem: генерація чотирьох фінальних файлів / BF2-UA-rem: generation of the four final files
+# BF2: генерація чотирьох фінальних файлів / BF2: generation of the four final files
 
 ## 0. Область застосування / Scope
 
@@ -107,43 +107,45 @@ audio), and one outside `GameData`). Among several matches
 `FindGameFile` picks the file whose immediate folder is named
 `_lvl_pc`; if there is none, the first path in alphabetical order.
 
-## 3. ingame.lvl — чотири послідовні кроки / four sequential steps
+## 3. ingame.lvl — шість послідовних кроків / six sequential steps
 
-**UA:** Крок 1/4 — розкладка в бою (`GenerateAnchorFixIngameCommand`).
-Крок 2/4 — положення напису «Кількість бійців»
-(`GenerateSpawnSelectUnitCountGapFixCommand`), застосований до результату
-кроку 1/4. Крок 3/4 — зсув переліку класів
-(`GenerateSpawnSelectListTopOffsetFixCommand`), застосований до
-результату кроку 2/4. Крок 4/4 — положення кнопки «Спавн»
-(`GenerateSpawnSelectVerticalLayoutFixCommand`), застосований до
-результату кроку 3/4. Вхід усього ланцюжка — ванільний
-`ingame.lvl`, знайдений під `reference-files\BF2\` через `FindGameFile`;
-кожен крок читає результат попереднього, а не окремий ванільний файл
-повторно. `ingame.lvl` не містить чанків Locl
-(перевірено пошуком за сигнатурою) — перекладу тут не потрібно; результат —
+**UA:** Крок 1/6 — розкладка в бою (`GenerateAnchorFixIngameCommand`).
+Крок 2/6 — положення напису «Кількість бійців»
+(`GenerateSpawnSelectUnitCountGapFixCommand`). Крок 3/6 — зсув переліку
+класів (`GenerateSpawnSelectListTopOffsetFixCommand`). Крок 4/6 —
+положення кнопки «Спавн» (`GenerateSpawnSelectVerticalLayoutFixCommand`).
+Крок 5/6 — масштаб тексту спорядження в комірках класів при більш ніж
+7 класах (`GenerateSpawnSelectInfoTextScaleFixCommand`). Крок 6/6 —
+таймер, підпис «Перемога/Поразка через» і значки прапорів у бойовому HUD
+(`GenerateHudLayoutFixCommand`). Кожен крок застосовується до результату
+попереднього. Вхід усього ланцюжка — ванільний `ingame.lvl`, знайдений
+під `reference-files\BF2\` через `FindGameFile`; окремий ванільний файл
+повторно не читається. `ingame.lvl` не містить чанків Locl (перевірено
+пошуком за сигнатурою) — перекладу тут не потрібно; результат —
 `final-assembly-output\GameData\data\_lvl_pc\ingame.lvl`. Проміжні
-файли кроків 1-3 лежать у тимчасовій теці поза `final-assembly-output`;
-вона видаляється після кроку 4/4. Положення напису залежить від того, що
-рядок «Кількість бійців» у перекладі `core.lvl` закінчується двома
-переносами рядка, як в оригіналі (див.
-`BF2_SPAWNSELECT_GAP_FIX.md`).
+файли кроків 1-5 лежать у тимчасовій теці поза `final-assembly-output`;
+вона видаляється після кроку 6/6. Положення напису «Кількість бійців»
+залежить від того, що рядок у перекладі `core.lvl` закінчується двома
+переносами рядка, як в оригіналі (див. `BF2_SPAWNSELECT_GAP_FIX.md`).
 
-**EN:** Step 1/4 — in-battle layout (`GenerateAnchorFixIngameCommand`).
-Step 2/4 — the position of the "Unit Count" label
-(`GenerateSpawnSelectUnitCountGapFixCommand`), applied to step 1/4's
-result. Step 3/4 — the class-list offset
-(`GenerateSpawnSelectListTopOffsetFixCommand`), applied to step 2/4's
-result. Step 4/4 — the position of the "Спавн" button
-(`GenerateSpawnSelectVerticalLayoutFixCommand`), applied to step 3/4's
-result. The whole chain's input is the vanilla
-`ingame.lvl`, found under `reference-files\BF2\` via `FindGameFile`; each
-step reads the previous step's result rather than the vanilla file
-again. `ingame.lvl` has no Locl
-chunks (verified by a signature search) — no translation is needed here;
-the result is `final-assembly-output\GameData\data\_lvl_pc\ingame.lvl`.
-The intermediate files of steps 1-3 sit in a temporary folder outside
-`final-assembly-output`; it is deleted after step 4/4. The label position
-depends on the "Unit Count" string in the `core.lvl` translation ending
+**EN:** Step 1/6 — in-battle layout (`GenerateAnchorFixIngameCommand`).
+Step 2/6 — the position of the "Unit Count" label
+(`GenerateSpawnSelectUnitCountGapFixCommand`). Step 3/6 — the class-list
+offset (`GenerateSpawnSelectListTopOffsetFixCommand`). Step 4/6 — the
+position of the "Спавн" button
+(`GenerateSpawnSelectVerticalLayoutFixCommand`). Step 5/6 — the scale of
+the equipment text in the class cells with more than 7 classes
+(`GenerateSpawnSelectInfoTextScaleFixCommand`). Step 6/6 — the timer, the
+«Перемога/Поразка через» label and the flag icons in the combat HUD
+(`GenerateHudLayoutFixCommand`). Each step is applied to the previous
+step's result. The whole chain's input is the vanilla `ingame.lvl`, found
+under `reference-files\BF2\` via `FindGameFile`; the vanilla file is not
+read again. `ingame.lvl` has no Locl chunks (verified by a signature
+search) — no translation is needed here; the result is
+`final-assembly-output\GameData\data\_lvl_pc\ingame.lvl`. The
+intermediate files of steps 1-5 sit in a temporary folder outside
+`final-assembly-output`; it is deleted after step 6/6. The "Unit Count"
+label position depends on the string in the `core.lvl` translation ending
 with two line breaks, as the original does (see
 `BF2_SPAWNSELECT_GAP_FIX.md`).
 
@@ -207,3 +209,104 @@ value an independent, public CI check
 runner by building d3d9.dll from the same repository source with the same
 recipe and comparing the result byte-for-byte against the binary bundled
 with the application.
+
+## 5. Що саме змінюють кроки розкладки / What the layout steps change
+
+**UA:** *Плашки меню, вкладок і кнопок (`shell.lvl`, `ingame.lvl`).* Синя
+плашка "flashy"-тексту читає зсув `bgoffsetx` під час створення мітки
+(`NewIFText`), тож рядок таблиці `Data/Bf2LayoutTable.txt` із цим полем
+виконується до побудови екрана й вирівнює плашку відносно тексту мітки.
+Рядки є для кнопок меню (`buttons.*.label`, `buttons._titlebar_`), міток
+вкладок (`_Tabs*._tab_*.label`), кнопок налаштувань (`cancelbutton`,
+`donebutton`, `resetbutton`, `autodetectbutton`) і підказок
+(`Helptext_*.label`). У `ingame.lvl` потрапляє підмножина рядків для
+екранів, що існують у бою (`GenerateAnchorFixIngameCommand.KeepRow`):
+налаштування, меню паузи, вибір команди, вибір бійця й `Helptext_Misc`
+лобі. Нативна функція `ScriptCB_IFFlashyText_SetBackgroundSize` не
+приймає дескриптора об'єкта й діє лише на об'єкт, що будується, тому
+підкладки спливаючих вікон `Popup_*`, які створюються до гачка, цим
+механізмом не зсуваються.
+
+**UA:** *Ширина плашки кнопок Галактичного завоювання й переходу між
+місіями (`shell.lvl`).* Кнопки `action.misc` / `action.back` будує спільна
+`ifs_freeform_AddCommonElements` з полем 220 px; обробники підставляють
+довші підписи, які в такому полі переносяться в прихований другий рядок.
+Операція `bgw` рядка `@post:` задає ширину поля, центрування й ширину
+плашки: плашка — власний фон "flashy"-мітки, а гра має метод
+`IFFlashyText_fnSetup` для зміни її ширини вже після побудови.
+
+**UA:** *Бойовий HUD (`ingame.lvl`).* `HudLayoutPatchBuilder` змінює лише
+float-и позицій у DATA-конфігу `1playerhud`: таймер цілі під мінімапою
+опускається й центрується по колу мінімапи; підпис і цифри
+«Перемога/Поразка через» опускаються нижче від таймера; значки прапорів
+опускаються нижче від таймера, а проміжки між ними збільшуються. Перед
+записом перевіряються старі значення бітів — на будь-яку розбіжність
+патч не застосовується.
+
+**UA:** *Текст спорядження на екрані вибору бійця (`ingame.lvl`).* У
+`fnBuildScreen` екрана `ifs_pc_spawnselect` ділильник масштабу тексту
+спорядження дорівнює 3.0 лише при висоті екрана менше 960 px; на 1080p за
+кількості слотів більше 7 лишається 4.0, і текст у комірках дрібніший, ніж
+дозволяє висота комірки. Патч змінює одне слово інструкції (pc244), після
+чого ділильник 3.0 діє за будь-якої висоти екрана, коли слотів більше 7.
+Комірки з 7 класами не змінюються. Результат у грі (1920×1080, Mos Eisley, штурм, 9 класів): крок рядків ≈14 px, гліфи читабельні; з 7 класами крок лишається 18 px.
+
+**UA:** *Порядок мап (`shell.lvl`).* Скрипт `missionlist` сортує списки мап
+«Миттєвого бою» й мультиплеєра за `ScriptCB_ununicode` від локалізованої
+назви; ця функція відкидає символи поза ASCII, тож від кириличної назви
+лишаються тільки пробіли, дефіси й цифри, і порядок усередині груп
+довільний. Рядок `@mapsort` таблиці задає ранг кожної мапи за чотирма
+першими символами `mapluafile`; гачок один раз підміняє порівняння
+`missionlist_mapsorthelper`: мапи з рангом стоять у порядку рангів перед
+рештою, для решти (додаткові мапи) діє оригінальне порівняння.
+
+**EN:** *Menu, tab and button backdrops (`shell.lvl`, `ingame.lvl`).* The
+blue backdrop of a "flashy" text reads the `bgoffsetx` offset when the
+label is created (`NewIFText`), so a `Data/Bf2LayoutTable.txt` row with
+that field runs before the screen builds and aligns the backdrop with the
+label's own text. Rows exist for menu buttons (`buttons.*.label`,
+`buttons._titlebar_`), tab labels (`_Tabs*._tab_*.label`), settings
+buttons (`cancelbutton`, `donebutton`, `resetbutton`, `autodetectbutton`)
+and help texts (`Helptext_*.label`). `ingame.lvl` receives the subset of
+rows for the screens that exist in battle
+(`GenerateAnchorFixIngameCommand.KeepRow`): settings, the pause menu, the
+team selection, the unit selection and the lobby's `Helptext_Misc`. The
+native function `ScriptCB_IFFlashyText_SetBackgroundSize` takes no object
+handle and acts only on the object being built, so the `Popup_*` dialog
+backdrops, which are created before the hook, are not shifted by this
+mechanism.
+
+**EN:** *The combat HUD (`ingame.lvl`).* `HudLayoutPatchBuilder` changes
+only the position floats in the `1playerhud` DATA config: the objective
+timer under the minimap moves down and is centred on the minimap circle;
+the «Перемога/Поразка через» label and digits move below the timer; the
+flag icons move below the timer and the gaps between them grow. The old
+bit values are verified before writing — on any mismatch the patch is
+not applied.
+
+**EN:** *The equipment text on the unit-selection screen (`ingame.lvl`).*
+In the `fnBuildScreen` of the `ifs_pc_spawnselect` screen the equipment
+text scale divisor is 3.0 only when the screen height is below 960 px; at
+1080p with more than 7 slots it stays 4.0 and the text in the cells is
+smaller than the cell height allows. The patch changes one instruction
+word (pc244), after which the divisor 3.0 applies at any screen height
+whenever there are more than 7 slots. Cells with 7 classes are not
+changed. In-game result (1920×1080, Mos Eisley, Assault, 9 classes): the line pitch is ≈14 px and the glyphs are legible; with 7 classes the pitch stays 18 px.
+
+**EN:** *The map order (`shell.lvl`).* The `missionlist` script sorts the
+Instant Action and multiplayer map lists by `ScriptCB_ununicode` of the
+localized name; that function drops every non-ASCII character, so a
+Cyrillic name keeps only its spaces, hyphens and digits and the order
+within each group is arbitrary. The table's `@mapsort` row gives each map
+a rank by the first four characters of `mapluafile`; the hook replaces
+the `missionlist_mapsorthelper` comparison once: ranked maps come first in
+rank order, and the rest (additional maps) follow the original comparison.
+
+**EN:** *The button backdrop width in Galactic Conquest and the mission
+transition (`shell.lvl`).* The `action.misc` / `action.back` buttons are
+built by the shared `ifs_freeform_AddCommonElements` with a 220 px field;
+the handlers assign longer labels that wrap into a hidden second line in
+such a field. The `bgw` operation of an `@post:` row sets the field width,
+the centring and the backdrop width: the backdrop is the "flashy" label's
+own background, and the game ships the `IFFlashyText_fnSetup` method to
+change its width after build.

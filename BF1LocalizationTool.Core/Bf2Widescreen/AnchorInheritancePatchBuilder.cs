@@ -6,7 +6,7 @@
 // =============================================================================
 // UA: Механізм застосування таблиці виправлень розкладки BF2.
 //
-//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 566 рядків на 34
+//     Таблиця виправлень (Data/Bf2LayoutTable.txt) містить 1017 рядків на 72
 //     екрани. Кожен рядок додається лише після виміру на реальному знімку
 //     гри; сама таблиця не зберігає статус перевірки по рядках — це формат
 //     числових значень, а не журнал підтверджень.
@@ -37,8 +37,8 @@
 //
 // EN: Mechanism for applying the BF2 layout correction table.
 //
-//     The correction table (Data/Bf2LayoutTable.txt) holds 566 rows across
-//     34 screens. Each row is added only after measuring a real in-game
+//     The correction table (Data/Bf2LayoutTable.txt) holds 1017 rows across
+//     72 screens. Each row is added only after measuring a real in-game
 //     screenshot; the table itself does not store a per-row verification
 //     status — it is a format of numeric values, not a confirmation log.
 //
@@ -124,26 +124,24 @@ public static class AnchorInheritancePatchBuilder
     // UA: Псевдошлях "@screen" — поля пишуться НАПРЯМУ в КОРІНЬ таблиці
     //     екрана (параметр функції-чанка), без жодного проходу GETTABLE.
     //     Потрібен для скалярних полів, що лежать прямо на екрані, а не у
-    //     вкладеному віджеті — приклад: `movieX`/`movieY`/`movieW`/`movieH`
-    //     на `ifs_missionselect`, які читає `ifelem_shellscreen_fnStartMovie`
-    //     напряму з `this.movieX` тощо (без проміжної таблиці-віджета).
+    //     вкладеному віджеті (рушій чи скрипт читає їх напряму з `this.<поле>`,
+    //     без проміжної таблиці-віджета).
     //     Звичайний шлях (навіть однослівний, напр. "_Tabs") ЗАВЖДИ робить
     //     перший GETTABLE від кореня — цього не уникнути без спецшляху, бо
     //     `BuildChunkFunction` трактує Path як шлях ДО контейнера, чиї поля
     //     потім пишуться (SETTABLE виконується на РЕЗУЛЬТАТІ проходу, не на
-    //     самому корені). Формат рядка: "ecran\t@screen\tmovieX=200;...".
+    //     самому корені). Формат рядка: "екран\t@screen\tполе=число;...".
     // EN: The "@screen" pseudo-path — fields are written DIRECTLY onto the
     //     screen table's ROOT (the chunk function's parameter), with no
     //     GETTABLE walk at all. Needed for scalar fields that live straight
-    //     on the screen, not inside a nested widget — example:
-    //     `movieX`/`movieY`/`movieW`/`movieH` on `ifs_missionselect`, read by
-    //     `ifelem_shellscreen_fnStartMovie` directly off `this.movieX` etc.
-    //     (no intermediate widget table). An ordinary path (even a one-word
-    //     one like "_Tabs") ALWAYS does a first GETTABLE off the root — that
-    //     cannot be avoided without a special path, because
-    //     `BuildChunkFunction` treats Path as the route TO a container whose
-    //     fields then get written (SETTABLE runs on the walk's RESULT, not on
-    //     the root itself). Row format: "screen\t@screen\tmovieX=200;...".
+    //     on the screen, not inside a nested widget (the engine or a script
+    //     reads them directly off `this.<field>`, with no intermediate widget
+    //     table). An ordinary path (even a one-word one like "_Tabs") ALWAYS
+    //     does a first GETTABLE off the root — that cannot be avoided without
+    //     a special path, because `BuildChunkFunction` treats Path as the
+    //     route TO a container whose fields then get written (SETTABLE runs
+    //     on the walk's RESULT, not on the root itself). Row format:
+    //     "screen\t@screen\tfield=number;...".
     private const string ScreenPath = "@screen";
 
     // -------------------------------------------------------------------------
@@ -187,43 +185,90 @@ public static class AnchorInheritancePatchBuilder
     // UA: Псевдошлях "@postscreen" — ПІСЛЯ-БУДОВНИЙ близнюк "@screen": поля
     //     пишуться SETTABLE напряму в КОРІНЬ таблиці екрана (без GETTABLE-
     //     проходу, без 'cp'), але ПІСЛЯ оригінального AddIFScreen, а не до
-    //     нього. Потрібен через порядок запису у власному конструкторі
-    //     екрана (f35, ifs_missionselect):
-    //         pc92: SETTABLE R0["movieW"] = 510.0   (константа, БЕЗУМОВНО)
-    //         pc93: SETTABLE R0["movieH"] = 400.0   (константа, БЕЗУМОВНО)
-    //     — жодного TEST/TESTSET перед цими інструкціями немає: конструктор
-    //     переписує movieW/movieH БЕЗУМОВНО, не питаючи "чи вже є
-    //     значення". "@screen" (пре-білд) пише СВОЄ значення ДО виклику
-    //     оригінального AddIFScreen — тобто до того, як f35 узагалі
-    //     запуститься, — тож щойно AddIFScreen делегує керування f35, цей
-    //     запис одразу затирається літералами 510/400. "@post:" тут не
-    //     підходить: він завжди робить GETTABLE-прохід по шляху, трактуючи
-    //     перший сегмент як вкладений об'єкт з дескриптором 'cp' або
-    //     подальшими полями — а movieW/movieH є ПРОСТИМ ЧИСЛОМ на корені,
-    //     не таблицею й не віджетом, тож GETTABLE R0["movieW"] дав би число,
-    //     а не таблицю для подальшого проходу. Формат рядка:
-    //     "екран\t@postscreen\tmovieW=125;...".
+    //     нього. Потрібен для полів, які власний конструктор екрана
+    //     присвоює БЕЗУМОВНО (без TEST/TESTSET): запис "@screen" іде ДО
+    //     виклику AddIFScreen і конструктор його затирає. "@post:" не
+    //     підходить: він завжди робить GETTABLE-прохід, трактуючи перший
+    //     сегмент як вкладений об'єкт з дескриптором 'cp' або подальшими
+    //     полями, а скалярне поле на корені — ПРОСТЕ ЧИСЛО, не таблиця й не
+    //     віджет. Формат рядка: "екран\t@postscreen\tполе=число;...".
     // EN: The "@postscreen" pseudo-path — the AFTER-BUILD twin of "@screen":
     //     fields are written via SETTABLE straight onto the screen table's
     //     root (no GETTABLE walk, no 'cp'), but AFTER the original
-    //     AddIFScreen call rather than before it. Needed because of the
-    //     write order inside the screen's own constructor (f35,
-    //     ifs_missionselect):
-    //         pc92: SETTABLE R0["movieW"] = 510.0   (literal, UNCONDITIONAL)
-    //         pc93: SETTABLE R0["movieH"] = 400.0   (literal, UNCONDITIONAL)
-    //     — no TEST/TESTSET guards this pair at all: the constructor
-    //     overwrites movieW/movieH unconditionally, never checking "is a
-    //     value already there". "@screen" (pre-build) writes its value
-    //     BEFORE the original AddIFScreen call — i.e. before f35 even runs —
-    //     so the moment AddIFScreen hands off to f35, that write is
-    //     immediately clobbered by the 510/400 literals. "@post:" cannot
+    //     AddIFScreen call rather than before it. Needed for fields that the
+    //     screen's own constructor assigns UNCONDITIONALLY (no
+    //     TEST/TESTSET): a "@screen" write happens BEFORE the AddIFScreen
+    //     call and the constructor overwrites it. "@post:" cannot
     //     substitute: it always performs a GETTABLE walk that treats the
-    //     first path segment as a nested object holding a 'cp' handle or
-    //     further fields — but movieW/movieH are PLAIN NUMBERS on the root,
-    //     not a table or widget, so GETTABLE R0["movieW"] would yield a
-    //     number where a table is expected for the walk to continue. Row
-    //     format: "screen\t@postscreen\tmovieW=125;...".
+    //     first segment as a nested object holding a 'cp' handle or further
+    //     fields, while a scalar field on the root is a PLAIN NUMBER, not a
+    //     table or widget. Row format: "screen\t@postscreen\tfield=number;...".
     private const string PostScreenPath = "@postscreen";
+
+    // -------------------------------------------------------------------------
+    // UA: Псевдошлях "@mapsort" — порядок мап у списках «Миттєвого бою» та
+    //     мультиплеєра. Скрипт `missionlist` (shell.lvl) сортує
+    //     `sp_missionselect_listbox_contents` і `mp_missionselect_listbox_contents`
+    //     через table.sort з порівнянням `missionlist_mapsorthelper(a, b)`:
+    //       ScriptCB_ununicode(missionlist_GetLocalizedMapName(a.mapluafile)) <
+    //       ScriptCB_ununicode(missionlist_GetLocalizedMapName(b.mapluafile))
+    //     (missionlist root/1). `ScriptCB_ununicode` відкидає символи поза
+    //     ASCII, тож від кириличної назви лишаються тільки пробіли, дефіси й
+    //     цифри: однослівні назви дають порожній ключ, назви з пробілом — " ",
+    //     «Тантив IV» — " IV", назви з дефісом — "-", «Явін-4» — "-4";
+    //     усередині кожної групи порядок довільний.
+    //     Сортування виконується ОДИН раз за сеанс: після нього скрипт ставить
+    //     `gSortedMaplist = 1` (missionlist root/2 pc0-14).
+    //
+    //     Рядок "екран\t@mapsort\t<префікс>=<ранг>;..." задає ранг кожної мапи
+    //     за чотирма першими символами `mapluafile` (cor1, kas2, spa3 …; усі 24
+    //     префікси стандартних мап різні). Після AddIFScreen цього екрана
+    //     гачок один раз (за відсутності резервного глобала) зберігає
+    //     оригінал у `missionlist_mapsorthelper_ws_o`, кладе таблицю рангів у
+    //     `missionlist_mapsortrank_ws` і ставить нове порівняння:
+    //       • обидві мапи мають ранг — менший ранг раніше;
+    //       • ранг має лише одна — вона раніше (мапи з рангом стоять перед
+    //         рештою);
+    //       • рангу не має жодна (додаткові мапи) або `mapluafile` відсутнє —
+    //         оригінальне порівняння.
+    //     `missionlist` завантажується в shell_interface раніше за всі екрани
+    //     `ifs_*` (pc123 проти pc177+), тож на момент AddIFScreen оригінал уже
+    //     визначено, а сортування ще не відбулося (воно запускається, коли
+    //     гравець відкриває список мап).
+    // EN: The "@mapsort" pseudo-path — the order of maps in the Instant Action
+    //     and multiplayer lists. The `missionlist` script (shell.lvl) sorts
+    //     `sp_missionselect_listbox_contents` and `mp_missionselect_listbox_contents`
+    //     with table.sort and the comparison `missionlist_mapsorthelper(a, b)`:
+    //       ScriptCB_ununicode(missionlist_GetLocalizedMapName(a.mapluafile)) <
+    //       ScriptCB_ununicode(missionlist_GetLocalizedMapName(b.mapluafile))
+    //     (missionlist root/1). `ScriptCB_ununicode` drops every non-ASCII
+    //     character, so a Cyrillic name keeps only its spaces, hyphens and
+    //     digits: one-word names yield an empty key, names with a space — " ",
+    //     «Тантив IV» — " IV", hyphenated names — "-", «Явін-4» — "-4"; within
+    //     each group the order is arbitrary.
+    //     The sort runs ONCE per session: afterwards the script sets
+    //     `gSortedMaplist = 1` (missionlist root/2 pc0-14).
+    //
+    //     The row "screen\t@mapsort\t<prefix>=<rank>;..." gives each map a rank
+    //     by the first four characters of `mapluafile` (cor1, kas2, spa3 …; all
+    //     24 stock map prefixes are distinct). After this screen's AddIFScreen
+    //     the hook, once (while the backup global is absent), saves the
+    //     original in `missionlist_mapsorthelper_ws_o`, puts the rank table in
+    //     `missionlist_mapsortrank_ws` and installs the new comparison:
+    //       • both maps have a rank — the lower rank first;
+    //       • only one has a rank — it comes first (ranked maps precede the
+    //         rest);
+    //       • neither has a rank (additional maps) or `mapluafile` is missing —
+    //         the original comparison.
+    //     `missionlist` is loaded in shell_interface before every `ifs_*`
+    //     screen (pc123 vs pc177+), so at AddIFScreen time the original is
+    //     already defined and the sort has not yet happened (it runs when the
+    //     player opens the map list).
+    // -------------------------------------------------------------------------
+    private const string MapSortPath = "@mapsort";
+    private const string MapSortHelperFn = "missionlist_mapsorthelper";
+    private const string MapSortRankGlobal = "missionlist_mapsortrank_ws";
+    private const int MapSortPrefixLength = 4;
 
     // -------------------------------------------------------------------------
     // UA: Дозволені операції «після побудови»: псевдополе -> (натив, скільки
@@ -351,6 +396,58 @@ public static class AnchorInheritancePatchBuilder
             ["winsize"] = ("gButtonWindow_fnSetSize", 2),
             ["bordersize"] = ("BorderRectSkin_fnSetSize", 2),
         };
+
+    // -------------------------------------------------------------------------
+    // UA: "bgw" — ширина ПІДКЛАДКИ (фону) мітки-кнопки після побудови. Фон
+    //     кнопок NewPCIFButton/NewPCIF_Basic_Button — не окремий об'єкт, а
+    //     власний фон мітки "flashy"-тексту (bgleft/bgmid/bgright =
+    //     BF2_basicbutton_*), ширину якого задає поле bg_width під час
+    //     створення: interface_util root/42 pc9-15 викликає
+    //       ScriptCB_IFFlashyText_Setup(startdelay, bg_flipped, bg_width,
+    //                                   bg_xflipped, bg_tail)
+    //     Для ВЖЕ створеного об'єкта гра має готовий метод IFFlashyText_fnSetup
+    //     (interface_util root/20, numparams=6):
+    //       if self.cp then ScriptCB_IFFlashyText_Setup(self.cp, a2, a3, a4, a5, a6)
+    //     і сама ним користується після побудови: ifelem_button root/7
+    //     pc186-194 — IFFlashyText_fnSetup(label, 0.1*i, nil, ширина, nil, 0),
+    //     тобто вертикальні меню гри підганяють ширину фону під виміряний
+    //     текст саме так. Порядок аргументів звірено з обома місцями виклику.
+    //     Емітується: IFFlashyText_fnSetup(self, 0, nil, bgw, nil, bgtail).
+    //     bgtail — необов'язкове поле, за замовчуванням 20: саме це значення
+    //     NewPCIF_Basic_Button (ifelem_roundbutton root/12 pc1-7) ставить
+    //     кнопкам без власного bg_width.
+    //     Фон центрується так само, як текстове поле, тож разом із "bgw"
+    //     потрібні "textw"/"textw2" і "posx" = -textw/2 (IFObj_fnSetPos
+    //     задає x АБСОЛЮТНО, а текстове поле кнопки прив'язане лівим краєм до
+    //     x). Зона кліку (fHotspotW = btnw) цим не змінюється.
+    // EN: "bgw" — the BACKDROP (background) width of a button label after
+    //     build. The backdrop of NewPCIFButton/NewPCIF_Basic_Button buttons is
+    //     not a separate object but the label's own "flashy" text background
+    //     (bgleft/bgmid/bgright = BF2_basicbutton_*), whose width comes from
+    //     the bg_width field at creation: interface_util root/42 pc9-15 calls
+    //       ScriptCB_IFFlashyText_Setup(startdelay, bg_flipped, bg_width,
+    //                                   bg_xflipped, bg_tail)
+    //     For an ALREADY created object the game ships the method
+    //     IFFlashyText_fnSetup (interface_util root/20, numparams=6):
+    //       if self.cp then ScriptCB_IFFlashyText_Setup(self.cp, a2, a3, a4, a5, a6)
+    //     and uses it after build itself: ifelem_button root/7 pc186-194 —
+    //     IFFlashyText_fnSetup(label, 0.1*i, nil, width, nil, 0), i.e. the
+    //     game's vertical menus fit the backdrop width to the measured text
+    //     exactly this way. Argument order checked against both call sites.
+    //     Emitted: IFFlashyText_fnSetup(self, 0, nil, bgw, nil, bgtail).
+    //     bgtail is optional, default 20: the value NewPCIF_Basic_Button
+    //     (ifelem_roundbutton root/12 pc1-7) gives buttons without their own
+    //     bg_width.
+    //     The backdrop is centred the same way as the text field, so "bgw"
+    //     needs "textw"/"textw2" and "posx" = -textw/2 alongside it
+    //     (IFObj_fnSetPos sets x ABSOLUTELY, and a button's text field is
+    //     anchored to x by its left edge). The click area (fHotspotW = btnw)
+    //     is not changed by this.
+    // -------------------------------------------------------------------------
+    private const string FlashyBgWidthOp = "bgw";
+    private const string FlashyBgTailOp = "bgtail";
+    private const string FlashySetupFn = "IFFlashyText_fnSetup";
+    private const float FlashyBgTailDefault = 20f;
 
     // -------------------------------------------------------------------------
     // UA: Окрема операція: зсунути елемент по ВЕРТИКАЛІ, не чіпаючи x і z.
@@ -590,14 +687,14 @@ public static class AnchorInheritancePatchBuilder
     // UA: ХУК НА Popup_Tutorial.SetPage (вікно довідки, кнопки Назад/OK/Далі).
     //
     //     ЧОМУ НЕ "@post": одноразовий "@post" пише значення ОДИН РАЗ, одразу
-    //     після побудови екрана. Дизасемблювання конструктора попапу показало:
+    //     після побудови екрана. Дизасемблювання конструктора попапу показує:
     //     Popup_Tutorial.SetPage(self, page) викликається на КОЖНУ зміну
     //     сторінки (і на перший показ попапу теж) і сама, зсередини, викликає
     //     gPopup_fnSetTitle_Internal — той нативно переукладає title/buttons на
     //     основі РЕАЛЬНОГО виміру тексту (IFText_fnGetDisplayRect). Тобто
     //     будь-який одноразовий запис миттєво затирається першим-таки викликом
-    //     SetPage. Це саме та причина, чому спроба
-    //     "@post:@Popup_Tutorial winsize=..." дала нульовий ефект.
+    //     SetPage. Тому "@post:@Popup_Tutorial winsize=..."
+    //     не має ефекту.
     //
     //     РІШЕННЯ: не одноразовий запис, а ПОСТІЙНА ОБГОРТКА самого SetPage,
     //     що виконується на КОЖЕН його виклик:
@@ -610,8 +707,8 @@ public static class AnchorInheritancePatchBuilder
     //       3) ставить Popup_Tutorial.buttons ПІСЛЯ виміряного низу тексту
     //          (y2) плюс невеликий запас, через уже підтверджений
     //          IFObj_fnSetPos.
-    //     Це "страхувальний" фікс НАД власною (як з'ясувалось, недостатньою)
-    //     логікою рушія, а не заміна її.
+    //     Це страхувальний фікс НАД власною логікою рушія (її недостатньо
+    //     для довгих сторінок), а не заміна її.
     //
     //     ВСТАНОВЛЕННЯ: Popup_Tutorial — глобал, якого може ще не існувати в
     //     момент роботи кореневого інсталятора (він живе в скрипті
@@ -622,21 +719,23 @@ public static class AnchorInheritancePatchBuilder
     //     Popup_Tutorial._ws_o_SetPage вже існує — вихід одразу, повторне
     //     обгортання неможливе.
     //
-    //     СТАТУС: НЕ ПРОТЕСТОВАНО. Запас (margin) обчислено з логіки (невеликий
-    //     проміжок після реально виміряного низу тексту), АЛЕ не підтверджено
-    //     знімком гри — обов'язково перевірити на всіх трьох вкладках ГЗ
-    //     (Перемістити/Бонус/Бійці) перед тим, як вважати завершеним.
+    //     РЕЗУЛЬТАТ У ГРІ (1920×1080): сторінка довідки 4/7 «Переміщення
+    //     флотів» (вкладка «Перемістити» Галактичного завоювання) — сторінка з
+    //     найдовшим текстом довідки: абзац лежить у межах вікна, кнопки
+    //     Назад/OK/Далі стоять одразу під текстом без перекриття. Обгортка
+    //     міряє реальну висоту тексту на кожен виклик, тож так само працює й
+    //     для коротших сторінок.
     // EN: HOOK ON Popup_Tutorial.SetPage (the help window, Back/OK/Next
     //     buttons).
     //
     //     WHY NOT "@post": a one-time "@post" write runs ONCE, right after
-    //     the screen builds. Disassembling the popup's own constructor showed:
+    //     the screen builds. Disassembling the popup's own constructor shows:
     //     Popup_Tutorial.SetPage(self, page) runs on EVERY page change (and on
     //     the popup's first show too) and itself calls
     //     gPopup_fnSetTitle_Internal, which natively re-lays-out title/buttons
     //     from a REAL text measurement (IFText_fnGetDisplayRect). So any
     //     one-time write gets overwritten by the very first SetPage call.
-    //     That is exactly why "@post:@Popup_Tutorial winsize=..." had zero
+    //     Therefore "@post:@Popup_Tutorial winsize=..." has no
     //     effect.
     //
     //     FIX: not a one-time write, but a PERMANENT WRAPPER around SetPage
@@ -650,8 +749,8 @@ public static class AnchorInheritancePatchBuilder
     //       3) places Popup_Tutorial.buttons AFTER the measured text bottom
     //          (y2) plus a small margin, via the already-confirmed
     //          IFObj_fnSetPos.
-    //     This is a safety-net fix LAYERED ON TOP of the engine's own (as it
-    //     turns out, insufficient) logic, not a replacement for it.
+    //     This is a safety-net fix LAYERED ON TOP of the engine's own logic (which
+    //     is insufficient for long pages), not a replacement for it.
     //
     //     INSTALLATION: Popup_Tutorial is a global that may not exist yet
     //     when the root installer runs (it lives in the popup_tutorial
@@ -661,10 +760,12 @@ public static class AnchorInheritancePatchBuilder
     //     itself idempotent: if Popup_Tutorial._ws_o_SetPage already exists,
     //     it exits immediately — double-wrapping is impossible.
     //
-    //     STATUS: NOT TESTED. The margin is derived from reasoning (a small gap
-    //     after the actually-measured text bottom), NOT yet confirmed by an
-    //     in-game screenshot — must be checked on all three GC tabs
-    //     (Move/Bonus/Troops) before this is considered done.
+    //     IN-GAME RESULT (1920×1080): help page 4/7 «Fleet movement» (the
+    //     «Move» tab of Galactic Conquest) — the page with the longest help
+    //     text: the paragraph sits inside the window, the Back/OK/Next
+    //     buttons stand right under the text with no overlap. The wrapper
+    //     measures the real text height on every call, so shorter pages are
+    //     handled the same way.
     // -------------------------------------------------------------------------
     private const string PopupTutorialGlobal = "Popup_Tutorial";
     private const string SetPageField = "SetPage";
@@ -1517,7 +1618,7 @@ public static class AnchorInheritancePatchBuilder
     // -------------------------------------------------------------------------
     private static LuaFunctionPrototype BuildPostChunkFunction(List<WidgetEntry> entries, string path)
     {
-        var b = new Lua50FunctionBuilder { NumParams = 1, IsVararg = 0, MaxStackSize = 8 };
+        var b = new Lua50FunctionBuilder { NumParams = 1, IsVararg = 0, MaxStackSize = 9 };
         var k = new ConstantCache(b);
 
         foreach (var entry in entries)
@@ -1624,6 +1725,33 @@ public static class AnchorInheritancePatchBuilder
                 b.PatchJump(skipPos, b.NextPc);
             }
 
+            // UA: ширина фону мітки: IFFlashyText_fnSetup(self, 0, nil, bgw, nil,
+            //     bgtail) — див. коментар біля FlashyBgWidthOp. r2..r8, тому
+            //     MaxStackSize цієї функції = 9. Якщо методу нема (інша
+            //     збірка гри) — крок пропускається.
+            // EN: label backdrop width: IFFlashyText_fnSetup(self, 0, nil, bgw,
+            //     nil, bgtail) — see the comment near FlashyBgWidthOp. Uses
+            //     r2..r8, hence MaxStackSize = 9 for this function. If the
+            //     method is absent (another game build), the step is skipped.
+            if (fields.TryGetValue(FlashyBgWidthOp, out var bgWidth))
+            {
+                var bgTail = fields.TryGetValue(FlashyBgTailOp, out var bgTailValue) ? bgTailValue : FlashyBgTailDefault;
+
+                b.EmitABx(LuaOpcode.GetGlobal, a: 2, bx: k.Str(FlashySetupFn));
+                b.EmitTest(register: 2, c: 0);
+                var skipBg = b.EmitJumpPlaceholder();
+
+                b.Emit(LuaOpcode.Move, a: 3, b: 1);                  // self
+                b.EmitABx(LuaOpcode.LoadK, a: 4, bx: k.Num(0f));    // startdelay
+                b.Emit(LuaOpcode.LoadNil, a: 5, b: 5);               // bg_flipped
+                b.EmitABx(LuaOpcode.LoadK, a: 6, bx: k.Num(bgWidth)); // bg_width
+                b.Emit(LuaOpcode.LoadNil, a: 7, b: 7);               // bg_xflipped
+                b.EmitABx(LuaOpcode.LoadK, a: 8, bx: k.Num(bgTail)); // bg_tail
+                b.Emit(LuaOpcode.Call, a: 2, b: 7, c: 1);            // 6 аргументів / 6 args
+
+                b.PatchJump(skipBg, b.NextPc);
+            }
+
             // UA: далі — НАТИВИ, яким потрібен дескриптор. Якщо у віджета нема
             //     'cp', виходимо: але Lua-методи вище вже відпрацювали.
             // EN: now the NATIVES, which need the handle. If the widget has no
@@ -1714,6 +1842,167 @@ public static class AnchorInheritancePatchBuilder
             throw new InvalidOperationException(
                 $"Перевищено ліміт адресації RK / RK addressing limit exceeded: {k.Count}");
 
+        return b.Build(path: path);
+    }
+
+    // -------------------------------------------------------------------------
+    // UA: Функція "@mapsort": f(t). Один раз (поки резервного глобала нема і
+    //     оригінальне порівняння існує) зберігає оригінал, записує таблицю
+    //     рангів і ставить нове порівняння (див. MapSortPath). Ранги — поля
+    //     рядка; однакові ранги в одному рядку відхиляються.
+    // EN: The "@mapsort" function: f(t). Once (while the backup global is
+    //     absent and the original comparison exists) it saves the original,
+    //     writes the rank table and installs the new comparison (see
+    //     MapSortPath). The ranks are the row's fields; duplicate ranks
+    //     within a row are rejected.
+    // -------------------------------------------------------------------------
+    private static LuaFunctionPrototype BuildMapSortInstallFunction(List<WidgetEntry> entries, string path)
+    {
+        var ranks = entries.SelectMany(e => e.Fields).ToList();
+        foreach (var (name, _) in ranks)
+        {
+            if (name.Length != MapSortPrefixLength || name.Any(c => c > 0x7F))
+                throw new InvalidDataException(
+                    $"UA: {TableResource}: \"{MapSortPath}\": префікс \"{name}\" має бути {MapSortPrefixLength} " +
+                    $"ASCII-символи. / EN: {TableResource}: \"{MapSortPath}\": prefix \"{name}\" must be " +
+                    $"{MapSortPrefixLength} ASCII characters.");
+        }
+        if (ranks.Select(r => r.Key).Distinct(StringComparer.Ordinal).Count() != ranks.Count ||
+            ranks.Select(r => r.Value).Distinct().Count() != ranks.Count)
+            throw new InvalidDataException(
+                $"UA: {TableResource}: \"{MapSortPath}\": префікси й ранги мають бути унікальними. / " +
+                $"EN: {TableResource}: \"{MapSortPath}\": prefixes and ranks must be unique.");
+
+        var b = new Lua50FunctionBuilder { NumParams = 1, IsVararg = 0, MaxStackSize = 4 };
+        var k = new ConstantCache(b);
+
+        // UA: уже встановлено? (c=1 -> перехід, коли резерв Є)
+        // EN: already installed? (c=1 -> jump when the backup EXISTS)
+        b.EmitABx(LuaOpcode.GetGlobal, a: 1, bx: k.Str(MapSortHelperFn + HookBackupSuffix));
+        b.EmitTest(register: 1, c: 1);
+        var installed = b.EmitJumpPlaceholder();
+
+        // UA: оригіналу немає — нічого не робимо
+        // EN: no original — do nothing
+        b.EmitABx(LuaOpcode.GetGlobal, a: 1, bx: k.Str(MapSortHelperFn));
+        b.EmitTest(register: 1, c: 0);
+        var noOriginal = b.EmitJumpPlaceholder();
+
+        b.EmitABx(LuaOpcode.SetGlobal, a: 1, bx: k.Str(MapSortHelperFn + HookBackupSuffix));
+
+        b.Emit(LuaOpcode.NewTable, a: 2, b: 0, c: 0);
+        foreach (var (name, value) in ranks)
+            b.Emit(LuaOpcode.SetTable, a: 2,
+                b: Lua50FunctionBuilder.Rk(k.Str(name)),
+                c: Lua50FunctionBuilder.Rk(k.Num(value)));
+        b.EmitABx(LuaOpcode.SetGlobal, a: 2, bx: k.Str(MapSortRankGlobal));
+
+        var comparator = b.AddNestedPrototype(BuildMapSortComparator($"{path}/compare"));
+        b.EmitABx(LuaOpcode.Closure, a: 3, bx: comparator);
+        b.EmitABx(LuaOpcode.SetGlobal, a: 3, bx: k.Str(MapSortHelperFn));
+
+        b.PatchJump(installed, b.NextPc);
+        b.PatchJump(noOriginal, b.NextPc);
+        b.Emit(LuaOpcode.Return, a: 0, b: 1);
+
+        if (k.Count >= 383)
+            throw new InvalidOperationException(
+                $"Перевищено ліміт адресації RK / RK addressing limit exceeded: {k.Count}");
+
+        return b.Build(path: path);
+    }
+
+    // -------------------------------------------------------------------------
+    // UA: Порівняння f(a, b) для table.sort (див. MapSortPath). Регістри:
+    //     r0 = a, r1 = b, r2 = таблиця рангів, r3/r4 = mapluafile, r5/r6 =
+    //     ранги, r7..r9 — робочі. Еквівалент Lua:
+    //       local t = missionlist_mapsortrank_ws
+    //       if t and a.mapluafile and b.mapluafile then
+    //         local ka = t[string.sub(a.mapluafile, 1, 4)]
+    //         local kb = t[string.sub(b.mapluafile, 1, 4)]
+    //         if ka then
+    //           if kb then return ka < kb end
+    //           return true
+    //         end
+    //         if kb then return false end
+    //       end
+    //       return missionlist_mapsorthelper_ws_o(a, b)
+    // EN: The comparison f(a, b) for table.sort (see MapSortPath). Registers:
+    //     r0 = a, r1 = b, r2 = the rank table, r3/r4 = mapluafile, r5/r6 =
+    //     ranks, r7..r9 — scratch. Lua equivalent: see the UA block above.
+    // -------------------------------------------------------------------------
+    private static LuaFunctionPrototype BuildMapSortComparator(string path)
+    {
+        var b = new Lua50FunctionBuilder { NumParams = 2, IsVararg = 0, MaxStackSize = 10 };
+        var k = new ConstantCache(b);
+        var toFallback = new List<int>();
+
+        b.EmitABx(LuaOpcode.GetGlobal, a: 2, bx: k.Str(MapSortRankGlobal));
+        b.EmitTest(register: 2, c: 0);
+        toFallback.Add(b.EmitJumpPlaceholder());
+
+        b.Emit(LuaOpcode.GetTable, a: 3, b: 0, c: Lua50FunctionBuilder.Rk(k.Str("mapluafile")));
+        b.EmitTest(register: 3, c: 0);
+        toFallback.Add(b.EmitJumpPlaceholder());
+
+        b.Emit(LuaOpcode.GetTable, a: 4, b: 1, c: Lua50FunctionBuilder.Rk(k.Str("mapluafile")));
+        b.EmitTest(register: 4, c: 0);
+        toFallback.Add(b.EmitJumpPlaceholder());
+
+        // UA: r[dst] = t[string.sub(r[src], 1, 4)]; займає r[dst]..r[dst+3]
+        // EN: r[dst] = t[string.sub(r[src], 1, 4)]; uses r[dst]..r[dst+3]
+        void EmitRank(int dst, int src)
+        {
+            b.EmitABx(LuaOpcode.GetGlobal, a: dst, bx: k.Str("string"));
+            b.Emit(LuaOpcode.GetTable, a: dst, b: dst, c: Lua50FunctionBuilder.Rk(k.Str("sub")));
+            b.Emit(LuaOpcode.Move, a: dst + 1, b: src);
+            b.EmitABx(LuaOpcode.LoadK, a: dst + 2, bx: k.Num(1f));
+            b.EmitABx(LuaOpcode.LoadK, a: dst + 3, bx: k.Num(MapSortPrefixLength));
+            b.Emit(LuaOpcode.Call, a: dst, b: 4, c: 2);              // 3 аргументи, 1 результат / 3 args, 1 result
+            b.Emit(LuaOpcode.GetTable, a: dst, b: 2, c: dst);
+        }
+        EmitRank(dst: 5, src: 3);
+        EmitRank(dst: 6, src: 4);
+
+        // UA: if not ka -> kaMissing
+        // EN: if not ka -> kaMissing
+        b.EmitTest(register: 5, c: 0);
+        var kaMissing = b.EmitJumpPlaceholder();
+
+        // UA: ka є, kb нема -> true
+        // EN: ka present, kb missing -> true
+        b.EmitTest(register: 6, c: 0);
+        var returnTrue = b.EmitJumpPlaceholder();
+
+        // UA: return ka < kb (та сама послідовність, що в оригіналі root/1 pc17-21)
+        // EN: return ka < kb (the same sequence as the original root/1 pc17-21)
+        b.Emit(LuaOpcode.Lt, a: 1, b: 5, c: 6);
+        var lessTrue = b.EmitJumpPlaceholder();
+        b.Emit(LuaOpcode.LoadBool, a: 7, b: 0, c: 1);
+        b.PatchJump(lessTrue, b.NextPc);
+        b.Emit(LuaOpcode.LoadBool, a: 7, b: 1, c: 0);
+        b.Emit(LuaOpcode.Return, a: 7, b: 2);
+
+        b.PatchJump(returnTrue, b.NextPc);
+        b.Emit(LuaOpcode.LoadBool, a: 7, b: 1, c: 0);
+        b.Emit(LuaOpcode.Return, a: 7, b: 2);
+
+        // UA: ka нема: kb є -> false; kb нема -> оригінал
+        // EN: ka missing: kb present -> false; kb missing -> the original
+        b.PatchJump(kaMissing, b.NextPc);
+        b.EmitTest(register: 6, c: 0);
+        toFallback.Add(b.EmitJumpPlaceholder());
+        b.Emit(LuaOpcode.LoadBool, a: 7, b: 0, c: 0);
+        b.Emit(LuaOpcode.Return, a: 7, b: 2);
+
+        foreach (var j in toFallback) b.PatchJump(j, b.NextPc);
+        b.EmitABx(LuaOpcode.GetGlobal, a: 7, bx: k.Str(MapSortHelperFn + HookBackupSuffix));
+        b.Emit(LuaOpcode.Move, a: 8, b: 0);
+        b.Emit(LuaOpcode.Move, a: 9, b: 1);
+        b.Emit(LuaOpcode.Call, a: 7, b: 3, c: 2);                    // 2 аргументи, 1 результат / 2 args, 1 result
+        b.Emit(LuaOpcode.Return, a: 7, b: 2);
+
+        b.Emit(LuaOpcode.Return, a: 0, b: 1);
         return b.Build(path: path);
     }
 
@@ -1941,144 +2230,100 @@ public static class AnchorInheritancePatchBuilder
 
     // =========================================================================
     // UA: Фікс "оверскан фону". Вмикається прапорцем includeBackgroundSizeFix у
-    //     BuildInstallerScript — і окремою діагностичною командою
-    //     (GenerateBackgroundSizeFixShellCommand, вихід "shell_bgfix.lvl",
-    //     для точкового тестування без перезбирання основного патча), і
-    //     production-командою (GenerateAnchorFixShellCommand, вихід
-    //     "shell_layout.lvl"). За замовчуванням прапорець лишається `false`
-    //     (нічого не викликає сам по собі) — обидва місця виклику передають
-    //     `true` явно.
+    //     BuildInstallerScript: його передають production-команда
+    //     (GenerateAnchorFixShellCommand, вихід "shell_layout.lvl") і окрема
+    //     діагностична команда (GenerateBackgroundSizeFixShellCommand, вихід
+    //     "shell_bgfix.lvl"). За замовчуванням прапорець `false`.
     //
-    //     ЩО ПІДТВЕРДЖЕНО ЗОНДОМ widescreen: реальне
-    //     `widescreen` на 1920×1080 = 1.3333(3) = (1920/1080)/(800/600) —
-    //     точно співвідношення "екранний аспект / авторський 4:3 аспект".
-    //     Свіже дизасемблювання `ifelem_shellscreen_fnAddBackground`
-    //     (common.lvl, ifelem_shellscreen, nested[15]) дало ПОВНУ, реєстрову
-    //     картину (не лише формулу для localpos_r, а й КУДИ саме зберігається
-    //     фоновий об'єкт):
-    //         SETTABLE R0[K0('bg')] := nil                 -- pc0, обнулення
+    //     Реальне `widescreen` (4-те значення ScriptCB_GetScreenInfo) на
+    //     1920×1080 дорівнює 1.3333(3) = (1920/1080)/(800/600), тобто
+    //     "екранний аспект / авторський аспект 4:3".
+    //
+    //     Дизасемблювання `ifelem_shellscreen_fnAddBackground` (common.lvl,
+    //     ifelem_shellscreen, nested[15]):
+    //         SETTABLE R0[K0('bg')] := nil                 -- pc0
     //         ... NewIFImage(...) ...                       -- pc1-12
-    //         SETTABLE R0[K0('bg')] := R2                   -- pc12: bg = НОВИЙ NewIFImage
+    //         SETTABLE R0[K0('bg')] := R2                   -- pc12: bg = новий NewIFImage
     //         ... w,h,v,widescreen = ScriptCB_GetScreenInfo() ...  -- pc14-19
     //         bg.localpos_r := w * widescreen                -- pc20-22 (2560 при w=1920)
     //         bg.localpos_b := h                              -- pc23-24
     //         bg.uvs_b := v                                   -- pc25-26
-    //     КЛЮЧОВИЙ ФАКТ: `localpos_r`/`localpos_b`/`uvs_b` НЕ входять у
-    //     початкову конструкторську таблицю `NewIFImage` (pc2-10 туди кладуть
-    //     лише ScreenRelativeX/Y, UseSafezone, ZPos, texture, localpos_l,
-    //     localpos_t, inert) — вони дописуються ОКРЕМИМИ SETTABLE вже НА
-    //     ГОТОВИЙ повернений об'єкт (`R6 := R0['bg']`, тричі, після CALL).
-    //     Це означає: сам ВАНІЛЬНИЙ скрипт покладається на те, що запис цих
-    //     полів ПІСЛЯ створення IFImage реально впливає на рендер — інакше
-    //     гра сама не робила б так. Тобто ЩЕ ОДИН такий самий запис (доданий,
-    //     ПІСЛЯ оригіналу) має спрацювати так само надійно.
+    //     `localpos_r`/`localpos_b`/`uvs_b` не входять у конструкторську
+    //     таблицю `NewIFImage` (pc2-10 задають лише ScreenRelativeX/Y,
+    //     UseSafezone, ZPos, texture, localpos_l, localpos_t, inert): вони
+    //     дописуються окремими SETTABLE на вже повернений об'єкт
+    //     (`R6 := R0['bg']`, тричі, після CALL). Тож запис цих полів після
+    //     створення IFImage впливає на рендер, і додатковий запис після
+    //     оригіналу працює так само.
     //
-    //     Ім'я поля на екранній таблиці — буквально `bg` (підтверджено:
-    //     `ifs_missionselect` встановлює власний `t.bg_texture =
-    //     "iface_bgmeta_space"` до виклику `AddIFScreen` — дизасемблювання
-    //     shell.lvl/ifs_missionselect, root pc65 — і `NewIFShellScreen_common`
-    //     викликає `fnAddBackground(t, t.bg_texture)` лише коли
-    //     `ScriptCB_GetShellActive()` істинний; інакше `t.bg = nil`).
+    //     Поле на таблиці екрана називається `bg`: `ifs_missionselect`
+    //     задає `t.bg_texture = "iface_bgmeta_space"` до виклику
+    //     `AddIFScreen` (shell.lvl/ifs_missionselect, root pc65), а
+    //     `NewIFShellScreen_common` викликає `fnAddBackground(t,
+    //     t.bg_texture)` лише коли `ScriptCB_GetShellActive()` істинний;
+    //     інакше `t.bg = nil`.
     //
-    //     ЦЕЙ ФІКС: контейнер фону навмисно (чи ні — невідомо) будується НА
-    //     33% ШИРШИМ за екран (`w × widescreen` замість `w`), тоді як
-    //     `uvs_r`/`uvs_t` НІКОЛИ не проставляються (лишаються на заводських
-    //     значеннях `NewIFImage`). Обгортка `ifelem_shellscreen_fnAddBackground`
-    //     (глобальна функція — виявлено тим самим CLOSURE+SETGLOBAL прийомом,
-    //     іменем підтверджено в дизасемблюванні) ПІСЛЯ виклику оригіналу
-    //     примусово повертає `bg.localpos_r` до РІВНО `w` (без множника) —
-    //     той самий підхід, що й `bg.localpos_b := h` вище (яке ЖОДНОГО разу
-    //     не викликало скарг: висота фону завжди відповідала екрану, лише
-    //     ширина — ні).
+    //     Фікс: оригінал будує контейнер фону на 33% ширшим за екран
+    //     (`w × widescreen` замість `w`), а `uvs_r`/`uvs_t` лишаються на
+    //     заводських значеннях `NewIFImage`; права чверть фонової картинки
+    //     обрізається. Обгортка глобальної функції
+    //     `ifelem_shellscreen_fnAddBackground` (знайдена CLOSURE+SETGLOBAL)
+    //     після виклику оригіналу повертає `bg.localpos_r` до рівно `w`.
+    //     Висота (`bg.localpos_b := h`) множника не має й не змінюється.
     //
-    //     ПІДТВЕРДЖЕНО ЗНІМКАМИ: пікселева звірка показала, що ДО фіксу
-    //     контейнер справді на 33% ширший за екран і обрізає праву чверть
-    //     фонової картинки (обрізаний правий край); ПІСЛЯ фіксу
-    //     контент повертається, без нових дефектів. Перевірено на 4 з 7
-    //     реально знайдених значень `bg_texture` (`iface_bgmeta_space` — 8
-    //     екранів, `iface_bg_1` — 5, `single_player_campaign` — 2,
-    //     `profile_manager` — 1; разом 16 з ~20 фактичних використань
-    //     `fnAddBackground` у shell.lvl). НЕ ПЕРЕВІРЕНІ (потребують окремого
-    //     скріншот-тесту через GenerateBackgroundSizeFixShellCommand):
-    //     `single_player_conquest` (той самий код, що вже підтверджений
-    //     `single_player_campaign`, тому низький ризик), `single_player_option`
-    //     і одне динамічне значення в `ifs_tutorials`. Питання висоти закрито
-    //     аналізом без зміни коду: `localpos_b := h` не має множника в жодному
-    //     з перевірених випадків. Фікс — у production
-    //     (`GenerateAnchorFixShellCommand`/`shell_layout.lvl`), поряд з
-    //     ізольованою діагностичною збіркою для точкових тестів нових
-    //     екранів/текстур.
-    // EN: The "background overscan" fix. Enabled by an includeBackgroundSizeFix flag on
-    //     BuildInstallerScript — used both by a separate diagnostic command
-    //     (GenerateBackgroundSizeFixShellCommand, output "shell_bgfix.lvl",
-    //     for spot-testing without rebuilding the main patch) and by
-    //     the production command (GenerateAnchorFixShellCommand, output
-    //     "shell_layout.lvl"). The flag still defaults to `false` (calls
-    //     nothing on its own) — both call sites pass `true` explicitly.
+    //     Результат у грі (1920×1080): фон заповнює екран без обрізання на
+    //     екранах з `bg_texture` `iface_bgmeta_space` (8 екранів),
+    //     `iface_bg_1` (5), `single_player_campaign` (2), `profile_manager`
+    //     (1) і `single_player_option` (екран налаштувань).
+    // EN: The "background overscan" fix. Enabled by the includeBackgroundSizeFix
+    //     flag of BuildInstallerScript: it is passed by the production
+    //     command (GenerateAnchorFixShellCommand, output "shell_layout.lvl")
+    //     and by a separate diagnostic command
+    //     (GenerateBackgroundSizeFixShellCommand, output "shell_bgfix.lvl").
+    //     The flag defaults to `false`.
     //
-    //     WHAT THE widescreen PROBE CONFIRMED: the real
-    //     `widescreen` at 1920x1080 = 1.3333(3) = (1920/1080)/(800/600) —
-    //     exactly the "screen aspect / authored 4:3 aspect" ratio. A fresh
-    //     disassembly of `ifelem_shellscreen_fnAddBackground` (common.lvl,
-    //     ifelem_shellscreen, nested[15]) gave the FULL, register-precise
-    //     picture (not just the localpos_r formula, but WHERE the background
-    //     object is actually stored):
-    //         SETTABLE R0[K0('bg')] := nil                 -- pc0, cleared first
+    //     The real `widescreen` (the 4th ScriptCB_GetScreenInfo value) at
+    //     1920x1080 is 1.3333(3) = (1920/1080)/(800/600), i.e. "screen
+    //     aspect / authored 4:3 aspect".
+    //
+    //     Disassembly of `ifelem_shellscreen_fnAddBackground` (common.lvl,
+    //     ifelem_shellscreen, nested[15]):
+    //         SETTABLE R0[K0('bg')] := nil                 -- pc0
     //         ... NewIFImage(...) ...                       -- pc1-12
-    //         SETTABLE R0[K0('bg')] := R2                   -- pc12: bg = the NEW NewIFImage
+    //         SETTABLE R0[K0('bg')] := R2                   -- pc12: bg = the new NewIFImage
     //         ... w,h,v,widescreen = ScriptCB_GetScreenInfo() ...  -- pc14-19
     //         bg.localpos_r := w * widescreen                -- pc20-22 (2560 when w=1920)
     //         bg.localpos_b := h                              -- pc23-24
     //         bg.uvs_b := v                                   -- pc25-26
-    //     KEY FACT: `localpos_r`/`localpos_b`/`uvs_b` are NOT part of the
-    //     initial `NewIFImage` constructor table (pc2-10 only set
-    //     ScreenRelativeX/Y, UseSafezone, ZPos, texture, localpos_l,
-    //     localpos_t, inert) — they are added by SEPARATE SETTABLEs onto the
-    //     ALREADY-RETURNED object (`R6 := R0['bg']`, three times, after the
-    //     CALL). This means the VANILLA script itself relies on writing these
-    //     fields AFTER IFImage creation actually affecting the render —
-    //     otherwise the game wouldn't do it this way. So ONE MORE such write
-    //     (ours, AFTER the original) should work exactly as reliably.
+    //     `localpos_r`/`localpos_b`/`uvs_b` are not part of the `NewIFImage`
+    //     constructor table (pc2-10 set only ScreenRelativeX/Y, UseSafezone,
+    //     ZPos, texture, localpos_l, localpos_t, inert): they are added by
+    //     separate SETTABLEs onto the already-returned object (`R6 :=
+    //     R0['bg']`, three times, after the CALL). So writing these fields
+    //     after the IFImage is created affects the render, and one more
+    //     write after the original works the same way.
     //
-    //     The field name on the screen table is literally `bg` (confirmed:
-    //     `ifs_missionselect` sets its own `t.bg_texture =
-    //     "iface_bgmeta_space"` before calling `AddIFScreen` — disassembly of
-    //     shell.lvl/ifs_missionselect, root pc65 — and
+    //     The field on the screen table is named `bg`: `ifs_missionselect`
+    //     sets `t.bg_texture = "iface_bgmeta_space"` before calling
+    //     `AddIFScreen` (shell.lvl/ifs_missionselect, root pc65), and
     //     `NewIFShellScreen_common` calls `fnAddBackground(t, t.bg_texture)`
-    //     only when `ScriptCB_GetShellActive()` is true; otherwise `t.bg =
-    //     nil`).
+    //     only when `ScriptCB_GetShellActive()` is true; otherwise
+    //     `t.bg = nil`.
     //
-    //     THIS FIX: the background container is built (whether deliberately
-    //     or not — unknown) 33% WIDER than the screen (`w x widescreen`
-    //     instead of `w`), while `uvs_r`/`uvs_t` are NEVER set (staying at
-    //     `NewIFImage`'s factory defaults). The wrapper around
-    //     `ifelem_shellscreen_fnAddBackground` (a global function — found by
-    //     the same CLOSURE+SETGLOBAL technique, name confirmed by
-    //     disassembly), AFTER the original runs, forces `bg.localpos_r` back
-    //     to EXACTLY `w` (no multiplier) — the same approach as
-    //     `bg.localpos_b := h` above (which has NEVER drawn a complaint: the
-    //     background's height always matched the screen, only its width
-    //     didn't).
+    //     The fix: the original builds the background container 33% wider
+    //     than the screen (`w x widescreen` instead of `w`) while
+    //     `uvs_r`/`uvs_t` stay at `NewIFImage`'s factory defaults; the right
+    //     quarter of the background picture is clipped. The wrapper around
+    //     the global function `ifelem_shellscreen_fnAddBackground` (found
+    //     via CLOSURE+SETGLOBAL) sets `bg.localpos_r` back to exactly `w`
+    //     after the original returns. The height (`bg.localpos_b := h`) has
+    //     no multiplier and is not changed.
     //
-    //     CONFIRMED BY SCREENSHOTS: a pixel-level comparison showed that
-    //     BEFORE the fix the container really is 33% wider than the screen
-    //     and clips the right quarter of the background artwork (a clipped
-    //     right edge); AFTER the fix the content comes back, with no new
-    //     defects.
-    //     Verified on 4 of 7 actually-found `bg_texture` values
-    //     (`iface_bgmeta_space` — 8 screens, `iface_bg_1` — 5,
-    //     `single_player_campaign` — 2, `profile_manager` — 1; 16 of ~20
-    //     actual `fnAddBackground` usages in shell.lvl total). NOT VERIFIED
-    //     (need a separate screenshot test via
-    //     GenerateBackgroundSizeFixShellCommand): `single_player_conquest`
-    //     (same code path as the already-confirmed `single_player_campaign`,
-    //     so low risk), `single_player_option`, and one dynamic value in
-    //     `ifs_tutorials`. The height question is closed by analysis, no code
-    //     change: `localpos_b := h`
-    //     has no multiplier in any checked case. The fix is
-    //     in production (`GenerateAnchorFixShellCommand`/`shell_layout.lvl`),
-    //     alongside the isolated diagnostic build kept for spot-testing new
-    //     screens/textures.
+    //     In-game result (1920x1080): the background fills the screen with
+    //     no clipping on screens with `bg_texture` `iface_bgmeta_space` (8
+    //     screens), `iface_bg_1` (5), `single_player_campaign` (2),
+    //     `profile_manager` (1) and `single_player_option` (the options
+    //     screen).
     // =========================================================================
     private const string BgFixFn = "ifelem_shellscreen_fnAddBackground";
     private const string BgFixBackupField = "ifelem_shellscreen_fnAddBackground_ws_o";
@@ -2225,7 +2470,8 @@ public static class AnchorInheritancePatchBuilder
             var pre = Table[screen].Where(e => !e.Path.StartsWith(PostPrefix, StringComparison.Ordinal)
                                             && !e.Path.StartsWith(HookPrefix, StringComparison.Ordinal)
                                             && !e.Path.StartsWith(InitListPrefix, StringComparison.Ordinal)
-                                            && e.Path != PostScreenPath)
+                                            && e.Path != PostScreenPath
+                                            && e.Path != MapSortPath)
                                    .OrderBy(e => e.Path, StringComparer.Ordinal).ToList();
             if (pre.Count == 0) continue;
 
@@ -2481,6 +2727,32 @@ public static class AnchorInheritancePatchBuilder
             b.PatchJump(nextScreen, b.NextPc);
         }
         foreach (var j in postScreenTail) b.PatchJump(j, b.NextPc);
+
+        // ---------------------------------------------------------------------
+        // UA: "@mapsort" — та сама точка (ПІСЛЯ CALL оригіналу, ДО RETURN):
+        //     встановлення порівняння для сортування мап (див. MapSortPath).
+        // EN: "@mapsort" — the same point (AFTER the original's CALL, BEFORE
+        //     RETURN): installs the map-sort comparison (see MapSortPath).
+        // ---------------------------------------------------------------------
+        var mapSortTail = new List<int>();
+        foreach (var screen in Table.Keys.OrderBy(s => s, StringComparer.Ordinal))
+        {
+            var mapSort = Table[screen].Where(e => e.Path == MapSortPath).ToList();
+            if (mapSort.Count == 0) continue;
+
+            b.Emit(LuaOpcode.Eq, a: 0, b: 1, c: Lua50FunctionBuilder.Rk(k.Str(screen)));
+            var nextScreen = b.EmitJumpPlaceholder();
+
+            var nested = b.AddNestedPrototype(
+                BuildMapSortInstallFunction(mapSort, $"{path}/{screen}#mapsort"));
+            b.EmitABx(LuaOpcode.Closure, a: 2, bx: nested);
+            b.Emit(LuaOpcode.Move, a: 3, b: 0);
+            b.Emit(LuaOpcode.Call, a: 2, b: 2, c: 1);
+
+            mapSortTail.Add(b.EmitJumpPlaceholder());
+            b.PatchJump(nextScreen, b.NextPc);
+        }
+        foreach (var j in mapSortTail) b.PatchJump(j, b.NextPc);
 
         // ---------------------------------------------------------------------
         // UA: ДІАГНОСТИЧНИЙ ЗОНД "widescreen" — крок ВІДОБРАЖЕННЯ. НАВМИСНО

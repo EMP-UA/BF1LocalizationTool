@@ -218,22 +218,3 @@ Used only for `ifs_missionselect_pcMulti`:
 
 (`ifs_missionselect`, single-player, uses the same lists without this
 fix — its working area stays at the authored size.)
-
-## 8. Незавершене калібрування розміру відео (лише `ifs_missionselect`) / Unfinished movie-size calibration (`ifs_missionselect` only)
-
-**UA:** Окремо в таблиці є один рядок з псевдошляхом `@postscreen` —
-ПІСЛЯ-будовний запис НАПРЯМУ в корінь таблиці екрана (потрібен саме тут,
-бо конструктор екрана переписує `movieW`/`movieH` БЕЗУМОВНИМИ літералами
-одразу після виклику `AddIFScreen`, тож ані звичайний рядок, ані
-`@post:` не встигають): `@postscreen movieW=125;movieH=125`. Це
-калібрувальна проба, а не підтверджений фікс — значення ще не звірене
-знімком гри.
-
-**EN:** The table separately carries one row with the `@postscreen` pseudo-path
-— an AFTER-BUILD write straight onto the screen table's root (needed
-specifically here because the screen's own constructor overwrites
-`movieW`/`movieH` with UNCONDITIONAL literals right after the
-`AddIFScreen` call, so neither an ordinary row nor `@post:` is early
-enough): `@postscreen movieW=125;movieH=125`. This is a calibration
-probe, not a confirmed fix — the value hasn't been checked against an
-in-game screenshot yet.

@@ -6,33 +6,40 @@
 // =============================================================================
 // UA: Записує ingame.lvl із тим самим гачком таблиці розкладки
 //     (AnchorInheritancePatchBuilder), що й shell_layout.lvl, але лише з
-//     рядками, які стосуються екранів, відкритих під час бою:
+//     рядками, які стосуються екранів, відкритих під час бою (повний перелік —
+//     KeepRow):
 //       • ifs_opt_* (скрипти з common.lvl, які ingame.lvl завантажує через
-//         game_interface) — лише виправлення обрізаного тексту
-//         (resetbutton/autodetectbutton, logoInfos.envmorphing);
-//       • ifs_opt_* — горизонтальний зсув рядів вкладок (_Tabs*, лише x);
-//       • ifs_pausemenu — усі рядки (меню паузи існує лише в бою);
+//         game_interface) — виправлення обрізаного тексту
+//         (resetbutton/autodetectbutton, logoInfos.envmorphing), горизонтальний
+//         зсув рядів вкладок (_Tabs*, лише x) і зсув плашок міток (bgoffsetx);
+//       • ifs_pausemenu, ifs_sideselect1, ifs_pc_SpawnSelect — усі рядки
+//         (ці екрани існують лише в бою);
 //       • ifs_mp_lobby — Helptext_Misc (лобі мережевої гри існує лише в
 //         ingame.lvl, тож у shell_layout.lvl цей рядок не діє).
-//     Вертикальні рядки вкладок (_Tabs y=31) і анкерні зсуви shell НЕ переносяться: у бою
-//     немає шапки з ім'ям профілю, яку ті рядки відкривали.
-//     Вхід — уже локалізований ingame.lvl (reference-files\BF2-UA-rem), бо він
-//     містить інші патчі; вхідний файл не змінюється.
+//     Вертикальні рядки вкладок (_Tabs y=31) і анкерні зсуви shell НЕ
+//     переносяться: у бою немає шапки з ім'ям профілю, яку ті рядки
+//     відкривали.
+//     Вхід — ванільний ingame.lvl (reference-files\BF2); вхідний файл не
+//     змінюється. ingame.lvl не містить чанків Locl — текстових рядків для
+//     перекладу в ньому немає.
 // EN: Writes an ingame.lvl with the same layout-table hook
 //     (AnchorInheritancePatchBuilder) as shell_layout.lvl, but only with the
-//     rows for screens that open during a battle:
+//     rows for screens that open during a battle (the full list — KeepRow):
 //       • ifs_opt_* (common.lvl scripts that ingame.lvl loads through
-//         game_interface) — only the clipped-text fixes
-//         (resetbutton/autodetectbutton, logoInfos.envmorphing);
-//       • ifs_opt_* — the horizontal shift of the tab rows (_Tabs*, x only);
-//       • ifs_pausemenu — every row (the pause menu exists only in battle);
+//         game_interface) — the clipped-text fixes
+//         (resetbutton/autodetectbutton, logoInfos.envmorphing), the
+//         horizontal shift of the tab rows (_Tabs*, x only) and the label
+//         backdrop shift (bgoffsetx);
+//       • ifs_pausemenu, ifs_sideselect1, ifs_pc_SpawnSelect — every row
+//         (these screens exist only in battle);
 //       • ifs_mp_lobby — Helptext_Misc (the multiplayer lobby exists only in
 //         ingame.lvl, so this row has no effect in shell_layout.lvl).
-//     The vertical tab rows (_Tabs y=31) and the shell anchor shifts are NOT carried
-//     over: a battle has no menu header with the profile name that those rows
-//     uncovered. The input is the already localized ingame.lvl
-//     (reference-files\BF2-UA-rem), since it carries other patches; the input
-//     file is not modified.
+//     The vertical tab rows (_Tabs y=31) and the shell anchor shifts are NOT
+//     carried over: a battle has no menu header with the profile name that
+//     those rows uncovered.
+//     The input is the vanilla ingame.lvl (reference-files\BF2); the input
+//     file is not modified. ingame.lvl has no Locl chunks — it holds no text
+//     strings to translate.
 // =============================================================================
 
 using System.Text;
@@ -65,21 +72,35 @@ public static class GenerateAnchorFixIngameCommand
     // UA: Які рядки таблиці переносяться в ingame.lvl:
     //     • ifs_opt_*: виправлення тексту (OptionsTextPaths) і горизонтальний
     //       зсув рядів вкладок (_Tabs*, лише поле x — вертикальні y=31 не
-    //       переносяться);
+    //       переносяться), а також рядки лише з полем bgoffsetx для міток
+    //       `buttons.*`, міток вкладок `_Tabs*` і кнопок `*button.label`
+    //       (центрування плашок відносно тексту);
     //     • ifs_pausemenu: усі рядки (меню паузи існує лише в бою);
+    //     • ifs_sideselect1: усі рядки (вибір команди існує лише в бою);
+    //     • ifs_pc_SpawnSelect: усі рядки (екран вибору бійця існує лише в бою);
     //     • ifs_mp_lobby: Helptext_Misc.
     // EN: Which table rows are carried over into ingame.lvl:
     //     • ifs_opt_*: text fixes (OptionsTextPaths) and the horizontal shift of
     //       the tab rows (_Tabs*, the x field only — the vertical y=31 rows are
-    //       not carried over);
+    //       not carried over), and the rows with the single field bgoffsetx for
+    //       the `buttons.*` labels, the `_Tabs*` tab labels and the `*button.label`
+    //       buttons (centring the backdrops on their text);
     //     • ifs_pausemenu: every row (the pause menu exists only in battle);
+    //     • ifs_sideselect1: every row (the team selection exists only in battle);
+    //     • ifs_pc_SpawnSelect: every row (the unit-selection screen exists only in battle);
     //     • ifs_mp_lobby: Helptext_Misc.
     public static bool KeepRow(string screen, AnchorInheritancePatchBuilder.WidgetEntry entry) =>
         (screen.StartsWith("ifs_opt_", StringComparison.Ordinal) &&
             (OptionsTextPaths.Contains(entry.Path) ||
              (entry.Path.StartsWith("_Tabs", StringComparison.Ordinal) &&
-              entry.Texts.Count == 0 && entry.Fields.Count > 0 && entry.Fields.All(f => f.Key == "x")))) ||
+              entry.Texts.Count == 0 && entry.Fields.Count > 0 && entry.Fields.All(f => f.Key == "x")) ||
+             ((entry.Path.StartsWith("buttons.", StringComparison.Ordinal) ||
+               entry.Path.StartsWith("_Tabs", StringComparison.Ordinal) ||
+               entry.Path.EndsWith("button.label", StringComparison.Ordinal)) &&
+              entry.Texts.Count == 0 && entry.Fields.Count > 0 && entry.Fields.All(f => f.Key == "bgoffsetx")))) ||
         screen == "ifs_pausemenu" ||
+        screen == "ifs_sideselect1" ||
+        screen == "ifs_pc_SpawnSelect" ||
         (screen == "ifs_mp_lobby" && entry.Path == "Helptext_Misc.label");
 
     public static string? Run(DiagnosticReport report, string ingameLvlPath, string outputDir, string outputFileName)

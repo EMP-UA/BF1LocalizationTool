@@ -2,7 +2,7 @@
 // BF1LocalizationTool.Diagnostic — GenerateFontHeadHeightFixCoreCommand.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
-// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
+// Тип / Type: ГЕНЕРАТОР (production, входить у фінальну збірку) / GENERATOR (production, part of the final assembly)
 // =============================================================================
 // UA: ФІКС HEAD. Записує копію ВЖЕ згенерованого українського core.lvl, у
 //     якій виправлено лише заявлену висоту шрифтів (`HEAD[3]`). Атлас,
@@ -15,9 +15,8 @@
 //       • повторне читання вихідного файлу дає саме заплановані висоти;
 //       • SHA-256 входу й виходу записуються у звіт (походження файлу).
 //
-//     Це не заява «виправлено». Висота впливає на всі тексти відповідного
-//     шрифту, тому після встановлення потрібна повна перевірка екранів
-//     (список — у звіті).
+//     Висота впливає на всі тексти відповідного шрифту; перелік екранів
+//     для перевірки після встановлення — у звіті.
 //
 // EN: HEAD FIX. Writes a copy of an ALREADY generated Ukrainian core.lvl in
 //     which only the declared font height (`HEAD[3]`) is corrected. The
@@ -31,9 +30,8 @@
 //       • re-reading the output yields exactly the planned heights;
 //       • input and output SHA-256 are written to the report (provenance).
 //
-//     This is not a "fixed" claim. The height affects every text in the
-//     corresponding font, so a full screen check is required after
-//     installing (the list is in the report).
+//     The height affects every text in the corresponding font; the list of
+//     screens to check after installing is in the report.
 // =============================================================================
 
 using System.Security.Cryptography;

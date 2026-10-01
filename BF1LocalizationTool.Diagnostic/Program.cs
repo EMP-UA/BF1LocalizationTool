@@ -391,8 +391,8 @@ List<MenuCategory> BuildCategories() =>
         ]),
 
     new MenuCategory(
-        "⚠ ГЕНЕРАЦІЯ: створити локалізований core.lvl (ПИШЕ файл, не лише перевіряє)",
-        "⚠ GENERATION: create a localized core.lvl (WRITES a file, not just checks)",
+        "⚠ ГЕНЕРАЦІЯ: створити кириличний core.lvl (ПИШЕ файл, не лише перевіряє)",
+        "⚠ GENERATION: create a Cyrillic core.lvl (WRITES a file, not just checks)",
         [
             new MenuItem(
                 "Порівняти кандидатів шрифту з Fonts\\ проти РЕАЛЬНИХ метрик ванільного шрифту гри (widthScale по кожній грі/розміру, БЕЗ запису файлу)",
@@ -497,8 +497,8 @@ List<MenuCategory> BuildCategories() =>
                 "★★ LAYOUT FIX: write shell_layout.lvl (only screens with a screenshot-CONFIRMED vanilla defect)",
                 RunGenerateAnchorFixShell),
             new MenuItem(
-                "★★ ФІКС РОЗКЛАДКИ У БОЮ: записати ingame_layout.lvl (налаштування та лобі в бою; вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl)",
-                "★★ IN-BATTLE LAYOUT FIX: write ingame_layout.lvl (options and lobby in battle; input — reference-files\\BF2-UA-rem\\...\\ingame.lvl)",
+                "★★ ФІКС РОЗКЛАДКИ У БОЮ: записати ingame_layout.lvl (налаштування та лобі в бою; вхід — reference-files\\BF2\\...\\ingame.lvl)",
+                "★★ IN-BATTLE LAYOUT FIX: write ingame_layout.lvl (options and lobby in battle; input — reference-files\\BF2\\...\\ingame.lvl)",
                 RunGenerateAnchorFixIngame),
             new MenuItem(
                 "★ ДІАГНОСТИЧНИЙ ЗОНД: записати shell_probe.lvl — показати РЕАЛЬНЕ \"widescreen\" (4-те значення ScriptCB_GetScreenInfo) як Y-позицію напису на екрані Сеансу",
@@ -521,17 +521,21 @@ List<MenuCategory> BuildCategories() =>
                 "★ CONFIRMED IN-GAME: write ingame_spawnselect_gapfix.lvl — adds a gap between the \"Кількість бійців\" label and the \"Відродження\" button on the unit-selection screen (shifts the text's position, font is NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
                 RunGenerateSpawnSelectUnitCountGapFix),
             new MenuItem(
-                "★ КАНДИДАТ: записати shell_freeform_descfont.lvl — ЗБІЛЬШИТИ шрифт опису в інформаційній панелі екранів Галактичного завоювання з gamefont_tiny на gamefont_small (спільна функція — виправляє десятки екранів одразу; НЕ ПІДТВЕРДЖЕНО у грі)",
-                "★ CANDIDATE: write shell_freeform_descfont.lvl — ENLARGE the description font in the Galactic Conquest screens' info panel from gamefont_tiny to gamefont_small (shared function — fixes dozens of screens at once; NOT YET CONFIRMED in-game)",
-                RunGenerateFreeformInfoDescriptionFontFix),
-            new MenuItem(
-                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_listoffset.lvl — опускає перелік класів на екрані вибору бійця на 30 px, щоб зрівняти відступи зверху й знизу (вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl; крок сітки, розміри комірок і шрифт НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
-                "★ CONFIRMED IN-GAME: write ingame_spawnselect_listoffset.lvl — moves the class list on the unit-selection screen down by 30 px to equalize the top/bottom gaps (input — reference-files\\BF2-UA-rem\\...\\ingame.lvl; the grid pitch, cell sizes and font are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_listoffset.lvl — опускає перелік класів на екрані вибору бійця на 30 px, щоб зрівняти відступи зверху й знизу (вхід — reference-files\\BF2\\...\\ingame.lvl; крок сітки, розміри комірок і шрифт НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_listoffset.lvl — moves the class list on the unit-selection screen down by 30 px to equalize the top/bottom gaps (input — reference-files\\BF2\\...\\ingame.lvl; the grid pitch, cell sizes and font are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
                 RunGenerateSpawnSelectListTopOffsetFix),
             new MenuItem(
-                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_buttonpos.lvl — опускає кнопку \"Спавн\" на екрані вибору бійця з 0.90 до 0.95 висоти безпечної області (вхід — reference-files\\BF2-UA-rem\\...\\ingame.lvl; один операнд у fnBuildScreen; положення 3D-моделі й розміри шрифту НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
-                "★ CONFIRMED IN-GAME: write ingame_spawnselect_buttonpos.lvl — moves the \"Спавн\" button on the unit-selection screen down from 0.90 to 0.95 of the safe-area height (input — reference-files\\BF2-UA-rem\\...\\ingame.lvl; a single operand in fnBuildScreen; the 3D model position and font sizes are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_buttonpos.lvl — опускає кнопку \"Спавн\" на екрані вибору бійця з 0.90 до 0.95 висоти безпечної області (вхід — reference-files\\BF2\\...\\ingame.lvl; один операнд у fnBuildScreen; положення 3D-моделі й розміри шрифту НЕ змінюються; докладно — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_buttonpos.lvl — moves the \"Спавн\" button on the unit-selection screen down from 0.90 to 0.95 of the safe-area height (input — reference-files\\BF2\\...\\ingame.lvl; a single operand in fnBuildScreen; the 3D model position and font sizes are NOT changed; details — docs/BF2_SPAWNSELECT_GAP_FIX.md)",
                 RunGenerateSpawnSelectVerticalLayoutFix),
+            new MenuItem(
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_spawnselect_infotext.lvl — на екрані вибору бійця збільшити текст спорядження в комірках, коли класів більше 7 (Mos Eisley, штурм: крок рядків ≈11 → ≈15 px на 1080p; один перехід у fnBuildScreen; вхід — reference-files\\BF2\\...\\ingame.lvl)",
+                "★ CONFIRMED IN-GAME: write ingame_spawnselect_infotext.lvl — on the unit-selection screen enlarge the equipment text in the cells when there are more than 7 classes (Mos Eisley, Assault: line pitch ≈11 → ≈15 px at 1080p; a single jump in fnBuildScreen; input — reference-files\\BF2\\...\\ingame.lvl)",
+                RunGenerateSpawnSelectInfoTextScaleFix),
+            new MenuItem(
+                "★ ПІДТВЕРДЖЕНО В ГРІ: записати ingame_hud_layout.lvl — у бойовому HUD опустити таймер під мінімапою й відцентрувати його по колу мінімапи, опустити значки прапорів нижче від таймера й збільшити проміжки між ними, опустити підпис «Перемога/Поразка через» з цифрами нижче від таймера (лише float-и позицій у 1playerhud; вхід — reference-files\\BF2\\...\\ingame.lvl)",
+                "★ CONFIRMED IN-GAME: write ingame_hud_layout.lvl — in the combat HUD lower the timer under the minimap and centre it on the minimap circle, lower the flag icons below the timer and enlarge the gaps between them, lower the «Перемога/Поразка через» label with its digits below the timer (position floats in 1playerhud only; input — reference-files\\BF2\\...\\ingame.lvl)",
+                RunGenerateHudLayoutFix),
         ]),
 
     new MenuCategory(
@@ -550,10 +554,6 @@ List<MenuCategory> BuildCategories() =>
                 "ЗБІЛЬШИТИ шрифт BF2 ×1.5 (upscale) → font-output-enlarged/BF2/core.lvl (тест: текст більший)",
                 "ENLARGE BF2 font ×1.5 (upscale) → font-output-enlarged/BF2/core.lvl (test: bigger text)",
                 RunGenerateEnlargedFontCore),
-            new MenuItem(
-                "★ ФІКС HEAD: виправити застарілу висоту шрифтів (HEAD[3]) у готовому core.lvl з reference-files\\BF2-UA-rem → font-output-headfix\\BF2\\core.lvl (по 1 байту на шрифт, атлас не чіпається)",
-                "★ HEAD FIX: correct the stale font height (HEAD[3]) in the finished core.lvl from reference-files\\BF2-UA-rem → font-output-headfix\\BF2\\core.lvl (1 byte per font, atlas untouched)",
-                RunGenerateFontHeadHeightFixCore),
         ]),
 
     new MenuCategory(
@@ -569,8 +569,8 @@ List<MenuCategory> BuildCategories() =>
                 "shell.lvl: layout fix (no translation needed — no Locl chunks) → final-assembly-output\\GameData\\data\\_lvl_pc\\shell.lvl",
                 RunFinalAssemblyShell),
             new MenuItem(
-                "ingame.lvl: розкладка в бою + зазор «Кількість бійців» + зсув переліку класів + кнопка «Спавн» поспіль → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
-                "ingame.lvl: in-battle layout + \"Unit Count\" gap + class-list offset + \"Спавн\" button in sequence → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                "ingame.lvl: розкладка в бою + зазор «Кількість бійців» + зсув переліку класів + кнопка «Спавн» + текст спорядження при 8-10 класах + таймер і значки прапорів у бою поспіль → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
+                "ingame.lvl: in-battle layout + \"Unit Count\" gap + class-list offset + \"Спавн\" button + equipment text with 8-10 classes + timer and flag icons in battle in sequence → final-assembly-output\\GameData\\data\\_lvl_pc\\ingame.lvl",
                 RunFinalAssemblyIngame),
             new MenuItem(
                 "d3d9.dll: збірка Zig-ом з вбудованого джерела → final-assembly-output\\GameData\\d3d9.dll",
@@ -2032,32 +2032,18 @@ async Task RunSessionListHeaderBlock()
     await Task.CompletedTask;
 }
 
-// UA: Widescreen-фікс. ОБСЯГ НАВМИСНО ВУЗЬКИЙ: правляться лише ті екрани,
-//     де ванільний дефект ПІДТВЕРДЖЕНО знімком екрана. ПРИЧИНА: синтетичні
-//     метрики («позиція змінилась із роздільністю», «розмір масштабується»)
-//     можуть позначати як дефект НОРМАЛЬНУ адаптивну поведінку — наприклад,
-//     екран аудіо у ванілі на 1920×1080 коректний сам по собі, хоча без
-//     підтвердження знімком патч міг би розсунути підписи й повзунки на
-//     ньому на 340 px, зламавши робочий екран.
-// EN: Widescreen fix. SCOPE IS DELIBERATELY NARROW: only screens whose
-//     vanilla defect is CONFIRMED by a screenshot are touched. REASON:
-//     synthetic metrics ("position changed with resolution", "size
-//     scales") can flag NORMAL responsive behaviour as a defect — for
-//     example, the audio screen is correct in vanilla at 1920x1080 on
-//     its own, though without screenshot confirmation a patch could push
-//     its labels and sliders 340 px apart, breaking a working screen.
 // UA: Той самий фікс розкладки для екранів, що відкриваються в бою
-//     (ingame.lvl). Вхід — уже локалізований ingame.lvl із
-//     reference-files\BF2-UA-rem (він містить інші патчі); якщо його немає —
-//     вибір файлу. Які рядки таблиці переносяться — GenerateAnchorFixIngameCommand.KeepRow.
+//     (ingame.lvl). Вхід — ванільний ingame.lvl із reference-files\BF2; якщо
+//     його немає — вибір файлу. Які рядки таблиці переносяться —
+//     GenerateAnchorFixIngameCommand.KeepRow.
 // EN: The same layout fix for screens that open in battle (ingame.lvl). The
-//     input is the already localized ingame.lvl from reference-files\BF2-UA-rem
-//     (it carries other patches); if missing — a file picker. Which table rows
-//     are carried over — GenerateAnchorFixIngameCommand.KeepRow.
+//     input is the vanilla ingame.lvl from reference-files\BF2; if missing — a
+//     file picker. Which table rows are carried over —
+//     GenerateAnchorFixIngameCommand.KeepRow.
 async Task RunGenerateAnchorFixIngame()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
-    var ingamePath = FindGameFile(Path.Combine(refRoot, "BF2-UA-rem"), "ingame.lvl");
+    var ingamePath = FindGameFile(Path.Combine(refRoot, "BF2"), "ingame.lvl");
     var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output");
 
     var report = new DiagnosticReport("GenerateAnchorFixIngame");
@@ -2066,9 +2052,9 @@ async Task RunGenerateAnchorFixIngame()
 
     if (ingamePath is null)
     {
-        report.Log($"UA: ingame.lvl не знайдено під \"{Path.Combine(refRoot, "BF2-UA-rem")}\" — оберіть локалізований ingame.lvl вручну.");
-        report.Log($"EN: ingame.lvl not found under \"{Path.Combine(refRoot, "BF2-UA-rem")}\" — pick the localized ingame.lvl manually.");
-        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        report.Log($"UA: ingame.lvl не знайдено під \"{Path.Combine(refRoot, "BF2")}\" — оберіть ванільний ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{Path.Combine(refRoot, "BF2")}\" — pick the vanilla ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
         if (ingamePath is null)
         {
             report.Log("UA: Файл не вибрано. / EN: No file selected.");
@@ -2294,19 +2280,15 @@ async Task RunGenerateMovieRectModeShell()
     await Task.CompletedTask;
 }
 
-// UA: ПІДТВЕРДЖЕНО В ГРІ. Вхід — ВАНІЛЬНИЙ ingame.lvl з
-//     reference-files\BF2 (копії у reference-files\BF2-UA-rem наразі
-//     немає — на відміну від ФІКС HEAD, який бере вже локалізований
-//     core.lvl). Зсуває позицію напису "Кількість бійців", шрифт не
-//     чіпає. Механізм, точна інструкція, повний доказ безпечності й
-//     підтвердження реальною грою — Core/Bf2Widescreen/
-//     SpawnSelectUnitCountGapPatchBuilder.cs та docs/BF2_SPAWNSELECT_GAP_FIX.md.
-// EN: CONFIRMED IN-GAME. Input — the VANILLA ingame.lvl
-//     from reference-files\BF2 (no reference-files\BF2-UA-rem copy exists
-//     yet — unlike HEAD FIX, which takes an already localized core.lvl).
-//     Shifts the "Кількість бійців" label's position, the font is
-//     untouched. Mechanism, exact instruction, full safety proof and the
-//     real-game confirmation — Core/Bf2Widescreen/
+// UA: ПІДТВЕРДЖЕНО В ГРІ. Вхід — ванільний ingame.lvl з reference-files\BF2.
+//     Зсуває позицію напису "Кількість бійців", шрифт не чіпає. Механізм,
+//     точна інструкція, повний доказ безпечності й підтвердження реальною
+//     грою — Core/Bf2Widescreen/SpawnSelectUnitCountGapPatchBuilder.cs та
+//     docs/BF2_SPAWNSELECT_GAP_FIX.md.
+// EN: CONFIRMED IN-GAME. Input — the vanilla ingame.lvl from
+//     reference-files\BF2. Shifts the "Кількість бійців" label's position, the
+//     font is untouched. Mechanism, exact instruction, full safety proof and
+//     the real-game confirmation — Core/Bf2Widescreen/
 //     SpawnSelectUnitCountGapPatchBuilder.cs and docs/BF2_SPAWNSELECT_GAP_FIX.md.
 async Task RunGenerateSpawnSelectUnitCountGapFix()
 {
@@ -2337,33 +2319,22 @@ async Task RunGenerateSpawnSelectUnitCountGapFix()
     await Task.CompletedTask;
 }
 
-// UA: ВИПРАВЛЕННЯ, ПІДТВЕРДЖЕНЕ РЕАЛЬНИМ ТЕСТОМ У ГРІ. Вхід — уже
-//     локалізований ingame.lvl із reference-files\BF2-UA-rem (той самий,
-//     що бере RunGenerateSpawnSelectUnitCountGapFix); якщо його немає —
-//     вибір файлу. Цей файл уже містить гачок розкладки та підтверджений
-//     фікс "Кількість бійців", тож вихідний файл = увесь вхідний файл +
-//     лише цей зсув, без втрати інших патчів. Ванільний
-//     reference-files\BF2\...\ingame.lvl як вхід НЕ використовується: він
-//     відрізняється від файлу гри не лише скриптами, а й чанками моделей
-//     (modl) та анімацій (zaf_). Механізм, точна інструкція й повний доказ
-//     безпечності — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs
-//     і docs/BF2_SPAWNSELECT_GAP_FIX.md.
-// EN: FIX, CONFIRMED BY A REAL IN-GAME TEST. Input — the already localized
-//     ingame.lvl from reference-files\BF2-UA-rem (the same one
-//     RunGenerateSpawnSelectUnitCountGapFix uses); if missing — a file
-//     picker. That file already carries the layout hook and the confirmed
-//     "Кількість бійців" fix, so the output = the whole input file + only
-//     this shift, with no other patches lost. The vanilla
-//     reference-files\BF2\...\ingame.lvl is NOT used as input: it differs
-//     from the game's file not only in scripts but also in model (modl)
-//     and animation (zaf_) chunks. Mechanism, exact instruction and full
+// UA: ВИПРАВЛЕННЯ, ПІДТВЕРДЖЕНЕ РЕАЛЬНИМ ТЕСТОМ У ГРІ. Вхід — ванільний
+//     ingame.lvl із reference-files\BF2; якщо його немає — вибір файлу.
+//     Вихід = увесь вхідний файл + лише цей зсув. Механізм, точна інструкція й
+//     повний доказ безпечності —
+//     Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs і
+//     docs/BF2_SPAWNSELECT_GAP_FIX.md.
+// EN: FIX, CONFIRMED BY A REAL IN-GAME TEST. Input — the vanilla ingame.lvl
+//     from reference-files\BF2; if missing — a file picker. Output = the whole
+//     input file + only this shift. Mechanism, exact instruction and full
 //     safety proof — Core/Bf2Widescreen/SpawnSelectListTopOffsetPatchBuilder.cs
 //     and docs/BF2_SPAWNSELECT_GAP_FIX.md.
 async Task RunGenerateSpawnSelectListTopOffsetFix()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
-    var uaRefDir = Path.Combine(refRoot, "BF2-UA-rem");
-    var ingamePath = FindGameFile(uaRefDir, "ingame.lvl");
+    var bf2RefDir = Path.Combine(refRoot, "BF2");
+    var ingamePath = FindGameFile(bf2RefDir, "ingame.lvl");
     var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-spawnselect-listoffset");
 
     var report = new DiagnosticReport("GenerateSpawnSelectListTopOffsetFix");
@@ -2373,9 +2344,9 @@ async Task RunGenerateSpawnSelectListTopOffsetFix()
 
     if (ingamePath is null)
     {
-        report.Log($"UA: ingame.lvl не знайдено під \"{uaRefDir}\" — оберіть локалізований ingame.lvl вручну.");
-        report.Log($"EN: ingame.lvl not found under \"{uaRefDir}\" — pick the localized ingame.lvl manually.");
-        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        report.Log($"UA: ingame.lvl не знайдено під \"{bf2RefDir}\" — оберіть ванільний ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{bf2RefDir}\" — pick the vanilla ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
         if (ingamePath is null)
         {
             report.Log("UA: Файл не вибрано. / EN: No file selected.");
@@ -2384,8 +2355,8 @@ async Task RunGenerateSpawnSelectListTopOffsetFix()
         }
     }
 
-    report.Log($"UA: Вхідний (локалізований) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
-    report.Log($"EN: Input (localized) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log($"UA: Вхідний (ванільний) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
     report.Log();
 
     GenerateSpawnSelectListTopOffsetFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_listoffset.lvl");
@@ -2394,26 +2365,26 @@ async Task RunGenerateSpawnSelectListTopOffsetFix()
     await Task.CompletedTask;
 }
 
-// UA: Вхід — уже локалізований ingame.lvl із reference-files\BF2-UA-rem (той
-//     самий, що в RunGenerateSpawnSelectListTopOffsetFix); якщо його немає —
-//     вибір файлу. Вихід = увесь вхідний файл + лише зсув кнопки «Спавн»
-//     (SpawnSelectVerticalLayoutPatchBuilder): коефіцієнт нижнього відступу
-//     в fnBuildScreen 0.10 → 0.05 висоти безпечної області. Положення
-//     3D-моделі бійця визначає рушій, цей патч його не змінює. Механізм і
-//     доказ безпечності — Core/Bf2Widescreen/SpawnSelectVerticalLayoutPatchBuilder.cs.
-// EN: Input — the already localized ingame.lvl from reference-files\BF2-UA-rem
-//     (the same one used by RunGenerateSpawnSelectListTopOffsetFix); if
-//     missing — a file picker. Output = the whole input file + only the
-//     "Спавн" button shift (SpawnSelectVerticalLayoutPatchBuilder): the
-//     bottom-margin fraction in fnBuildScreen 0.10 → 0.05 of the safe-area
-//     height. The soldier's 3D model position is controlled by the engine;
-//     this patch does not change it. Mechanism and safety proof —
+// UA: ПІДТВЕРДЖЕНО В ГРІ. Вхід — ванільний ingame.lvl із reference-files\BF2;
+//     якщо його немає — вибір файлу. Вихід = увесь вхідний файл + лише зсув
+//     кнопки «Спавн» (SpawnSelectVerticalLayoutPatchBuilder): коефіцієнт
+//     нижнього відступу в fnBuildScreen 0.10 → 0.05 висоти безпечної області.
+//     Положення 3D-моделі бійця визначає рушій, цей патч його не змінює.
+//     Механізм і доказ безпечності —
+//     Core/Bf2Widescreen/SpawnSelectVerticalLayoutPatchBuilder.cs.
+// EN: CONFIRMED IN-GAME. Input — the vanilla ingame.lvl from
+//     reference-files\BF2; if missing — a file picker. Output = the whole
+//     input file + only the "Спавн" button shift
+//     (SpawnSelectVerticalLayoutPatchBuilder): the bottom-margin fraction in
+//     fnBuildScreen 0.10 → 0.05 of the safe-area height. The soldier's 3D
+//     model position is controlled by the engine; this patch does not change
+//     it. Mechanism and safety proof —
 //     Core/Bf2Widescreen/SpawnSelectVerticalLayoutPatchBuilder.cs.
 async Task RunGenerateSpawnSelectVerticalLayoutFix()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
-    var uaRefDir = Path.Combine(refRoot, "BF2-UA-rem");
-    var ingamePath = FindGameFile(uaRefDir, "ingame.lvl");
+    var bf2RefDir = Path.Combine(refRoot, "BF2");
+    var ingamePath = FindGameFile(bf2RefDir, "ingame.lvl");
     var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-spawnselect-buttonpos");
 
     var report = new DiagnosticReport("GenerateSpawnSelectVerticalLayoutFix");
@@ -2423,9 +2394,9 @@ async Task RunGenerateSpawnSelectVerticalLayoutFix()
 
     if (ingamePath is null)
     {
-        report.Log($"UA: ingame.lvl не знайдено під \"{uaRefDir}\" — оберіть локалізований ingame.lvl вручну.");
-        report.Log($"EN: ingame.lvl not found under \"{uaRefDir}\" — pick the localized ingame.lvl manually.");
-        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть локалізований ingame.lvl / Select the localized ingame.lvl");
+        report.Log($"UA: ingame.lvl не знайдено під \"{bf2RefDir}\" — оберіть ванільний ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{bf2RefDir}\" — pick the vanilla ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
         if (ingamePath is null)
         {
             report.Log("UA: Файл не вибрано. / EN: No file selected.");
@@ -2434,8 +2405,8 @@ async Task RunGenerateSpawnSelectVerticalLayoutFix()
         }
     }
 
-    report.Log($"UA: Вхідний (локалізований) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
-    report.Log($"EN: Input (localized) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log($"UA: Вхідний (ванільний) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
     report.Log();
 
     GenerateSpawnSelectVerticalLayoutFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_buttonpos.lvl");
@@ -2444,73 +2415,110 @@ async Task RunGenerateSpawnSelectVerticalLayoutFix()
     await Task.CompletedTask;
 }
 
-// UA: КАНДИДАТ (НЕ ПІДТВЕРДЖЕНО У ГРІ). Вхід — УЖЕ ЛОКАЛІЗОВАНИЙ shell.lvl
-//     (reference-files\BF2-UA-rem\shell.lvl; якщо його немає — вибір файлу
-//     вручну) — той самий принцип, що й ФІКС HEAD: патчимо ГОТОВИЙ файл,
-//     а не ванільний, бо результат має бути одразу придатним для тесту в
-//     грі (з усією наявною локалізацією). На відміну від ФІКС HEAD, тут не
-//     потрібен ванільний файл-еталон — індекси констант ("font",
-//     "gamefont_tiny", "gamefont_small") резолвляться динамічно з ТОГО Ж
-//     самого файлу, що патчиться. Механізм, точна інструкція й повний
-//     доказ безпечності — Core/Bf2Widescreen/
-//     FreeformInfoDescriptionFontPatchBuilder.cs.
-// EN: CANDIDATE (NOT CONFIRMED IN-GAME). Input — the ALREADY LOCALIZED
-//     shell.lvl (reference-files\BF2-UA-rem\shell.lvl; if missing — a
-//     manual file picker) — the same principle as HEAD FIX: patch the
-//     FINISHED file, not the vanilla one, so the result is immediately
-//     ready for an in-game test (with all existing localization intact).
-//     Unlike HEAD FIX, no vanilla reference file is needed here — the
-//     constant indices ("font", "gamefont_tiny", "gamefont_small") are
-//     resolved dynamically from the SAME file being patched. Mechanism,
-//     exact instruction and full safety proof — Core/Bf2Widescreen/
-//     FreeformInfoDescriptionFontPatchBuilder.cs.
-async Task RunGenerateFreeformInfoDescriptionFontFix()
+// UA: ПІДТВЕРДЖЕНО В ГРІ. Вхід — ванільний ingame.lvl із reference-files\BF2;
+//     якщо його немає — вибір файлу. Вихід = увесь вхідний файл + одне слово
+//     інструкції (pc244 у fnBuildScreen екрана ifs_pc_spawnselect): ділильник
+//     масштабу тексту спорядження 3.0 за будь-якої висоти екрана, коли слотів
+//     більше 7. Механізм і межі —
+//     Core/Bf2Widescreen/SpawnSelectInfoTextScalePatchBuilder.cs.
+// EN: CONFIRMED IN-GAME. Input — the vanilla ingame.lvl from
+//     reference-files\BF2; if missing — a file picker. Output = the whole
+//     input file + one instruction word (pc244 in the fnBuildScreen of the
+//     ifs_pc_spawnselect screen): the equipment text scale divisor 3.0 at any
+//     screen height whenever there are more than 7 slots. Mechanism and
+//     limits — Core/Bf2Widescreen/SpawnSelectInfoTextScalePatchBuilder.cs.
+async Task RunGenerateSpawnSelectInfoTextScaleFix()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
-    var targetPath = Path.Combine(refRoot, "BF2-UA-rem", "shell.lvl");
-    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-freeform-descfont");
+    var bf2RefDir = Path.Combine(refRoot, "BF2");
+    var ingamePath = FindGameFile(bf2RefDir, "ingame.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-spawnselect-infotext");
 
-    var report = new DiagnosticReport("GenerateFreeformInfoDescriptionFontFix");
-    report.Log("UA: КАНДИДАТ НА ВИПРАВЛЕННЯ — ЩЕ НЕ ПІДТВЕРДЖЕНО РЕАЛЬНИМ ТЕСТОМ У ГРІ.");
-    report.Log("EN: CANDIDATE FIX — NOT YET CONFIRMED BY A REAL IN-GAME TEST.");
+    var report = new DiagnosticReport("GenerateSpawnSelectInfoTextScaleFix");
+    report.Log("UA: Масштаб тексту спорядження на екрані вибору бійця при більш ніж 7 класах (ПІДТВЕРДЖЕНО у грі).");
+    report.Log("EN: Equipment text scale on the unit-selection screen with more than 7 classes (CONFIRMED in-game).");
     report.Log();
 
-    if (!File.Exists(targetPath))
+    if (ingamePath is null)
     {
-        report.Log($"UA: \"{targetPath}\" не знайдено — оберіть локалізований shell.lvl вручну.");
-        report.Log($"EN: \"{targetPath}\" not found — pick the localized shell.lvl manually.");
-        var picked = NativeFileDialog.ShowOpenDialog("Виберіть локалізований shell.lvl / Select the localized shell.lvl");
-        if (picked is null)
+        report.Log($"UA: ingame.lvl не знайдено під \"{bf2RefDir}\" — оберіть ванільний ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{bf2RefDir}\" — pick the vanilla ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
+        if (ingamePath is null)
         {
             report.Log("UA: Файл не вибрано. / EN: No file selected.");
             report.Save();
             return;
         }
-        targetPath = picked;
     }
 
-    report.Log($"UA: Вхідний (уже локалізований) shell.lvl: \"{targetPath}\".");
-    report.Log($"EN: Input (already localized) shell.lvl: \"{targetPath}\".");
+    report.Log($"UA: Вхідний (ванільний) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
     report.Log();
 
-    GenerateFreeformInfoDescriptionFontFixCommand.Run(report, targetPath, outputDir, "shell_freeform_descfont.lvl");
+    GenerateSpawnSelectInfoTextScaleFixCommand.Run(report, ingamePath, outputDir, "ingame_spawnselect_infotext.lvl");
 
     report.Save();
     await Task.CompletedTask;
 }
 
-// UA: ПОВНИЙ ПРОГІН по всіх .lvl гри у пошуку конфігу роликів. Причина
-//     існування команди — чесно закрити питання, яке досі стояло на
-//     припущенні: субтитри роликів знайдені в mission.lvl, але перевірено
-//     на той момент був рівно один файл із понад п'яти сотень. Робота
+// UA: ПІДТВЕРДЖЕНО В ГРІ. Вхід — ванільний ingame.lvl із reference-files\BF2;
+//     якщо його немає — вибір файлу. Вихід = увесь вхідний файл + лише float-и
+//     позицій таймера під мінімапою (`objectivetimerGROUP`), підпису з цифрами
+//     відліку «Перемога через» / «Поразка через» (`VictoryTimerGroup`,
+//     `DefeatTimerGroup`) і значків прапорів (`player1flags` та їхні дочірні
+//     віджети) у чанку hud_ `1playerhud`. Механізм і межі —
+//     Core/Bf2Widescreen/HudLayoutPatchBuilder.cs.
+// EN: CONFIRMED IN-GAME. Input — the vanilla ingame.lvl from
+//     reference-files\BF2; if missing — a file picker. Output = the whole
+//     input file + only the position floats of the timer under the minimap
+//     (`objectivetimerGROUP`), of the «Перемога через» / «Поразка через» label
+//     with its countdown digits (`VictoryTimerGroup`, `DefeatTimerGroup`) and
+//     of the flag icons (`player1flags` and their child widgets) in the
+//     `1playerhud` hud_ chunk. Mechanism and limits —
+//     Core/Bf2Widescreen/HudLayoutPatchBuilder.cs.
+async Task RunGenerateHudLayoutFix()
+{
+    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
+    var bf2RefDir = Path.Combine(refRoot, "BF2");
+    var ingamePath = FindGameFile(bf2RefDir, "ingame.lvl");
+    var outputDir = Path.Combine(AppContext.BaseDirectory, "widescreen-output-hud-layout");
+
+    var report = new DiagnosticReport("GenerateHudLayoutFix");
+    report.Log("UA: Розкладка таймера, підпису «Перемога/Поразка через» і значків прапорів у бойовому HUD (ПІДТВЕРДЖЕНО у грі).");
+    report.Log("EN: Layout of the timer, the victory/defeat label and the flag icons in the combat HUD (CONFIRMED in-game).");
+    report.Log();
+
+    if (ingamePath is null)
+    {
+        report.Log($"UA: ingame.lvl не знайдено під \"{bf2RefDir}\" — оберіть ванільний ingame.lvl вручну.");
+        report.Log($"EN: ingame.lvl not found under \"{bf2RefDir}\" — pick the vanilla ingame.lvl manually.");
+        ingamePath = NativeFileDialog.ShowOpenDialog("Виберіть ванільний ingame.lvl / Select the vanilla ingame.lvl");
+        if (ingamePath is null)
+        {
+            report.Log("UA: Файл не вибрано. / EN: No file selected.");
+            report.Save();
+            return;
+        }
+    }
+
+    report.Log($"UA: Вхідний (ванільний) ingame.lvl: \"{ingamePath}\" — цей файл НЕ змінюється.");
+    report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
+    report.Log();
+
+    GenerateHudLayoutFixCommand.Run(report, ingamePath, outputDir, "ingame_hud_layout.lvl");
+
+    report.Save();
+    await Task.CompletedTask;
+}
+
+// UA: ПОВНИЙ ПРОГІН по всіх .lvl гри у пошуку конфігу роликів. Робота
 //     процесорна, тож виконується локально; назовні йде короткий звіт.
 //     Розгорнуте пояснення — у ScanMovieSubtitleConfigCommand.cs.
 // EN: A FULL SWEEP over all of the game's .lvl files looking for the movie
-//     config. The command exists to honestly close a question that until now
-//     rested on an assumption: movie subtitles were found in mission.lvl, but
-//     at that point exactly one file out of five hundred-odd had been checked.
-//     The work is CPU-bound, so it runs locally; what leaves the machine is a
-//     short report. Full explanation is in ScanMovieSubtitleConfigCommand.cs.
+//     config. The work is CPU-bound, so it runs locally; what leaves the
+//     machine is a short report. Full explanation is in
+//     ScanMovieSubtitleConfigCommand.cs.
 async Task RunScanMovieSubtitleConfig()
 {
     // UA: Копія файлів гри вже лежить поруч із програмою, у
@@ -2758,18 +2766,17 @@ static string? FindGameDir(string rootDir, string dirName)
         .FirstOrDefault();
 }
 
-// UA: ПІДТВЕРДЖЕНИЙ ЗНІМКАМИ фікс — УЖЕ в production
-//     (shell_layout.lvl через GenerateAnchorFixShellCommand). Ця команда —
-//     окрема ІЗОЛЬОВАНА збірка (shell_bgfix.lvl) для точкового тестування
-//     нових екранів/текстур bg_texture без перезбирання основного патча.
+// UA: Фікс фону вже входить у production (shell_layout.lvl через
+//     GenerateAnchorFixShellCommand). Ця команда — окрема ІЗОЛЬОВАНА збірка
+//     (shell_bgfix.lvl) для точкового тестування екранів/текстур bg_texture
+//     без перезбирання основного патча.
 //     Див. розгорнутий коментар у GenerateBackgroundSizeFixShellCommand.cs і
 //     в AnchorInheritancePatchBuilder.cs (розділ "фікс оверскан фону" перед
 //     BuildDispatchWrapper).
-// EN: A fix CONFIRMED BY SCREENSHOTS — already in
-//     production (shell_layout.lvl via GenerateAnchorFixShellCommand). This
-//     command is a separate ISOLATED build (shell_bgfix.lvl) for
-//     spot-testing new screens/bg_texture values without rebuilding the
-//     main patch. See the detailed comment in
+// EN: The background fix is already part of production (shell_layout.lvl
+//     via GenerateAnchorFixShellCommand). This command is a separate
+//     ISOLATED build (shell_bgfix.lvl) for spot-testing screens/bg_texture
+//     values without rebuilding the main patch. See the detailed comment in
 //     GenerateBackgroundSizeFixShellCommand.cs and in
 //     AnchorInheritancePatchBuilder.cs (the "background overscan fix"
 //     section before BuildDispatchWrapper).
@@ -2797,8 +2804,8 @@ async Task RunGenerateBackgroundSizeFixShell()
         report.Log(@"EN: 1. Back up: ...\GameData\data\_lvl_pc\shell.lvl -> shell.lvl.backup (IF not already done).");
         report.Log($"UA: 2. Скопіюйте \"{outputPath}\" на місце shell.lvl (це ТИМЧАСОВА заміна лише для цього тесту).");
         report.Log($"EN: 2. Copy \"{outputPath}\" over shell.lvl (a TEMPORARY swap for this test only).");
-        report.Log("UA: 3. Перейдіть на екран із ЩЕ НЕ перевіреною текстурою bg_texture (напр. \"Миттєвий бій -> Налаштування\" для single_player_option). Фон має бути на весь екран, без чорних дір і швів.");
-        report.Log("EN: 3. Navigate to a screen with a bg_texture NOT yet checked (e.g. \"Instant Action -> Options\" for single_player_option). The background should fill the screen, no black gaps or seams.");
+        report.Log("UA: 3. Відкрийте екран із потрібною текстурою bg_texture. Фон має бути на весь екран, без чорних дір і швів.");
+        report.Log("EN: 3. Open a screen with the bg_texture to check. The background should fill the screen, no black gaps or seams.");
         report.Log("UA: 4. Зробіть знімок(и) і надішліть — за правилом 3 нічого не вважається виправленим без знімка з нулем дефектів.");
         report.Log("EN: 4. Take screenshot(s) and send them — per rule 3, nothing counts as fixed without a zero-defect screenshot.");
         report.Log("UA: 5. Після тесту поверніть shell_layout.lvl (production, вже з цим фіксом) або ванільний shell.lvl.");
@@ -3037,8 +3044,8 @@ async Task RunGenerateNoDonorCyrillicCore()
             if (bf2LocalizedPath is not null)
             {
                 report.Log();
-                report.Log($"UA: [BF2] Готово — фінальний локалізований+збільшений файл (без подвійного розмиття кирилиці): {bf2LocalizedPath}");
-                report.Log($"EN: [BF2] Done — final localized+enlarged file (no double blur on Cyrillic): {bf2LocalizedPath}");
+                report.Log($"UA: [BF2] Готово — core.lvl зі збільшеним шрифтом і кирилицею (рендер без подвійного розмиття); фікс HEAD виконує фінальна збірка: {bf2LocalizedPath}");
+                report.Log($"EN: [BF2] Done — core.lvl with the enlarged font and Cyrillic (rendered without double blur); the HEAD fix is applied by the final assembly: {bf2LocalizedPath}");
             }
         }
         else
@@ -3050,56 +3057,6 @@ async Task RunGenerateNoDonorCyrillicCore()
         report.Log("UA: Невідомий вибір — нічого не зроблено. / EN: Unknown choice — nothing done.");
 
     report.Save();
-}
-
-// UA: ФІКС HEAD. Вхід — уже згенерований український core.lvl
-//     (reference-files\BF2-UA-rem\core.lvl; якщо його немає — вибір файлу),
-//     еталон запасу висоти — ванільний core.lvl з reference-files\BF2.
-//     Механізм і адреси — Core/Fonts/FontHeadHeightFix.cs; причина —
-//     FONT_FORMAT_SPEC.md.
-// EN: HEAD FIX. Input — the already generated Ukrainian core.lvl
-//     (reference-files\BF2-UA-rem\core.lvl; if missing — a file picker),
-//     the height-margin reference — the vanilla core.lvl from
-//     reference-files\BF2. Mechanism and addresses — Core/Fonts/
-//     FontHeadHeightFix.cs; cause — FONT_FORMAT_SPEC.md.
-async Task RunGenerateFontHeadHeightFixCore()
-{
-    var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
-    var vanillaPath = FindGameFile(Path.Combine(refRoot, "BF2"), "core.lvl");
-    var targetPath = Path.Combine(refRoot, "BF2-UA-rem", "core.lvl");
-    var outputDir = Path.Combine(AppContext.BaseDirectory, "font-output-headfix", "BF2");
-
-    var report = new DiagnosticReport("GenerateFontHeadHeightFixCore");
-    report.Log("UA: ФІКС HEAD — виправлення заявленої висоти шрифтів у готовому core.lvl.");
-    report.Log("EN: HEAD FIX — correcting the declared font height in a finished core.lvl.");
-    report.Log();
-
-    if (!File.Exists(targetPath))
-    {
-        report.Log($"UA: \"{targetPath}\" не знайдено — оберіть український core.lvl вручну.");
-        report.Log($"EN: \"{targetPath}\" not found — pick the Ukrainian core.lvl manually.");
-        var picked = NativeFileDialog.ShowOpenDialog("Виберіть український core.lvl / Select the Ukrainian core.lvl");
-        if (picked is null)
-        {
-            report.Log("UA: Файл не вибрано. / EN: No file selected.");
-            report.Save();
-            return;
-        }
-        targetPath = picked;
-    }
-
-    if (vanillaPath is null)
-    {
-        report.Log($"UA: Ванільний core.lvl не знайдено ніде під \"{Path.Combine(refRoot, "BF2")}\" (шукали рекурсивно).");
-        report.Log($"EN: Vanilla core.lvl not found anywhere under \"{Path.Combine(refRoot, "BF2")}\" (searched recursively).");
-        report.Save();
-        return;
-    }
-
-    GenerateFontHeadHeightFixCoreCommand.Run(report, targetPath, vanillaPath, outputDir, "core.lvl");
-
-    report.Save();
-    await Task.CompletedTask;
 }
 
 async Task RunGenerateEnlargedFontCore()
@@ -3586,18 +3543,20 @@ async Task RunFinalAssemblyShell()
     await Task.CompletedTask;
 }
 
-// UA: Крок 2/4 (зазор "Кількість бійців") отримує на вхід результат
-//     кроку 1/4 (розкладка в бою) того самого запуску, а не ванільний
+// UA: Крок 2/6 (зазор "Кількість бійців") отримує на вхід результат
+//     кроку 1/6 (розкладка в бою) того самого запуску, а не ванільний
 //     ingame.lvl окремо; самостійний пункт меню того самого фіксу
 //     (категорія 10, "записати ingame_spawnselect_gapfix.lvl") читає
-//     ванільний файл. Кроки 3/4 і 4/4 (зсув переліку класів, кнопка
-//     «Спавн») отримують результат попереднього кроку.
-// EN: Step 2/4 (the "Unit Count" gap) takes as input this run's own
-//     step 1/4 result (in-battle layout), not a vanilla ingame.lvl on its
+//     ванільний файл. Кожен із кроків 3/6…6/6 (зсув переліку класів,
+//     кнопка «Спавн», текст спорядження, таймер і значки прапорів у
+//     бойовому HUD) отримує результат попереднього кроку.
+// EN: Step 2/6 (the "Unit Count" gap) takes as input this run's own
+//     step 1/6 result (in-battle layout), not a vanilla ingame.lvl on its
 //     own; the standalone menu item for the same fix (category 10,
 //     "write ingame_spawnselect_gapfix.lvl") reads the vanilla file.
-//     Steps 3/4 and 4/4 (class-list offset, "Спавн" button) take the
-//     previous step's result.
+//     Each of steps 3/6…6/6 (class-list offset, "Спавн" button, equipment
+//     text, timer and flag icons in the combat HUD) takes the previous
+//     step's result.
 async Task RunFinalAssemblyIngame()
 {
     var refRoot = Path.Combine(AppContext.BaseDirectory, "reference-files");
@@ -3606,20 +3565,20 @@ async Task RunFinalAssemblyIngame()
     // UA: ПОЗА final-assembly-output — тека final-assembly-output має
     //     містити ЛИШЕ фінальні файли гри (GameData\...), а не проміжні
     //     кроки збірки ingame.lvl. Видаляється нижче одразу після того,
-    //     як крок 4/4 прочитав з неї останній проміжний файл — так само,
+    //     як крок 6/6 прочитав з неї останній проміжний файл — так само,
     //     як enlargeTempDir у RunFinalAssemblyCore і workDir у
     //     GenerateD3D9FixBuildCommand.
     // EN: OUTSIDE final-assembly-output — that folder must contain ONLY
     //     the final game files (GameData\...), not ingame.lvl's
-    //     intermediate build steps. Deleted below right after step 4/4
+    //     intermediate build steps. Deleted below right after step 6/6
     //     has read the last intermediate file from it — the same
     //     pattern as enlargeTempDir in RunFinalAssemblyCore and workDir
     //     in GenerateD3D9FixBuildCommand.
     var stepsTempDir = Path.Combine(AppContext.BaseDirectory, "_final-assembly-ingame-steps-tmp");
 
     var report = new DiagnosticReport("FinalAssemblyIngame");
-    report.Log("UA: ingame.lvl — розкладка в бою → зазор «Кількість бійців» → зсув переліку класів → кнопка «Спавн», поспіль, від ВАНІЛЬНОГО файлу. У ingame.lvl немає чанків Locl (перевірено байт-пошуком) — переклад тут не потрібен.");
-    report.Log("EN: ingame.lvl — in-battle layout -> \"Unit Count\" gap -> class-list offset -> \"Спавн\" button, in sequence, from the VANILLA file. ingame.lvl has no Locl chunks (verified by a byte search) — no translation needed here.");
+    report.Log("UA: ingame.lvl — розкладка в бою → зазор «Кількість бійців» → зсув переліку класів → кнопка «Спавн» → текст спорядження при 8-10 класах → таймер і значки прапорів у бойовому HUD, поспіль, від ВАНІЛЬНОГО файлу. У ingame.lvl немає чанків Locl (перевірено байт-пошуком) — переклад тут не потрібен.");
+    report.Log("EN: ingame.lvl — in-battle layout -> \"Unit Count\" gap -> class-list offset -> \"Спавн\" button -> equipment text with 8-10 classes -> timer and flag icons in the combat HUD, in sequence, from the VANILLA file. ingame.lvl has no Locl chunks (verified by a byte search) — no translation needed here.");
     report.Log();
 
     var ingamePath = FindGameFile(bf2VanillaDir, "ingame.lvl") ?? Path.Combine(bf2VanillaDir, "ingame.lvl");
@@ -3640,54 +3599,78 @@ async Task RunFinalAssemblyIngame()
     report.Log($"EN: Input (vanilla) ingame.lvl: \"{ingamePath}\" — this file is NOT modified.");
     report.Log();
 
-    report.Log("UA: Крок 1/4 — розкладка в бою.");
-    report.Log("EN: Step 1/4 — in-battle layout.");
+    report.Log("UA: Крок 1/6 — розкладка в бою.");
+    report.Log("EN: Step 1/6 — in-battle layout.");
     var layoutPath = GenerateAnchorFixIngameCommand.Run(report, ingamePath, stepsTempDir, "ingame_step1_layout.lvl");
     if (layoutPath is null)
     {
-        report.Log("UA: Крок 1/4 провалився — зупинено. / EN: Step 1/4 failed — stopped.");
+        report.Log("UA: Крок 1/6 провалився — зупинено. / EN: Step 1/6 failed — stopped.");
         try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
         report.Save();
         return;
     }
 
     report.Log();
-    report.Log("UA: Крок 2/4 — зазор «Кількість бійців» (SpawnSelectUnitCountGapPatchBuilder).");
-    report.Log("EN: Step 2/4 — \"Unit Count\" gap (SpawnSelectUnitCountGapPatchBuilder).");
+    report.Log("UA: Крок 2/6 — зазор «Кількість бійців» (SpawnSelectUnitCountGapPatchBuilder).");
+    report.Log("EN: Step 2/6 — \"Unit Count\" gap (SpawnSelectUnitCountGapPatchBuilder).");
     var gapPath = GenerateSpawnSelectUnitCountGapFixCommand.Run(report, layoutPath, stepsTempDir, "ingame_step2_gapfix.lvl");
     if (gapPath is null)
     {
-        report.Log("UA: Крок 2/4 провалився — зупинено. / EN: Step 2/4 failed — stopped.");
+        report.Log("UA: Крок 2/6 провалився — зупинено. / EN: Step 2/6 failed — stopped.");
         try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
         report.Save();
         return;
     }
 
     report.Log();
-    report.Log("UA: Крок 3/4 — зсув переліку класів (SpawnSelectListTopOffsetPatchBuilder).");
-    report.Log("EN: Step 3/4 — class-list offset (SpawnSelectListTopOffsetPatchBuilder).");
+    report.Log("UA: Крок 3/6 — зсув переліку класів (SpawnSelectListTopOffsetPatchBuilder).");
+    report.Log("EN: Step 3/6 — class-list offset (SpawnSelectListTopOffsetPatchBuilder).");
     var listOffsetPath = GenerateSpawnSelectListTopOffsetFixCommand.Run(report, gapPath, stepsTempDir, "ingame_step3_listoffset.lvl");
     if (listOffsetPath is null)
     {
-        report.Log("UA: Крок 3/4 провалився — зупинено. / EN: Step 3/4 failed — stopped.");
+        report.Log("UA: Крок 3/6 провалився — зупинено. / EN: Step 3/6 failed — stopped.");
         try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
         report.Save();
         return;
     }
 
     report.Log();
-    report.Log("UA: Крок 4/4 — кнопка «Спавн» (SpawnSelectVerticalLayoutPatchBuilder).");
-    report.Log("EN: Step 4/4 — \"Спавн\" button (SpawnSelectVerticalLayoutPatchBuilder).");
-    var finalPath = GenerateSpawnSelectVerticalLayoutFixCommand.Run(report, listOffsetPath, finalOutputDir, "ingame.lvl");
+    report.Log("UA: Крок 4/6 — кнопка «Спавн» (SpawnSelectVerticalLayoutPatchBuilder).");
+    report.Log("EN: Step 4/6 — \"Спавн\" button (SpawnSelectVerticalLayoutPatchBuilder).");
+    var buttonPath = GenerateSpawnSelectVerticalLayoutFixCommand.Run(report, listOffsetPath, stepsTempDir, "ingame_step4_button.lvl");
+    if (buttonPath is null)
+    {
+        report.Log("UA: Крок 4/6 провалився — зупинено. / EN: Step 4/6 failed — stopped.");
+        try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+        report.Save();
+        return;
+    }
 
-    // UA: Проміжна тека кроків 1-3 більше не потрібна — крок 4/4 прочитав
-    //     з неї свій вхід (listOffsetPath) і записав готовий результат
+    report.Log();
+    report.Log("UA: Крок 5/6 — масштаб тексту спорядження при більш ніж 7 класах (SpawnSelectInfoTextScalePatchBuilder).");
+    report.Log("EN: Step 5/6 — equipment text scale with more than 7 classes (SpawnSelectInfoTextScalePatchBuilder).");
+    var infoTextPath = GenerateSpawnSelectInfoTextScaleFixCommand.Run(report, buttonPath, stepsTempDir, "ingame_step5_infotext.lvl");
+    if (infoTextPath is null)
+    {
+        report.Log("UA: Крок 5/6 провалився — зупинено. / EN: Step 5/6 failed — stopped.");
+        try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
+        report.Save();
+        return;
+    }
+
+    report.Log();
+    report.Log("UA: Крок 6/6 — таймер і значки прапорів у бойовому HUD (HudLayoutPatchBuilder).");
+    report.Log("EN: Step 6/6 — timer and flag icons in the combat HUD (HudLayoutPatchBuilder).");
+    var finalPath = GenerateHudLayoutFixCommand.Run(report, infoTextPath, finalOutputDir, "ingame.lvl");
+
+    // UA: Проміжна тека кроків 1-5 більше не потрібна — крок 6/6 прочитав
+    //     з неї свій вхід (infoTextPath) і записав готовий результат
     //     напряму у finalOutputDir. Видаляється незалежно від того,
-    //     вдався крок 4/4 чи ні.
-    // EN: The steps 1-3 temp folder is no longer needed — step 4/4 read
-    //     its input (listOffsetPath) from it and wrote the finished result
+    //     вдався крок 6/6 чи ні.
+    // EN: The steps 1-5 temp folder is no longer needed — step 6/6 read
+    //     its input (infoTextPath) from it and wrote the finished result
     //     directly into finalOutputDir. Deleted regardless of whether
-    //     step 4/4 succeeded.
+    //     step 6/6 succeeded.
     try { Directory.Delete(stepsTempDir, recursive: true); } catch { /* UA: не критично / EN: not critical */ }
 
     report.Log();
@@ -3700,7 +3683,7 @@ async Task RunFinalAssemblyIngame()
     }
     else
     {
-        report.Log("UA: Крок 4/4 провалився. / EN: Step 4/4 failed.");
+        report.Log("UA: Крок 6/6 провалився. / EN: Step 6/6 failed.");
     }
 
     report.Save();

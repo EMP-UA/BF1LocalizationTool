@@ -2,7 +2,7 @@
 // BF1LocalizationTool.Core — Fonts/FontHeadHeightFix.cs
 // Автор / Author: EMP_UA (https://github.com/EMP-UA)
 // Ліцензія / License: MIT
-// Тип / Type: ДІАГНОСТИКА (генерує ігровий файл лише для точкових тестів, НЕ production) / DIAGNOSTIC (generates a game file for point-tests only, NOT production)
+// Тип / Type: ГЕНЕРАТОР (production, входить у фінальну збірку) / GENERATOR (production, part of the final assembly)
 // =============================================================================
 // UA: ФІКС HEAD — виправлення застарілої висоти шрифту (`HEAD[3]`,
 //     `fontHeightPx`) у ВЖЕ згенерованому core.lvl, без перегенерації атласу.
@@ -49,8 +49,9 @@
 //     ризикує зламати геометрію екранів, які зараз коректні, без перевірки
 //     кожного з них у грі). ТОМУ: після КОЖНОЇ регенерації core.lvl через
 //     `FontRepacker.Repack`/`RepackWithAdditions` висота знову стає
-//     застарілою, і цей фікс (`GenerateFontHeadHeightFixCoreCommand`) треба
-//     запускати повторно на новому файлі.
+//     застарілою; цей фікс (`GenerateFontHeadHeightFixCoreCommand`)
+//     виконується кроком 3/3 фінальної збірки core.lvl
+//     (`RunFinalAssemblyCore`) на результаті генерації кирилиці.
 //
 // EN: HEAD FIX — corrects the stale font height (`HEAD[3]`, `fontHeightPx`)
 //     in an ALREADY generated core.lvl, without regenerating the atlas.
@@ -97,9 +98,10 @@
 //     number in the generator risks breaking the geometry of screens that
 //     are currently correct, without checking each one in-game). SO: after
 //     EVERY core.lvl regeneration via `FontRepacker.Repack`/
-//     `RepackWithAdditions`, the height goes stale again, and this fix
-//     (`GenerateFontHeadHeightFixCoreCommand`) needs to be re-run on the new
-//     file.
+//     `RepackWithAdditions`, the height goes stale again; this fix
+//     (`GenerateFontHeadHeightFixCoreCommand`) runs as step 3/3 of the
+//     final core.lvl assembly (`RunFinalAssemblyCore`) on the result of the
+//     Cyrillic generation.
 // =============================================================================
 
 using System.Text;
