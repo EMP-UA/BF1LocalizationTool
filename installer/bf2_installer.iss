@@ -98,6 +98,13 @@ Source: "Readme.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesnte
 ; Записуємо версію в реєстр користувача
 Root: HKCU; Subkey: "Software\{#AppPublisher}\{#AppName}"; ValueType: string; ValueName: "Version"; ValueData: "{#AppVersion}"; Flags: uninsdeletekey
 
+[UninstallDelete]
+; Журнал d3d9-проксі створюється грою в теці GameData (поточна тека процесу)
+; і належить лише цьому проксі. / The d3d9 proxy's log is created by the game
+; in the GameData folder (the process's working directory) and belongs to
+; this proxy only.
+Type: files; Name: "{app}\GameData\bf2_widescreen_fix.log"
+
 [Run]
 ; Опціональний запуск гри після встановлення (без галочки за замовчуванням)
 Filename: "steam://rungameid/{#SteamAppId}"; Description: "{cm:LaunchGame}"; Flags: shellexec postinstall nowait skipifsilent unchecked
