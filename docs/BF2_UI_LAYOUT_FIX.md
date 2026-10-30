@@ -662,13 +662,11 @@ widescreen` замість просто `w`, де `widescreen` — 4-те зна
 геометрична правка — жодна конкретна текстура не хардкодиться, фікс діє
 однаково для будь-якого фону.
 
-**Підтвердження.** Пікселева звірка знімків до/після підтвердила: до
-фіксу контейнер справді на 33% ширший за екран і обрізає праву чверть
-фонової картинки; після фіксу зображення повертається цілим, без нових
-дефектів. Перевірено на 4 з 7 реально знайдених у `shell.lvl` значень
-`bg_texture` (`iface_bgmeta_space` — 8 екранів, `iface_bg_1` — 5,
-`single_player_campaign` — 2, `profile_manager` — 1; разом 16 із ~20
-фактичних викликів `fnAddBackground`). Фікс входить у той самий
+**Результат у грі (1920×1080).** Контейнер фону оригіналу на 33% ширший
+за екран і обрізає праву чверть картинки; з фіксом фон заповнює екран
+без обрізання на екранах з `bg_texture` `iface_bgmeta_space` (8 екранів),
+`iface_bg_1` (5), `single_player_campaign` (2), `profile_manager` (1) і
+`single_player_option` (екран налаштувань). Фікс входить у той самий
 production-патч, що й решта верстки меню (не окрема збірка).
 
 **EN:**
@@ -690,15 +688,14 @@ original, then asks `ScriptCB_GetScreenInfo()` itself and forces
 geometry fix — no specific texture is hardcoded, and it works identically
 for any background.
 
-**Confirmation.** A pixel-level comparison of before/after screenshots
-confirmed: before the fix the container really is 33% wider than the
-screen and clips the right quarter of the background artwork; after the
-fix the image comes back whole, with no new defects. Verified on 4 of 7
-actually-found `bg_texture` values in `shell.lvl` (`iface_bgmeta_space` —
-8 screens, `iface_bg_1` — 5, `single_player_campaign` — 2,
-`profile_manager` — 1; 16 of ~20 actual `fnAddBackground` calls total).
-This fix ships in the same production patch as the rest of the menu
-layout work, not a separate build.
+**In-game result (1920x1080).** The original background container is 33%
+wider than the screen and clips the right quarter of the picture; with
+the fix the background fills the screen with no clipping on screens with
+`bg_texture` `iface_bgmeta_space` (8 screens), `iface_bg_1` (5),
+`single_player_campaign` (2), `profile_manager` (1) and
+`single_player_option` (the options screen). This fix ships in the same
+production patch as the rest of the menu layout work, not a separate
+build.
 
 ## 12. Ще не задіяний, але реалізований механізм / An implemented mechanism not currently in use
 
@@ -726,25 +723,23 @@ instead (the same row also applies to `ifs_missionselect_pcMulti` and
 
 ## 13. Бойовий HUD (`ingame.lvl`): напис «Кількість бійців» / Combat HUD (`ingame.lvl`): the "unit count" label
 
-**UA:** На екрані вибору бійця (`ifs_pc_spawnselect`, у `ingame.lvl`) той самий
-шрифт `gamefont_large`, чию висоту (поле `HEAD`) цей інструмент збільшив
-із 22 до 33px (+50%, див. `BF2_FONT_SCALING.md`) для читабельності
-кирилиці, робить видимим прихований у ванілі нульовий зазор між написом
-«Кількість бійців» і кнопкою «Відродження» — обидва елементи торкаються
-однієї координати за побудовою формули верстки, незалежно від висоти
-шрифту. Це окремий, спеціально виправлений дефект: повний розбір формули,
-точна інструкція байткоду і підтвердження реальним знімком гри —
+**UA:** На екрані вибору бійця (`ifs_pc_spawnselect`, у `ingame.lvl`) нижній край
+напису «Кількість бійців» збігається з координатою `y` кнопки
+«Відродження» за побудовою формули верстки — незалежно від висоти
+шрифту. Над кнопкою текст піднімають лише два завершальні порожні рядки
+самого рядка `Locl` (`Unit Count: %d\r\n\r\n`). Збільшення шрифту (22→33 px
+для `gamefont_large`, див. `BF2_FONT_SCALING.md`) зазору не створює. Повний
+розбір формули, точна інструкція байткоду й результат у грі —
 [`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).
 
 **EN:** On the unit-selection screen (`ifs_pc_spawnselect`, in `ingame.lvl`), the
-same `gamefont_large` font — whose height (the `HEAD` field) this tool
-enlarged from 22 to 33px (+50%, see `BF2_FONT_SCALING.md`) for Cyrillic
-readability — exposes a zero gap between the "Unit Count" label and
-the "Spawn" button that was hidden in vanilla: both elements meet
-at the same coordinate by construction of the layout formula, regardless
-of font height. This is a separate, specifically fixed defect: the full
-formula breakdown, the exact bytecode instruction, and confirmation by a
-real in-game screenshot — [`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).
+bottom edge of the "Unit Count" label coincides with the `y` coordinate of
+the "Spawn" button by construction of the layout formula, regardless of
+font height. Only the two trailing empty lines of the `Locl` string itself
+(`Unit Count: %d\r\n\r\n`) lift the text above the button. Enlarging the font
+(22→33 px for `gamefont_large`, see `BF2_FONT_SCALING.md`) creates no gap
+by itself. The full formula breakdown, the exact bytecode instruction and
+the in-game result — [`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).
 
 ## 14. Другий патч розкладки для екранів у бою (`ingame.lvl`) / Second layout patch for in-battle screens (`ingame.lvl`)
 
@@ -801,3 +796,29 @@ way as the rest of the table, but without a separate in-game screenshot
 confirming those two screens specifically — both only open in the course
 of playing a campaign or a multiplayer session, not directly from the
 main menu.
+
+## 15. Обсяг виявлених дефектів `shell.lvl` / Scope of the detected `shell.lvl` defects
+
+**UA:** Автоматичний детектор виконує справжні скрипти гри в Lua-VM і будує
+через `AddIFScreen` усі 162 екрани при 800×600 (ваніль) і при 1920×1080,
+після чого порівнює розкладку віджетів. Результат: 15 екранів із дефектами
+розташування, разом 373 дефекти — 228 зіткнень (прямокутники елементів
+перетинаються) і 145 втрат вкладеності (листок, що на авторському екрані
+лежав усередині контейнера площею від 20000 px², на широкому екрані
+виходить за його межі). Заголовки й кнопки, підкладка яких розрахована на
+висоту шрифту оригіналу (поле `HEAD`, розділ 6), — окремий клас дефектів,
+який детектор не рахує. Екрани, що завантажуються лише в бою, детектором
+не охоплені; їхні виправлення описано в розділах 13–14 і в
+[`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).
+
+**EN:** The automatic detector executes the game's real scripts in a Lua VM
+and builds all 162 screens through `AddIFScreen` at 800×600 (vanilla) and
+at 1920×1080, then compares the widget layout. Result: 15 screens with
+layout defects, 373 defects in total — 228 collisions (element rectangles
+intersect) and 145 nesting losses (a leaf that sat inside a container of
+at least 20000 px² on the authored screen falls outside it on the wide
+screen). Titles and buttons whose backdrop is sized for the original font
+height (the `HEAD` field, section 6) are a separate class of defect that
+the detector does not count. Screens that load only in battle are not
+covered by the detector; their fixes are described in sections 13–14 and
+in [`BF2_SPAWNSELECT_GAP_FIX.md`](BF2_SPAWNSELECT_GAP_FIX.md).

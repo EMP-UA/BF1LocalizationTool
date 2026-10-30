@@ -44,8 +44,9 @@ always holds only the finished game files.
 
 **UA:** Крок 1/3 — збільшення ванільного шрифту ×1.5
 (`GenerateEnlargedFontCoreCommand`, тимчасова тека, видаляється одразу
-після використання). Крок 2/3 — вбудовування кириличних гліфів (Fira
-Sans) прямими Unicode-кодами напряму у вже збільшений атлас
+після використання). Крок 2/3 — вбудовування кириличних гліфів
+(Unbounded для `gamefont_large`/`medium`/`small`, Exo 2 для
+`gamefont_tiny`/`gamefont_super_tiny`) прямими Unicode-кодами напряму у вже збільшений атлас
 (`GenerateNoDonorCyrillicCoreCommand`), без донорських файлів. Крок 3/3 —
 фікс застарілої висоти шрифтів (HEAD[3]) зі звіркою проти ванільного
 `core.lvl` (`GenerateFontHeadHeightFixCoreCommand`). Вхід усього
@@ -58,7 +59,9 @@ Sans) прямими Unicode-кодами напряму у вже збільш�
 
 **EN:** Step 1/3 — enlarging the vanilla font ×1.5
 (`GenerateEnlargedFontCoreCommand`, a temp folder deleted right after
-use). Step 2/3 — embedding Cyrillic glyphs (Fira Sans) with direct
+use). Step 2/3 — embedding Cyrillic glyphs (Unbounded for
+`gamefont_large`/`medium`/`small`, Exo 2 for
+`gamefont_tiny`/`gamefont_super_tiny`) with direct
 Unicode codes straight into the already-enlarged atlas
 (`GenerateNoDonorCyrillicCoreCommand`), with no donor files. Step 3/3 —
 fixing the stale font height (HEAD[3]), cross-checked against the vanilla

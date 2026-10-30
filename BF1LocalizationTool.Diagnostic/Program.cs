@@ -2894,7 +2894,7 @@ async Task RunFontCandidateComparison()
 //     читає ВЖЕ ЗБІЛЬШЕНИЙ файл — його GlyphMetricModel.DeriveReference
 //     САМ вимірює baselineOffset/CapHeightGame/CoreHeightGame з
 //     РЕАЛЬНИХ (уже збільшених) англійських записів, тож кириличні
-//     гліфи рендеряться з Fira Sans ОДРАЗУ під фінальний, великий
+//     гліфи рендеряться шрифтом Unbounded/Exo 2 ОДРАЗУ під фінальний, великий
 //     розмір — ОДИН прохід TTF→піксель, без повторного
 //     bicubic-розмиття. Зворотний порядок (спершу кирилиця в
 //     маленький атлас, потім ×1.5 bicubic-upscale всього атласу
@@ -2913,7 +2913,7 @@ async Task RunFontCandidateComparison()
 //     file — its GlyphMetricModel.DeriveReference measures
 //     baselineOffset/CapHeightGame/CoreHeightGame from the REAL
 //     (already-enlarged) English records itself, so Cyrillic glyphs
-//     render from Fira Sans DIRECTLY at the final, big size — ONE
+//     render with Unbounded/Exo 2 DIRECTLY at the final, big size — ONE
 //     TTF→pixel pass, no repeated bicubic blur. The reverse order
 //     (Cyrillic into a small atlas first, then ×1.5 bicubic-upscaling
 //     the whole atlas together) causes DOUBLE blur on the Cyrillic
@@ -3034,8 +3034,8 @@ async Task RunGenerateNoDonorCyrillicCore()
         if (enlargedVanillaPath is not null)
         {
             report.Log();
-            report.Log("UA: [BF2] Крок 2/2 — свіжий рендер кирилиці (Fira Sans) НАПРЯМУ у вже збільшений атлас. / " +
-                       "EN: [BF2] Step 2/2 — fresh Cyrillic render (Fira Sans) DIRECTLY into the already-enlarged atlas.");
+            report.Log("UA: [BF2] Крок 2/2 — свіжий рендер кирилиці (Unbounded / Exo 2) НАПРЯМУ у вже збільшений атлас. / " +
+                       "EN: [BF2] Step 2/2 — fresh Cyrillic render (Unbounded / Exo 2) DIRECTLY into the already-enlarged atlas.");
 
             var bf2LocalizedPath = await GenerateNoDonorCyrillicCoreCommand.Run(report, enlargedVanillaPath, "BF2");
 

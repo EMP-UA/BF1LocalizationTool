@@ -97,11 +97,10 @@ BF1. `BF1LocalizationTool.Diagnostic` (розповсюджується лише
 першому (§8).
 
 Метрична модель гліфів верифікована побайтовим сканом повного алфавіту
-обох ігор (§7.5, §7.7–§7.8). Два відкриті обмеження: коефіцієнт
-збільшення шрифту BF2 (×1,5) підібраний емпірично, не доведено
-оптимальний; підсистема "BF2 widescreen" (верстка меню під 1080p)
-існує в коді як експериментальна, не інтегрована в основний робочий
-процес.
+обох ігор (§7.5, §7.7–§7.8). Коефіцієнт збільшення шрифту BF2 (×1,5)
+підібраний емпірично. Підсистема "BF2 widescreen" (верстка меню та
+екранів у бою під 1080p) входить у фінальну збірку файлів BF2 —
+[`docs/BF2_FINAL_FILES_GENERATION.md`](docs/BF2_FINAL_FILES_GENERATION.md).
 
 **EN:** The `.txt` format (Latin1) does not support Cyrillic for BF1 on
 its own. `BF1LocalizationTool.Diagnostic` (distributed as source only —
@@ -124,11 +123,11 @@ All of BF1's text is confirmed to live in exactly two files
 first (§8).
 
 The glyph metric model is verified via a byte-level scan of the full
-alphabet in both games (§7.5, §7.7–§7.8). Two open limitations remain:
-the BF2 font enlargement factor (×1.5) was chosen empirically and isn't
-proven optimal; a "BF2 widescreen" subsystem (1080p menu layout) exists
-in the code as experimental and isn't integrated into the main
-workflow.
+alphabet in both games (§7.5, §7.7–§7.8). The BF2 font enlargement
+factor (×1.5) was chosen empirically. The "BF2 widescreen" subsystem
+(menu and in-battle screen layout for 1080p) is part of the final
+assembly of the BF2 files —
+[`docs/BF2_FINAL_FILES_GENERATION.md`](docs/BF2_FINAL_FILES_GENERATION.md).
 
 ---
 

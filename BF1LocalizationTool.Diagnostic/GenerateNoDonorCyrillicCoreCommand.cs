@@ -91,92 +91,46 @@ namespace BF1LocalizationTool.Diagnostic;
 
 public static class GenerateNoDonorCyrillicCoreCommand
 {
-    // UA: Bahnschrift (системний шрифт Windows,
-    //     ліцензія забороняє розповсюдження) замінено на Fira Sans
-    //     SemiBold (SIL OFL, вільно розповсюджується, дизайн Carrois Type
-    //     Design + кирилиця Botio Nikoltchev — чистий європейський
-    //     провенанс, той самий шрифт уже використано в проєкті SWH).
-    //     Завантажується з .ttf у теці Fonts\ біля .exe через
-    //     PrivateFontRegistry, НЕ з системного реєстру шрифтів —
-    //     відтворювано незалежно від того, що встановлено на машині.
-    //
-    //     Значення тепер ВІДНОСНИЙ ШЛЯХ ФАЙЛУ
-    //     (`"FiraSans-SemiBold.ttf"`), а НЕ назва родини (`"Fira Sans
-    //     SemiBold"`). ПРИЧИНА: GDI+ обрізає family-назви до 31 символа
-    //     (LOGFONT-ліміт) і зливає кілька файлів в одну family, якщо їхні
-    //     назви родини збігаються — обидва підтверджено реальним
-    //     логом-регресією (FONT_FORMAT_SPEC.md, розділ 11.13). Ім'я файлу
-    //     — рядок файлової системи, жодного з цих обмежень немає.
-    //     PrivateFontRegistry.Get шукає САМЕ за ним. Насиченість
-    //     (SemiBold) не змінюється — це виправлення механізму пошуку, не
-    //     зміна вибору шрифту.
-    // EN: Bahnschrift (a Windows system font,
-    //     license forbids redistribution) replaced with Fira Sans
-    //     SemiBold (SIL OFL, freely redistributable, designed by Carrois
-    //     Type Design + Cyrillic by Botio Nikoltchev — clean European
-    //     provenance, the same font already used in the SWH project).
-    //     Loaded from a .ttf in the Fonts\ folder next to the .exe via
-    //     PrivateFontRegistry, NOT from the system font registry —
-    //     reproducible regardless of what's installed on a given machine.
-    //
-    //     The value is now a RELATIVE FILE PATH
-    //     (`"FiraSans-SemiBold.ttf"`), not a family name (`"Fira Sans
-    //     SemiBold"`). REASON: GDI+ truncates family names to 31
-    //     characters (a LOGFONT limit) and merges several files into one
-    //     family when their family names collide — both confirmed by a
-    //     real regression in a log (FONT_FORMAT_SPEC.md, section 11.13).
-    //     A file name is a filesystem string, subject to neither limit.
-    //     PrivateFontRegistry.Get looks up by exactly that. The weight
-    //     (SemiBold) does not change — this is a lookup-mechanism fix,
-    //     not a font choice change.
-    // UA: Константа ЗАМІНЕНА на резолвер за (гра,
-    //     розмір шрифту). ПРИЧИНА: реальний прогін `FontCandidateComparisonCommand`
-    //     на розширеному пулі кандидатів (57 кандидатів, Fira Sans + Sofia Sans + Exo2 + Unbounded,
-    //     FONT_FORMAT_SPEC.md розділ 11.18) показав, що ОДИН шрифт на
-    //     обидві гри й усі 5 розмірів — не найкращий підбір за реальними
-    //     даними:
-    //       - BF1 (ціль капітелей ≈0.50, дуже вузька) — ОДНОСТАЙНО всі
-    //         5 розмірів: SofiaSansExtraCondensed-Bold (стиснення лише
-    //         2.5-8%, було 18-22% на Fira Sans).
-    //       - BF2 (ціль ≈1.00 large/medium/small, ≈0.857 tiny/super_tiny)
-    //         — large/medium/small тримають Unbounded (Bold/Black/
-    //         ExtraBold — легкий підбір ваги під спад нативної щільності
-    //         гри 0.551→0.529 з розміром), а tiny/super_tiny ПЕРЕМИКАЮТЬСЯ
-    //         на Exo2-ExtraBold: Unbounded там дає лише aspect=0.722
-    //         (26-28% стиснення) — це вже не шум, реальна невідповідність
-    //         природної пропорції Unbounded дрібнішій цілі.
-    //     Рішення: прошити ТОЧНІ переможці по розміру (не
-    //     компроміс на одну вагу).
-    // EN: The constant REPLACED by a (game, font
-    //     size) resolver. REASON: a real `FontCandidateComparisonCommand`
-    //     run over the expanded candidate pool (57 candidates,
-    //     Fira Sans + Sofia Sans + Exo2 + Unbounded, FONT_FORMAT_SPEC.md
-    //     section 11.18) showed ONE font for both games and all 5 sizes
-    //     is not the best fit by real data:
-    //       - BF1 (capital target ≈0.50, very narrow) — UNANIMOUS across
-    //         all 5 sizes: SofiaSansExtraCondensed-Bold (squeeze only
-    //         2.5-8%, was 18-22% with Fira Sans).
-    //       - BF2 (target ≈1.00 large/medium/small, ≈0.857 tiny/
-    //         super_tiny) — large/medium/small stick with Unbounded
-    //         (Bold/Black/ExtraBold — a light weight adjustment tracking
-    //         the game's own native density decline 0.551→0.529 with
-    //         size), while tiny/super_tiny SWITCH to Exo2-ExtraBold:
-    //         Unbounded only reaches aspect=0.722 there (26-28% squeeze)
-    //         — not noise, a real mismatch between Unbounded's natural
-    //         proportion and the smaller target.
-    //     Decision: wire the EXACT per-size winners (not a
-    //     single-weight compromise).
-    //
-    //     UA: ЗМІНЕНО — internal (було private): LowercaseCoreMarginPreviewCommand
-    //     (read-only діагностика "ядро+виступ", БЕЗ генерації) навмисно
-    //     перевикористовує САМЕ цей вибір шрифту, а не копіює switch —
-    //     інакше довелось би тримати два джерела істини й вручну
-    //     синхронізувати їх при кожній зміні кандидата.
-    //     EN: CHANGED — internal (was private): LowercaseCoreMarginPreviewCommand
-    //     (read-only "core+extension" diagnostics, NO generation)
-    //     deliberately reuses THIS EXACT font choice instead of copying the
-    //     switch — otherwise there'd be two sources of truth to keep in
-    //     sync by hand every time the candidate changes.
+    // UA: Шрифт, яким малюється кирилиця, вибирається за (гра, розмір шрифту).
+    //     Значення — ВІДНОСНИЙ ШЛЯХ .ttf у теці Fonts\ біля .exe
+    //     (напр. `"Unbounded-Bold.ttf"`), а не назва родини: GDI+ обрізає
+    //     назви родин до 31 символа (LOGFONT-ліміт) і зливає файли з
+    //     однаковою назвою родини в одну родину (FONT_FORMAT_SPEC.md,
+    //     розділ 11.13); ім'я файлу таких обмежень не має.
+    //     PrivateFontRegistry.Get шукає саме за ним; системний реєстр
+    //     шрифтів не використовується, тож результат не залежить від
+    //     шрифтів, встановлених на машині. Усі файли — SIL OFL.
+    //       - BF1 (ціль капітелей ≈0.50, дуже вузька): усі 5 розмірів —
+    //         SofiaSansExtraCondensed-Bold (стиснення 2.5–8%).
+    //       - BF2 (ціль ≈1.00 для large/medium/small, ≈0.857 для tiny/
+    //         super_tiny): large/medium/small — Unbounded (Bold/Black/
+    //         ExtraBold; вага йде за спадом нативної щільності гри
+    //         0.551→0.529 з розміром); tiny/super_tiny — Exo2-ExtraBold,
+    //         бо Unbounded там дає aspect=0.722 (стиснення 26–28%).
+    //     Порівняння 57 кандидатів — FONT_FORMAT_SPEC.md, розділ 11.18.
+    //     Метод `internal`: LowercaseCoreMarginPreviewCommand (діагностика
+    //     без генерації) бере той самий вибір, а не копіює switch.
+    // EN: The font used to draw Cyrillic is chosen by (game, font size).
+    //     The value is a RELATIVE PATH of a .ttf in the Fonts\ folder next
+    //     to the .exe (e.g. `"Unbounded-Bold.ttf"`), not a family name:
+    //     GDI+ truncates family names to 31 characters (a LOGFONT limit) and
+    //     merges files with equal family names into one family
+    //     (FONT_FORMAT_SPEC.md, section 11.13); a file name has neither
+    //     limit. PrivateFontRegistry.Get looks up by exactly that; the system
+    //     font registry is not used, so the result does not depend on the
+    //     fonts installed on the machine. All files are SIL OFL.
+    //       - BF1 (capital target ≈0.50, very narrow): all 5 sizes —
+    //         SofiaSansExtraCondensed-Bold (squeeze 2.5–8%).
+    //       - BF2 (target ≈1.00 for large/medium/small, ≈0.857 for
+    //         tiny/super_tiny): large/medium/small — Unbounded (Bold/Black/
+    //         ExtraBold; the weight follows the game's native density
+    //         decline 0.551→0.529 with size); tiny/super_tiny —
+    //         Exo2-ExtraBold, because Unbounded gives aspect=0.722 there
+    //         (26–28% squeeze).
+    //     Comparison of 57 candidates — FONT_FORMAT_SPEC.md, section 11.18.
+    //     The method is `internal`: LowercaseCoreMarginPreviewCommand
+    //     (diagnostics, no generation) takes the same choice instead of
+    //     copying the switch.
     internal static string ResolveFontFamilyName(string label, string fontBaseName) => (label, fontBaseName) switch
     {
         ("BF1", _) => "SofiaSansExtraCondensed-Bold.ttf",

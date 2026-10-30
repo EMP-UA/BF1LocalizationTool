@@ -37,6 +37,20 @@ than Latin ones. The font was therefore enlarged for Battlefront II.
 українського `core.lvl` (не з опису чи журналу збірки) і зіставлене з тим
 самим полем у ванільному файлі.
 
+Окремо від `HEAD` існує найвища комірка гліфа — максимум байта `+7`
+(`CellHeight`) серед записів `FBOD` шрифту. Це інша величина: вона
+вимірює зображення гліфів в атласі, а не висоту, яку читає верстка.
+Ванільна гра тримає `HEAD` на 1 px вище найвищої комірки (крім
+`gamefont_small`, де вони рівні); після збільшення той самий запас
+збережено:
+
+| Шрифт | Найвища комірка, оригінал (px) | Найвища комірка, українська версія (px) |
+|---|---|---|
+| `gamefont_large` | 21 | 32 |
+| `gamefont_medium` | 18 | 27 |
+| `gamefont_small` | 17 | 26 |
+| `gamefont_tiny` / `gamefont_super_tiny` | 12 | 19 |
+
 **EN:** Font height — the value the game stores in each font resource's `HEAD`
 field and that the engine's own layout formulas read (including the
 title-backdrop size calculation):
@@ -51,6 +65,20 @@ title-backdrop size calculation):
 The values are verified byte-for-byte: the `HEAD` field was read
 directly from the real Ukrainian `core.lvl` (not from a description or
 build log) and compared against the same field in the vanilla file.
+
+Separate from `HEAD` there is the tallest glyph cell — the maximum of
+byte `+7` (`CellHeight`) over the font's `FBOD` records. It is a different
+quantity: it measures the glyph images in the atlas, not the height that
+the layout code reads. The vanilla game keeps `HEAD` 1 px above the
+tallest cell (except `gamefont_small`, where they are equal); the same
+margin is kept after the enlargement:
+
+| Font | Tallest cell, original (px) | Tallest cell, Ukrainian version (px) |
+|---|---|---|
+| `gamefont_large` | 21 | 32 |
+| `gamefont_medium` | 18 | 27 |
+| `gamefont_small` | 17 | 26 |
+| `gamefont_tiny` / `gamefont_super_tiny` | 12 | 19 |
 
 ## 3. Чому висота `HEAD` виправлена окремим кроком / Why the `HEAD` height needed a separate fix
 
